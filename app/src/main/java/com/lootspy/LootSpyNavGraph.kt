@@ -1,6 +1,7 @@
 package com.lootspy
 
 import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.material3.DrawerState
@@ -15,11 +16,11 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.google.accompanist.navigation.animation.AnimatedNavHost
+import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.lootspy.LootSpyDestinationArgs.FILTER_ID_ARG
 import com.lootspy.LootSpyDestinationArgs.USER_MESSAGE_ARG
@@ -46,13 +47,19 @@ fun LootSpyNavGraph(
   val currentRoute = currentNavBackStackEntry?.destination?.route ?: startDestination
 
   AnimatedNavHost(
+//  NavHost(
     navController = navController,
     startDestination = startDestination,
     enterTransition = {
-      slideIntoContainer(
-        AnimatedContentScope.SlideDirection.Left,
-        animationSpec = tween(700)
-      )
+//      when (initialState.destination.route) {
+//        LootSpyDestinations.LOOT_ROUTE -> EnterTransition.None
+//        else -> {
+          slideIntoContainer(
+            AnimatedContentScope.SlideDirection.Left,
+            animationSpec = tween(700)
+          )
+//        }
+//      }
     },
     exitTransition = {
       slideOutOfContainer(
@@ -60,18 +67,36 @@ fun LootSpyNavGraph(
         animationSpec = tween(700)
       )
     },
+    popEnterTransition = {
+      slideIntoContainer(
+        AnimatedContentScope.SlideDirection.Right,
+        animationSpec = tween(700)
+      )
+    },
+    popExitTransition = {
+      slideOutOfContainer(
+        AnimatedContentScope.SlideDirection.Right,
+        animationSpec = tween(700)
+      )
+    },
     modifier = modifier
   ) {
-    composable(LootSpyDestinations.LOOT_ROUTE, arguments = listOf(navArgument(USER_MESSAGE_ARG) {
-      type = NavType.IntType; defaultValue = 0
-    })) {
+    composable(
+      LootSpyDestinations.LOOT_ROUTE,
+      arguments = listOf(navArgument(USER_MESSAGE_ARG) {
+        type = NavType.IntType; defaultValue = 0
+      }),
+    ) {
       AppModalDrawer(drawerState, currentRoute, navActions) {
         LootScreen(openDrawer = { coroutineScope.launch { drawerState.open() } })
       }
     }
-    composable(LootSpyDestinations.FILTERS_ROUTE, arguments = listOf(navArgument(USER_MESSAGE_ARG) {
-      type = NavType.IntType; defaultValue = 0
-    })) {
+    composable(
+      LootSpyDestinations.FILTERS_ROUTE,
+      arguments = listOf(navArgument(USER_MESSAGE_ARG) {
+        type = NavType.IntType; defaultValue = 0
+      })
+    ) {
       AppModalDrawer(drawerState, currentRoute, navActions) {
         FilterScreen(
           openDrawer = { coroutineScope.launch { drawerState.open() } },
