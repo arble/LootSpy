@@ -5,8 +5,14 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.navigation.compose.rememberNavController
 import com.lootspy.ui.theme.LootSpyTheme
+import com.lootspy.util.LootSpyNavBar
 import dagger.hilt.android.AndroidEntryPoint
 import net.openid.appauth.AuthorizationRequest
 import net.openid.appauth.AuthorizationService
@@ -20,7 +26,22 @@ class LootSpyActivity : ComponentActivity() {
     super.onCreate(savedInstanceState)
     setContent {
       LootSpyTheme {
-        LootSpyNavGraph()
+//        LootSpyNavGraph()
+        val navController = rememberNavController()
+        val navActions = remember(navController) {
+          LootSpyNavigationActions(navController)
+        }
+        Scaffold(bottomBar = {
+          LootSpyNavBar(
+            currentRoute = LootSpyDestinations.LOOT_ROUTE,
+            navController = navController,
+            navigationActions = remember(navController) {
+              LootSpyNavigationActions(navController)
+            }
+          )
+        }) { paddingValues ->
+          LootSpyNavGraph(modifier = Modifier.padding(paddingValues), navActions = navActions)
+        }
       }
     }
   }
