@@ -21,17 +21,11 @@ import com.example.lootspy.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LootTopAppBar(
-  openDrawer: () -> Unit,
   onChangeFilter: () -> Unit,
   onRefresh: () -> Unit,
 ) {
   TopAppBar(
     title = { Text(text = stringResource(id = R.string.app_name)) },
-    navigationIcon = {
-      IconButton(onClick = openDrawer) {
-        Icon(Icons.Filled.Menu, stringResource(id = R.string.open_drawer))
-      }
-    },
     modifier = Modifier.fillMaxWidth(),
     colors = TopAppBarDefaults.smallTopAppBarColors(),
     actions = {
@@ -48,16 +42,10 @@ fun LootTopAppBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FilterTopAppBar(
-  openDrawer: () -> Unit,
   addFilter: () -> Unit,
 ) {
   TopAppBar(
     title = { Text(text = stringResource(id = R.string.filter_title)) },
-    navigationIcon = {
-      IconButton(onClick = openDrawer) {
-        Icon(Icons.Filled.Menu, stringResource(id = R.string.open_drawer))
-      }
-    }
   )
 }
 

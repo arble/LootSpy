@@ -31,7 +31,6 @@ import com.lootspy.util.ScreenContentWithEmptyText
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FilterScreen(
-  openDrawer: () -> Unit,
   onAddFilter: () -> Unit,
   onClickFilter: (Filter) -> Unit,
   modifier: Modifier = Modifier,
@@ -42,7 +41,6 @@ fun FilterScreen(
   Scaffold(
     topBar = {
       FilterTopAppBar(
-        openDrawer = openDrawer,
         addFilter = {},
       )
     },

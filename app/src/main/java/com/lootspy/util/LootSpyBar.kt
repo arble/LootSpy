@@ -54,7 +54,7 @@ fun LootSpyNavBar(
         }
         coroutineScope.launch {
           navigationActions.navigateToFilters()
-          selectedRoute.value = LootSpyDestinations.LOOT_ROUTE
+          selectedRoute.value = LootSpyDestinations.FILTERS_ROUTE
         }
       },
     )
@@ -68,7 +68,7 @@ fun LootSpyNavBar(
         }
         coroutineScope.launch {
           navigationActions.navigateToVendors()
-          selectedRoute.value = LootSpyDestinations.LOOT_ROUTE
+          selectedRoute.value = LootSpyDestinations.VENDORS_ROUTE
         }
       },
     )

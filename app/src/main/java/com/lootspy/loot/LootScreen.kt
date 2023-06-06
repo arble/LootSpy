@@ -39,7 +39,6 @@ import com.lootspy.util.ScreenContentWithEmptyText
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun LootScreen(
-  openDrawer: () -> Unit,
   modifier: Modifier = Modifier,
   viewModel: LootViewModel = hiltViewModel()
 ) {
@@ -48,7 +47,6 @@ fun LootScreen(
   Scaffold(
     topBar = {
       LootTopAppBar(
-        openDrawer = openDrawer,
         onChangeFilter = {},
         onRefresh = {},
       )
