@@ -9,9 +9,8 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -22,12 +21,11 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun LootSpyNavBar(
-  currentRoute: String,
+  selectedRoute: MutableState<String>,
   navController: NavHostController,
   navigationActions: LootSpyNavigationActions,
   coroutineScope: CoroutineScope = rememberCoroutineScope(),
 ) {
-  val selectedRoute = remember { mutableStateOf(currentRoute) }
   val navBackStackEntry by navController.currentBackStackEntryAsState()
   NavigationBar {
     NavigationBarItem(

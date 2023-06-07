@@ -1,6 +1,7 @@
 package com.lootspy.filter
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,11 +34,13 @@ import com.lootspy.util.ScreenContentWithEmptyText
 fun FilterScreen(
   onAddFilter: () -> Unit,
   onClickFilter: (Filter) -> Unit,
+  onBack: () -> Unit,
   modifier: Modifier = Modifier,
   viewModel: FilterViewModel = hiltViewModel(),
 ) {
   val context = LocalContext.current
 
+  BackHandler(onBack = onBack)
   Scaffold(
     topBar = {
       FilterTopAppBar(

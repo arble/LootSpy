@@ -1,6 +1,7 @@
 package com.lootspy.addeditfilter
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,7 +11,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -30,7 +30,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.lootspy.R
 import com.lootspy.filter.matchers.FilterMatcher
-import com.lootspy.util.ScreenContent
 import com.lootspy.util.ScreenContentWithEmptyText
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,7 +40,7 @@ fun AddEditFilterScreen(
   viewModel: AddEditFilterViewModel = hiltViewModel()
 ) {
   val context = LocalContext.current
-
+  BackHandler(onBack = onBack)
   Scaffold(
     topBar = {
       AddEditFilterTopAppBar(

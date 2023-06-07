@@ -35,20 +35,37 @@ object LootSpyDestinations {
 
 class LootSpyNavigationActions(private val navController: NavHostController) {
 
-  val routeOrderingMap = hashMapOf<String, Int>(
+  val routeOrderingMap = hashMapOf(
     LootSpyDestinations.LOOT_ROUTE to 0,
     LootSpyDestinations.FILTERS_ROUTE to 1,
-    LootSpyDestinations.VENDORS_ROUTE to 2,
-    LootSpyDestinations.SETTINGS_ROUTE to 3,
+    LootSpyDestinations.ADD_EDIT_FILTER_ROUTE to 2,
+    LootSpyDestinations.VENDORS_ROUTE to 3,
+    LootSpyDestinations.SETTINGS_ROUTE to 4,
   )
 
-  fun navigateToLoot() = navController.navigate(LOOT_SCREEN)
+  fun navigateToLoot() = navController.navigate(LOOT_SCREEN) {
+    popUpTo(LOOT_SCREEN) {
+      inclusive = true
+    }
+  }
 
-  fun navigateToVendors() = navController.navigate(VENDORS_SCREEN)
+  fun navigateToVendors() = navController.navigate(VENDORS_SCREEN) {
+    popUpTo(LOOT_SCREEN) {
+//      inclusive = true
+    }
+  }
 
-  fun navigateToFilters() = navController.navigate(FILTERS_SCREEN)
+  fun navigateToFilters() = navController.navigate(FILTERS_SCREEN) {
+    popUpTo(LOOT_SCREEN) {
+//      inclusive = true
+    }
+  }
 
-  fun navigateToSettings() = navController.navigate(SETTINGS_SCREEN)
+  fun navigateToSettings() = navController.navigate(SETTINGS_SCREEN) {
+    popUpTo(LOOT_SCREEN) {
+      inclusive = true
+    }
+  }
 
   fun navigateToAddEditFilter(filterId: String?) =
     navController.navigate("$ADD_EDIT_FILTER_SCREEN/${filterId ?: ""}")

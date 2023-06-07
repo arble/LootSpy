@@ -5,6 +5,7 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -26,9 +27,9 @@ fun LootSpyNavGraph(
   navController: NavHostController,
   startDestination: String = LootSpyDestinations.LOOT_ROUTE,
   navActions: LootSpyNavigationActions,
+  selectedRoute: MutableState<String>,
 ) {
   val currentNavBackStackEntry by navController.currentBackStackEntryAsState()
-  val currentRoute = currentNavBackStackEntry?.destination?.route ?: startDestination
 
   AnimatedNavHost(
     navController = navController,
@@ -83,7 +84,11 @@ fun LootSpyNavGraph(
     ) {
       FilterScreen(
         onAddFilter = { navActions.navigateToAddEditFilter(null) },
-        onClickFilter = { navActions.navigateToAddEditFilter(it.id) }
+        onClickFilter = { navActions.navigateToAddEditFilter(it.id) },
+        onBack = {
+          selectedRoute.value = LootSpyDestinations.LOOT_ROUTE
+          navController.popBackStack()
+        }
       )
     }
     composable(
@@ -93,24 +98,6 @@ fun LootSpyNavGraph(
           type = NavType.StringType; nullable = true
         },
       ),
-      enterTransition = {
-        slideIntoContainer(
-          AnimatedContentScope.SlideDirection.Up,
-          animationSpec = tween(700)
-        )
-      },
-      exitTransition = {
-        slideOutOfContainer(
-          AnimatedContentScope.SlideDirection.Down,
-          animationSpec = tween(700)
-        )
-      },
-      popExitTransition = {
-        slideOutOfContainer(
-          AnimatedContentScope.SlideDirection.Down,
-          animationSpec = tween(700)
-        )
-      }
     ) {
       AddEditFilterScreen(
         onBack = { navController.popBackStack() },

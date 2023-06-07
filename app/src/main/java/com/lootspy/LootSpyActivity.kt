@@ -9,9 +9,9 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.lootspy.ui.theme.LootSpyTheme
 import com.lootspy.util.LootSpyNavBar
@@ -33,9 +33,10 @@ class LootSpyActivity : ComponentActivity() {
         val navActions = remember(navController) {
           LootSpyNavigationActions(navController)
         }
+        val selectedRoute = remember { mutableStateOf(LootSpyDestinations.LOOT_ROUTE) }
         Scaffold(bottomBar = {
           LootSpyNavBar(
-            currentRoute = LootSpyDestinations.LOOT_ROUTE,
+            selectedRoute = selectedRoute,
             navController = navController,
             navigationActions = remember(navController) {
               LootSpyNavigationActions(navController)
@@ -45,7 +46,8 @@ class LootSpyActivity : ComponentActivity() {
           LootSpyNavGraph(
             navController = navController,
             modifier = Modifier.padding(paddingValues),
-            navActions = navActions
+            navActions = navActions,
+            selectedRoute = selectedRoute,
           )
         }
       }
