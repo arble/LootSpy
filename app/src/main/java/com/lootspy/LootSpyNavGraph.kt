@@ -16,9 +16,9 @@ import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.lootspy.LootSpyDestinationArgs.FILTER_ID_ARG
 import com.lootspy.LootSpyDestinationArgs.USER_MESSAGE_ARG
-import com.lootspy.addeditfilter.AddEditFilterScreen
-import com.lootspy.filter.FilterScreen
-import com.lootspy.loot.LootScreen
+import com.lootspy.screens.addeditfilter.AddEditFilterScreen
+import com.lootspy.screens.filter.FilterScreen
+import com.lootspy.screens.loot.LootScreen
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable

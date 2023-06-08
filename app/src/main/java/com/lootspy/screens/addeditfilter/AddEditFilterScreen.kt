@@ -1,24 +1,23 @@
-package com.lootspy.loot
+package com.lootspy.screens.addeditfilter
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,55 +30,79 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.lootspy.R
-import com.lootspy.data.LootEntry
-import com.lootspy.util.LootTopAppBar
-import com.lootspy.util.ScreenContent
+import com.lootspy.filter.matchers.FilterMatcher
+import com.lootspy.util.NewMatcherDialog
 import com.lootspy.util.ScreenContentWithEmptyText
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LootScreen(
+fun AddEditFilterScreen(
+  onBack: () -> Unit,
   modifier: Modifier = Modifier,
-  viewModel: LootViewModel = hiltViewModel()
+  viewModel: AddEditFilterViewModel = hiltViewModel()
 ) {
   val context = LocalContext.current
-  val showNewLootDialog = remember { mutableStateOf(false) }
+  val showNewMatcherDialog = remember { mutableStateOf(false) }
+  BackHandler(onBack = onBack)
   Scaffold(
     topBar = {
-      LootTopAppBar(
-        onChangeFilter = {},
-        onRefresh = {},
-      )
+      AddEditFilterTopAppBar(
+        onBack = onBack,
+        addFilterMatcher = {})
     },
     modifier = modifier.fillMaxSize(),
     floatingActionButton = {
-      FloatingActionButton(onClick = { showNewLootDialog.value = true }) {
-        Icon(Icons.Filled.Add, "Add New")
+      FloatingActionButton(onClick = { showNewMatcherDialog.value = true }) {
+        Icon(imageVector = Icons.Filled.Add, contentDescription = null)
       }
-    },
-    floatingActionButtonPosition = FabPosition.End
+    }
   ) { paddingValues ->
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val onLootClick: (LootEntry) -> Unit = {
-      Toast.makeText(context, "Loot item is: $it", Toast.LENGTH_SHORT).show()
+    val onMatcherClick: (FilterMatcher) -> Unit = {
+      Toast.makeText(context, "Matcher is: ${it.summaryString()}", Toast.LENGTH_SHORT).show()
     }
-
+    NewMatcherDialog(show = showNewMatcherDialog) {
+      showNewMatcherDialog.value = false
+      viewModel.createBlankMatcher(it)
+      Toast.makeText(context, "New matcher: ${it.name}", Toast.LENGTH_SHORT).show()
+    }
     ScreenContentWithEmptyText(
       loading = uiState.isLoading,
-      items = uiState.items,
-      itemContent = {
-        LootItem(entry = it, onLootClick = onLootClick)
+      items = uiState.matchers,
+      itemContent = { matcher ->
+        FilterMatcherItem(matcher = matcher, onMatcherClick = onMatcherClick)
       },
-      emptyText = stringResource(id = R.string.loot_screen_empty),
+      emptyText = stringResource(id = R.string.add_edit_filter_screen_empty),
       modifier = Modifier.padding(paddingValues)
     )
   }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LootItem(
-  entry: LootEntry,
-  onLootClick: (LootEntry) -> Unit,
+fun AddEditFilterTopAppBar(
+  onBack: () -> Unit,
+  addFilterMatcher: () -> Unit,
+) {
+  TopAppBar(
+    title = { Text(text = stringResource(id = R.string.add_filter_matcher_title)) },
+    navigationIcon = {
+      IconButton(onClick = onBack) {
+        Icon(Icons.Filled.ArrowBack, stringResource(id = R.string.back))
+      }
+    },
+    actions = {
+      IconButton(onClick = addFilterMatcher) {
+        Icon(Icons.Default.Add, stringResource(id = R.string.add_edit_filter_add_matcher))
+      }
+    }
+  )
+}
+
+@Composable
+private fun FilterMatcherItem(
+  matcher: FilterMatcher,
+  onMatcherClick: (FilterMatcher) -> Unit,
 ) {
   Row(
     verticalAlignment = Alignment.CenterVertically,
@@ -89,10 +112,10 @@ private fun LootItem(
         horizontal = dimensionResource(id = R.dimen.horizontal_margin),
         vertical = dimensionResource(id = R.dimen.loot_item_padding),
       )
-      .clickable { onLootClick(entry) }
+      .clickable { onMatcherClick(matcher) }
   ) {
     Text(
-      text = entry.name,
+      text = matcher.summaryString(),
       style = MaterialTheme.typography.headlineSmall,
       modifier = Modifier.padding(
         start = dimensionResource(

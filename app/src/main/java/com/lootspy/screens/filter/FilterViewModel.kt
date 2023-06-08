@@ -1,4 +1,4 @@
-package com.lootspy.filter
+package com.lootspy.screens.filter
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

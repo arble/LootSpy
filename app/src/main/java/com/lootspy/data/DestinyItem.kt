@@ -1,4 +1,7 @@
 package com.lootspy.data
 
-class DestinyItem {
+class DestinyItem(
+  val name: String,
+  val season: Int,
+) {
 }

@@ -20,6 +20,7 @@ private object LootSpyScreens {
 
 object LootSpyDestinationArgs {
   const val FILTER_ID_ARG = "filterId"
+  const val MATCHER_ARG = "matcherIndex"
   const val VENDOR_ARG = "vendor"
   const val USER_MESSAGE_ARG = "userMessage"
 }

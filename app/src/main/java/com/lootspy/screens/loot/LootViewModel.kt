@@ -1,4 +1,4 @@
-package com.lootspy.loot
+package com.lootspy.screens.loot
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel

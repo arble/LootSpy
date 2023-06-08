@@ -1,4 +1,4 @@
-package com.lootspy.addeditfilter
+package com.lootspy.screens.addeditfilter
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -8,6 +8,7 @@ import com.lootspy.LootSpyDestinationArgs
 import com.lootspy.data.Filter
 import com.lootspy.data.FilterRepository
 import com.lootspy.filter.matchers.FilterMatcher
+import com.lootspy.filter.matchers.MatcherType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -99,5 +100,9 @@ class AddEditFilterViewModel @Inject constructor(
         }
       }
     }
+  }
+
+  fun createBlankMatcher(type: MatcherType) {
+
   }
 }

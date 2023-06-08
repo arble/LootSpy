@@ -1,4 +1,4 @@
-package com.lootspy.loot
+package com.lootspy.screens.loot
 
 enum class LootFilterType {
   ALL_LOOT,
