@@ -62,8 +62,8 @@ fun FilterScreen(
     ScreenContentWithEmptyText(
       loading = uiState.isLoading,
       items = uiState.items,
-      itemContent = {
-        FilterItem(filter = it, onFilterClick = onFilterClick)
+      itemContent = { _, filter ->
+        FilterItem(filter = filter, onFilterClick = onFilterClick)
       },
       emptyText = stringResource(id = R.string.filter_screen_empty),
       modifier = Modifier.padding(paddingValues)

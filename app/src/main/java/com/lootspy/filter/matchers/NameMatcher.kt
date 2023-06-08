@@ -5,7 +5,7 @@ import com.lootspy.data.DestinyItem
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
-class NameMatcher(private val name: String) : FilterMatcher, Parcelable {
+class NameMatcher(private var name: String) : FilterMatcher, Parcelable {
   override fun match(item: DestinyItem) = item.name == name
 
   override fun summaryString() = "Name matcher: $name"

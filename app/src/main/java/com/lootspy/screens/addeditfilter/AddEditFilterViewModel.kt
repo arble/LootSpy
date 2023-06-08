@@ -9,6 +9,7 @@ import com.lootspy.data.Filter
 import com.lootspy.data.FilterRepository
 import com.lootspy.filter.matchers.FilterMatcher
 import com.lootspy.filter.matchers.MatcherType
+import com.lootspy.filter.matchers.NameMatcher
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +21,8 @@ import javax.inject.Inject
 data class AddEditFilterUiState(
   val id: String = "",
   val name: String = "New Filter",
-  val matchers: List<FilterMatcher> = emptyList(),
+  val matchers: List<FilterMatcher> = mutableListOf(),
+  val selectedMatcher: Int? = null,
   val userMessage: Int? = null,
   val isLoading: Boolean = false,
   val isFilterSaved: Boolean = false,
@@ -47,13 +49,11 @@ class AddEditFilterViewModel @Inject constructor(
     if (uiState.value.name.isEmpty()) {
       _uiState.update {
         it.copy(userMessage = R.string.empty_filter_name_message)
-        return
       }
     }
     if (uiState.value.matchers.isEmpty()) {
       _uiState.update {
         it.copy(userMessage = R.string.empty_filter_matchers_message)
-        return
       }
     }
 
@@ -103,6 +103,16 @@ class AddEditFilterViewModel @Inject constructor(
   }
 
   fun createBlankMatcher(type: MatcherType) {
+    _uiState.update {
+      val matchers = it.matchers.toMutableList()
+      if (type == MatcherType.NAME) {
+        matchers.add(NameMatcher("foo"))
+      }
+      it.copy(matchers = matchers, selectedMatcher = matchers.size - 1)
+    }
+  }
 
+  fun updateSelectedMatcher(index: Int) {
+    _uiState.update { it.copy(selectedMatcher = index) }
   }
 }

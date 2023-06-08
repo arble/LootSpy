@@ -53,8 +53,8 @@ fun LootScreen(
     ScreenContentWithEmptyText(
       loading = uiState.isLoading,
       items = uiState.items,
-      itemContent = {
-        LootItem(entry = it, onLootClick = onLootClick)
+      itemContent = { _, entry ->
+        LootItem(entry = entry, onLootClick = onLootClick)
       },
       emptyText = stringResource(id = R.string.loot_screen_empty),
       modifier = Modifier.padding(paddingValues)
