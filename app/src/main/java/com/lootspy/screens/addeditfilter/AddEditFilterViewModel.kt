@@ -23,6 +23,7 @@ data class AddEditFilterUiState(
   val name: String = "New Filter",
   val matchers: List<FilterMatcher> = mutableListOf(),
   val selectedMatcher: Int? = null,
+  val selectedMatcherFields: Map<String, String>? = null,
   val userMessage: Int? = null,
   val isLoading: Boolean = false,
   val isFilterSaved: Boolean = false,
@@ -102,17 +103,56 @@ class AddEditFilterViewModel @Inject constructor(
     }
   }
 
+  private fun buildMatcherFieldMap(matcher: FilterMatcher): Map<String, String> {
+    val result = HashMap<String, String>()
+    when (matcher) {
+      is NameMatcher -> {
+        result["name"] = matcher.name
+      }
+    }
+    return result
+  }
+
   fun createBlankMatcher(type: MatcherType) {
     _uiState.update {
       val matchers = it.matchers.toMutableList()
       if (type == MatcherType.NAME) {
         matchers.add(NameMatcher("foo"))
       }
-      it.copy(matchers = matchers, selectedMatcher = matchers.size - 1)
+      val index = matchers.size - 1
+      it.copy(
+        matchers = matchers,
+        selectedMatcher = index,
+        selectedMatcherFields = buildMatcherFieldMap(matchers[index])
+      )
     }
   }
 
   fun updateSelectedMatcher(index: Int) {
-    _uiState.update { it.copy(selectedMatcher = index) }
+    _uiState.update {
+      it.copy(
+        selectedMatcher = index,
+        selectedMatcherFields = buildMatcherFieldMap(it.matchers[index])
+      )
+    }
+  }
+
+  fun updateMatcherFields(fields: Map<String, String>) {
+    var matcher: FilterMatcher? = null
+    when (fields["MATCHER_TYPE"]) {
+      MatcherType.NAME.name -> {
+        matcher = NameMatcher(fields["name"]!!)
+      }
+    }
+    _uiState.update { state ->
+      val newMatchers = List(state.matchers.size) { index ->
+        if (index != state.selectedMatcher) {
+          return@List state.matchers[index]
+        } else {
+          return@List matcher!!
+        }
+      }
+      return@update state.copy(matchers = newMatchers, selectedMatcher = null)
+    }
   }
 }

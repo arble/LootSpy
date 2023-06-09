@@ -2,18 +2,14 @@ package com.lootspy.screens.addeditfilter
 
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.keyframes
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.with
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,21 +27,25 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.IntSize
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.lootspy.R
 import com.lootspy.filter.matchers.FilterMatcher
+import com.lootspy.filter.matchers.MatcherType
+import com.lootspy.filter.matchers.NameMatcher
 import com.lootspy.util.NewMatcherDialog
 import com.lootspy.util.ScreenContentWithEmptyText
 
@@ -89,7 +90,9 @@ fun AddEditFilterScreen(
           matcher = matcher,
           index = index,
           selected = uiState.selectedMatcher == index,
-          onMatcherClick = onMatcherClick
+          details = uiState.selectedMatcherFields,
+          onMatcherClick = onMatcherClick,
+          onSaveMatcher = { viewModel.updateMatcherFields(it) }
         )
       },
       emptyText = stringResource(id = R.string.add_edit_filter_screen_empty),
@@ -119,22 +122,23 @@ fun AddEditFilterTopAppBar(
   )
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun FilterMatcherItem(
   matcher: FilterMatcher,
   index: Int,
   selected: Boolean,
+  details: Map<String, String>?,
   onMatcherClick: (FilterMatcher, Int) -> Unit,
+  onSaveMatcher: (Map<String, String>) -> Unit,
 ) {
   val background =
     if (selected) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surfaceTint
+  LocalContext.current
   Card(
     shape = MaterialTheme.shapes.medium,
     colors = CardDefaults.cardColors(containerColor = background),
-    modifier = Modifier.clickable { onMatcherClick(matcher, index) }.animateContentSize(
-//      animationSpec = tween(durationMillis = 300, easing = LinearEasing)
-    )
+    modifier = Modifier
+      .clickable { onMatcherClick(matcher, index) }
   ) {
     Row(
       verticalAlignment = Alignment.CenterVertically,
@@ -155,25 +159,66 @@ private fun FilterMatcherItem(
         ),
       )
     }
-    if (selected) {
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-          .fillMaxWidth()
-          .padding(
-            horizontal = dimensionResource(id = R.dimen.horizontal_margin),
-            vertical = dimensionResource(id = R.dimen.loot_item_padding),
-          )
-      ) {
-        Text(
-          text = matcher.summaryString(),
-          style = MaterialTheme.typography.headlineSmall,
-          modifier = Modifier.padding(
-            start = dimensionResource(
-              id = R.dimen.horizontal_margin
-            )
-          ),
-        )
+    AnimatedVisibility(
+      visible = selected,
+      enter = fadeIn() + expandVertically(tween(500)),
+      exit = fadeOut() + shrinkVertically(tween(500)),
+    ) {
+      MatcherDetails(matcher = matcher, details = details, onSaveMatcher = onSaveMatcher)
+//      Row(
+//        verticalAlignment = Alignment.CenterVertically,
+//        modifier = Modifier
+//          .fillMaxWidth()
+//          .padding(
+//            horizontal = dimensionResource(id = R.dimen.horizontal_margin),
+//            vertical = dimensionResource(id = R.dimen.loot_item_padding),
+//          )
+//      ) {
+//        Text(
+//          text = matcher.summaryString(),
+//          style = MaterialTheme.typography.headlineSmall,
+//          modifier = Modifier.padding(
+//            start = dimensionResource(
+//              id = R.dimen.horizontal_margin
+//            )
+//          ),
+//        )
+//      }
+    }
+  }
+}
+
+@Composable
+fun MatcherDetails(
+  matcher: FilterMatcher,
+  details: Map<String, String>?,
+  onSaveMatcher: (Map<String, String>) -> Unit,
+) {
+  when (matcher) {
+    is NameMatcher -> NameMatcherDetails(
+      details = details,
+      onSaveMatcher = onSaveMatcher
+    )
+  }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun NameMatcherDetails(
+  details: Map<String, String>?,
+  onSaveMatcher: (Map<String, String>) -> Unit
+) {
+  if (details == null) {
+    return
+  }
+  val newDetails = remember { mutableStateMapOf<String, String>() }
+  newDetails["MATCHER_TYPE"] = MatcherType.NAME.name
+  var nameText by remember { mutableStateOf(details["name"]!!) }
+  Column(modifier = Modifier.fillMaxWidth()) {
+    Row {
+      TextField(value = nameText, onValueChange = { nameText = it }, label = { Text("Name") })
+      IconButton(onClick = { newDetails["name"] = nameText; onSaveMatcher(newDetails) }) {
+        Icon(imageVector = Icons.Default.Check, contentDescription = null)
       }
     }
   }
