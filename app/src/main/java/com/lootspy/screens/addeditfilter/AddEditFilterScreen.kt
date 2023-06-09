@@ -27,10 +27,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -47,6 +50,7 @@ import com.example.lootspy.R
 import com.lootspy.filter.matchers.FilterMatcher
 import com.lootspy.filter.matchers.MatcherType
 import com.lootspy.filter.matchers.NameMatcher
+import com.lootspy.util.AlertDialog
 import com.lootspy.util.NewMatcherDialog
 import com.lootspy.util.ScreenContentWithEmptyText
 
@@ -58,7 +62,10 @@ fun AddEditFilterScreen(
   viewModel: AddEditFilterViewModel = hiltViewModel()
 ) {
   val context = LocalContext.current
+  val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val showNewMatcherDialog = remember { mutableStateOf(false) }
+  var showAlreadyMatchedDialog by remember { mutableStateOf(false) }
+  val snackbarHostState = remember { SnackbarHostState() }
   BackHandler(onBack = onBack)
   Scaffold(
     topBar = {
@@ -66,6 +73,7 @@ fun AddEditFilterScreen(
         onBack = onBack,
         addFilterMatcher = {})
     },
+    snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
     modifier = modifier.fillMaxSize(),
     floatingActionButton = {
       FloatingActionButton(onClick = { showNewMatcherDialog.value = true }) {
@@ -73,14 +81,31 @@ fun AddEditFilterScreen(
       }
     }
   ) { paddingValues ->
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     val onMatcherClick: (FilterMatcher, Int) -> Unit = { _, index ->
       viewModel.updateSelectedMatcher(index)
     }
-    NewMatcherDialog(show = showNewMatcherDialog) {
-      showNewMatcherDialog.value = false
-      viewModel.createBlankMatcher(it)
-      Toast.makeText(context, "New matcher: ${it.name}", Toast.LENGTH_SHORT).show()
+    if (showNewMatcherDialog.value) {
+      NewMatcherDialog(
+        show = showNewMatcherDialog,
+        onSubmit = {
+          showNewMatcherDialog.value = false
+          viewModel.createBlankMatcher(it)
+          Toast.makeText(context, "New matcher: ${it.name}", Toast.LENGTH_SHORT).show()
+        })
+    }
+    if (showAlreadyMatchedDialog) {
+      AlertDialog(
+        titleText = "Already matched!",
+        messageText = "Other active matchers completely cover everything that this would match.",
+        ackText = "OK",
+        onDismiss = { showAlreadyMatchedDialog = false }
+      )
+    }
+    if (uiState.removedMatchers != null && uiState.removedMatchers!! > 0) {
+      LaunchedEffect(snackbarHostState) {
+        snackbarHostState.showSnackbar("${uiState.removedMatchers} redundant matchers removed")
+      }
     }
     ScreenContentWithEmptyText(
       loading = uiState.isLoading,
@@ -92,7 +117,9 @@ fun AddEditFilterScreen(
           selected = uiState.selectedMatcher == index,
           details = uiState.selectedMatcherFields,
           onMatcherClick = onMatcherClick,
-          onSaveMatcher = { viewModel.updateMatcherFields(it) },
+          onSaveMatcher = {
+            showAlreadyMatchedDialog = !viewModel.updateMatcherFields(it, uiState.matchers)
+          },
           onDeleteMatcher = { viewModel.deleteSelectedMatcher() },
         )
       },

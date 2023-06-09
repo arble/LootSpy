@@ -24,6 +24,7 @@ data class AddEditFilterUiState(
   val matchers: List<FilterMatcher> = mutableListOf(),
   val selectedMatcher: Int? = null,
   val selectedMatcherFields: Map<String, String>? = null,
+  val removedMatchers: Int? = null,
   val userMessage: Int? = null,
   val isLoading: Boolean = false,
   val isFilterSaved: Boolean = false,
@@ -137,23 +138,68 @@ class AddEditFilterViewModel @Inject constructor(
     }
   }
 
-  fun updateMatcherFields(fields: Map<String, String>) {
+  private fun checkAlreadyMatchedName(
+    newMatcher: NameMatcher,
+    matchers: List<NameMatcher>
+  ): Pair<Boolean, Set<NameMatcher>> {
+    val redundantMatchers = HashSet<NameMatcher>()
+    for (matcher in matchers) {
+      if (matcher.name.contains(newMatcher.name)) {
+        return Pair(true, redundantMatchers)
+      }
+      if (newMatcher.name.contains(matcher.name)) {
+        redundantMatchers.add(matcher)
+      }
+    }
+    return Pair(false, redundantMatchers)
+  }
+
+  private fun checkAlreadyMatched(
+    newMatcher: FilterMatcher,
+    matchers: List<FilterMatcher>
+  ): Pair<Boolean, Set<FilterMatcher>> {
+    when (newMatcher.type()) {
+      MatcherType.NAME -> {
+        return checkAlreadyMatchedName(
+          newMatcher as NameMatcher,
+          matchers.filter { it.type() == MatcherType.NAME }.map { it as NameMatcher })
+      }
+    }
+  }
+
+  fun updateMatcherFields(fields: Map<String, String>, matchers: List<FilterMatcher>): Boolean {
     var matcher: FilterMatcher? = null
     when (fields["MATCHER_TYPE"]) {
       MatcherType.NAME.name -> {
         matcher = NameMatcher(fields["name"]!!)
       }
     }
+    if (matcher == null) {
+      return true
+    }
+    val (alreadyMatched, redundantMatchers) = checkAlreadyMatched(matcher, matchers)
+    if (alreadyMatched) {
+      return false
+    }
     _uiState.update { state ->
-      val newMatchers = List(state.matchers.size) { index ->
+      val newMatchers = List(matchers.size) { index ->
         if (index != state.selectedMatcher) {
           return@List state.matchers[index]
         } else {
-          return@List matcher!!
+          return@List matcher
         }
       }
-      state.copy(matchers = newMatchers, selectedMatcher = null)
+      val (resultMatchers, removedMatchers) =
+        if (redundantMatchers.isEmpty()) Pair(newMatchers, null) else Pair(
+          newMatchers.subtract(redundantMatchers).toList(),
+          redundantMatchers.size)
+      state.copy(
+        matchers = resultMatchers,
+        removedMatchers = removedMatchers,
+        selectedMatcher = null,
+      )
     }
+    return true
   }
 
   fun deleteSelectedMatcher() {
