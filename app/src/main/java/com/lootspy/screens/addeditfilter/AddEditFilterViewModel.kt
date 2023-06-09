@@ -152,7 +152,16 @@ class AddEditFilterViewModel @Inject constructor(
           return@List matcher!!
         }
       }
-      return@update state.copy(matchers = newMatchers, selectedMatcher = null)
+      state.copy(matchers = newMatchers, selectedMatcher = null)
+    }
+  }
+
+  fun deleteSelectedMatcher() {
+    _uiState.update {
+      it.copy(
+        matchers = it.matchers.filterIndexed { index, _ -> index != it.selectedMatcher },
+        selectedMatcher = null,
+      )
     }
   }
 }

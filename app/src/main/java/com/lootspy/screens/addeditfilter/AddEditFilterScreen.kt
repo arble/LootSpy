@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -74,7 +75,6 @@ fun AddEditFilterScreen(
   ) { paddingValues ->
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val onMatcherClick: (FilterMatcher, Int) -> Unit = { _, index ->
-//      Toast.makeText(context, "Matcher is: ${matcher.summaryString()}", Toast.LENGTH_SHORT).show()
       viewModel.updateSelectedMatcher(index)
     }
     NewMatcherDialog(show = showNewMatcherDialog) {
@@ -92,7 +92,8 @@ fun AddEditFilterScreen(
           selected = uiState.selectedMatcher == index,
           details = uiState.selectedMatcherFields,
           onMatcherClick = onMatcherClick,
-          onSaveMatcher = { viewModel.updateMatcherFields(it) }
+          onSaveMatcher = { viewModel.updateMatcherFields(it) },
+          onDeleteMatcher = { viewModel.deleteSelectedMatcher() },
         )
       },
       emptyText = stringResource(id = R.string.add_edit_filter_screen_empty),
@@ -130,6 +131,7 @@ private fun FilterMatcherItem(
   details: Map<String, String>?,
   onMatcherClick: (FilterMatcher, Int) -> Unit,
   onSaveMatcher: (Map<String, String>) -> Unit,
+  onDeleteMatcher: () -> Unit,
 ) {
   val background =
     if (selected) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surfaceTint
@@ -164,26 +166,12 @@ private fun FilterMatcherItem(
       enter = fadeIn() + expandVertically(tween(500)),
       exit = fadeOut() + shrinkVertically(tween(500)),
     ) {
-      MatcherDetails(matcher = matcher, details = details, onSaveMatcher = onSaveMatcher)
-//      Row(
-//        verticalAlignment = Alignment.CenterVertically,
-//        modifier = Modifier
-//          .fillMaxWidth()
-//          .padding(
-//            horizontal = dimensionResource(id = R.dimen.horizontal_margin),
-//            vertical = dimensionResource(id = R.dimen.loot_item_padding),
-//          )
-//      ) {
-//        Text(
-//          text = matcher.summaryString(),
-//          style = MaterialTheme.typography.headlineSmall,
-//          modifier = Modifier.padding(
-//            start = dimensionResource(
-//              id = R.dimen.horizontal_margin
-//            )
-//          ),
-//        )
-//      }
+      MatcherDetails(
+        matcher = matcher,
+        details = details,
+        onSaveMatcher = onSaveMatcher,
+        onDeleteMatcher = onDeleteMatcher,
+      )
     }
   }
 }
@@ -193,11 +181,13 @@ fun MatcherDetails(
   matcher: FilterMatcher,
   details: Map<String, String>?,
   onSaveMatcher: (Map<String, String>) -> Unit,
+  onDeleteMatcher: () -> Unit,
 ) {
   when (matcher) {
     is NameMatcher -> NameMatcherDetails(
       details = details,
-      onSaveMatcher = onSaveMatcher
+      onSaveMatcher = onSaveMatcher,
+      onDeleteMatcher = onDeleteMatcher,
     )
   }
 }
@@ -206,7 +196,8 @@ fun MatcherDetails(
 @Composable
 fun NameMatcherDetails(
   details: Map<String, String>?,
-  onSaveMatcher: (Map<String, String>) -> Unit
+  onSaveMatcher: (Map<String, String>) -> Unit,
+  onDeleteMatcher: () -> Unit,
 ) {
   if (details == null) {
     return
@@ -218,7 +209,10 @@ fun NameMatcherDetails(
     Row {
       TextField(value = nameText, onValueChange = { nameText = it }, label = { Text("Name") })
       IconButton(onClick = { newDetails["name"] = nameText; onSaveMatcher(newDetails) }) {
-        Icon(imageVector = Icons.Default.Check, contentDescription = null)
+        Icon(Icons.Default.Check, contentDescription = null)
+      }
+      IconButton(onClick = onDeleteMatcher) {
+        Icon(Icons.Default.Delete, contentDescription = null)
       }
     }
   }
