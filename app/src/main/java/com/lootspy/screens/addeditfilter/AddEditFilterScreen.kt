@@ -44,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.lootspy.R
@@ -104,7 +105,12 @@ fun AddEditFilterScreen(
     }
     if (uiState.removedMatchers != null && uiState.removedMatchers!! > 0) {
       LaunchedEffect(snackbarHostState) {
-        snackbarHostState.showSnackbar("${uiState.removedMatchers} redundant matchers removed")
+        snackbarHostState.showSnackbar(
+          withDismissAction = true,
+          message = "${uiState.removedMatchers} redundant matcher" +
+              "${if (uiState.removedMatchers == 1) "" else "s"} removed"
+        )
+        viewModel.onRedundantMatcherSnackbarDismiss()
       }
     }
     ScreenContentWithEmptyText(
@@ -232,10 +238,35 @@ fun NameMatcherDetails(
   val newDetails = remember { mutableStateMapOf<String, String>() }
   newDetails["MATCHER_TYPE"] = MatcherType.NAME.name
   var nameText by remember { mutableStateOf(details["name"]!!) }
-  Column(modifier = Modifier.fillMaxWidth()) {
+  val emptyText = nameText.isEmpty()
+  val badCharacters = nameText.contains("[^a-zA-Z0-9 ]".toRegex())
+  val errorText = if (emptyText) {
+    "Cannot be empty"
+  } else if (badCharacters) {
+    "Can match only alphanumerics and spaces"
+  } else {
+    ""
+  }
+  Column(modifier = Modifier
+    .fillMaxWidth()) {
     Row {
-      TextField(value = nameText, onValueChange = { nameText = it }, label = { Text("Name") })
-      IconButton(onClick = { newDetails["name"] = nameText; onSaveMatcher(newDetails) }) {
+      TextField(
+        value = nameText,
+        onValueChange = { nameText = it },
+        label = { Text("Name") },
+        supportingText = {
+          Text(
+            text = errorText,
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.error,
+          )
+        },
+        modifier = Modifier.weight(1f)
+      )
+      IconButton(
+        onClick = { newDetails["name"] = nameText; onSaveMatcher(newDetails) },
+        enabled = !emptyText && !badCharacters,
+      ) {
         Icon(Icons.Default.Check, contentDescription = null)
       }
       IconButton(onClick = onDeleteMatcher) {

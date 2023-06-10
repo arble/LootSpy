@@ -11,5 +11,5 @@ class NameMatcher(var name: String) : FilterMatcher, Parcelable {
 
   override fun match(item: DestinyItem) = item.name == name
 
-  override fun summaryString() = "Name matcher: $name"
+  override fun summaryString() = "Name matcher: ${name.ifEmpty { "<blank>" }}"
 }

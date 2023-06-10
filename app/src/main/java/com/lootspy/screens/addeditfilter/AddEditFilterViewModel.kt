@@ -118,13 +118,13 @@ class AddEditFilterViewModel @Inject constructor(
     _uiState.update {
       val matchers = it.matchers.toMutableList()
       if (type == MatcherType.NAME) {
-        matchers.add(NameMatcher("foo"))
+        matchers.add(NameMatcher(""))
       }
       val index = matchers.size - 1
       it.copy(
         matchers = matchers,
         selectedMatcher = index,
-        selectedMatcherFields = buildMatcherFieldMap(matchers[index])
+        selectedMatcherFields = buildMatcherFieldMap(matchers[index]),
       )
     }
   }
@@ -133,7 +133,7 @@ class AddEditFilterViewModel @Inject constructor(
     _uiState.update {
       it.copy(
         selectedMatcher = index,
-        selectedMatcherFields = buildMatcherFieldMap(it.matchers[index])
+        selectedMatcherFields = buildMatcherFieldMap(it.matchers[index]),
       )
     }
   }
@@ -162,13 +162,15 @@ class AddEditFilterViewModel @Inject constructor(
       MatcherType.NAME -> {
         return checkAlreadyMatchedName(
           newMatcher as NameMatcher,
-          matchers.filter { it.type() == MatcherType.NAME }.map { it as NameMatcher })
+          matchers.filter { it !== newMatcher }.filterIsInstance(NameMatcher::class.java)
+        )
       }
     }
   }
 
   fun updateMatcherFields(fields: Map<String, String>, matchers: List<FilterMatcher>): Boolean {
     var matcher: FilterMatcher? = null
+
     when (fields["MATCHER_TYPE"]) {
       MatcherType.NAME.name -> {
         matcher = NameMatcher(fields["name"]!!)
@@ -177,22 +179,24 @@ class AddEditFilterViewModel @Inject constructor(
     if (matcher == null) {
       return true
     }
-    val (alreadyMatched, redundantMatchers) = checkAlreadyMatched(matcher, matchers)
+    val newMatchers = List(matchers.size) { index ->
+      // replace the appropriate Matcher with our new one
+      if (index != uiState.value.selectedMatcher) {
+        return@List uiState.value.matchers[index]
+      } else {
+        return@List matcher
+      }
+    }
+    val (alreadyMatched, redundantMatchers) = checkAlreadyMatched(matcher, newMatchers)
     if (alreadyMatched) {
       return false
     }
+    val (resultMatchers, removedMatchers) =
+      if (redundantMatchers.isEmpty()) Pair(newMatchers, null) else Pair(
+        newMatchers.subtract(redundantMatchers).toList(),
+        redundantMatchers.size
+      )
     _uiState.update { state ->
-      val newMatchers = List(matchers.size) { index ->
-        if (index != state.selectedMatcher) {
-          return@List state.matchers[index]
-        } else {
-          return@List matcher
-        }
-      }
-      val (resultMatchers, removedMatchers) =
-        if (redundantMatchers.isEmpty()) Pair(newMatchers, null) else Pair(
-          newMatchers.subtract(redundantMatchers).toList(),
-          redundantMatchers.size)
       state.copy(
         matchers = resultMatchers,
         removedMatchers = removedMatchers,
@@ -209,5 +213,9 @@ class AddEditFilterViewModel @Inject constructor(
         selectedMatcher = null,
       )
     }
+  }
+
+  fun onRedundantMatcherSnackbarDismiss() {
+    _uiState.update { it.copy(removedMatchers = null) }
   }
 }
