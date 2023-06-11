@@ -21,6 +21,7 @@ import javax.inject.Inject
 data class AddEditFilterUiState(
   val id: String = "",
   val name: String = "New Filter",
+  val filter: Filter? = null,
   val matchers: List<FilterMatcher> = mutableListOf(),
   val selectedMatcher: Int? = null,
   val selectedMatcherFields: Map<String, String>? = null,
@@ -67,7 +68,7 @@ class AddEditFilterViewModel @Inject constructor(
   }
 
   private fun createNewFilter() = viewModelScope.launch {
-    filterRepository.saveFilter(uiState.value.id, uiState.value.name, uiState.value.matchers)
+//    filterRepository.saveFilter(uiState.value.id, uiState.value.name, uiState.value.matchers)
     _uiState.update { it.copy() }
   }
 
@@ -92,6 +93,7 @@ class AddEditFilterViewModel @Inject constructor(
           _uiState.update {
             it.copy(
               name = filter.name,
+              filter = filter,
               matchers = filter.matchers
             )
           }
@@ -217,5 +219,12 @@ class AddEditFilterViewModel @Inject constructor(
 
   fun onRedundantMatcherSnackbarDismiss() {
     _uiState.update { it.copy(removedMatchers = null) }
+  }
+
+  fun checkModifiedFilter(): Boolean {
+    if (filterId == null) {
+      return true
+    }
+    return uiState.value.filter?.matchers == uiState.value.matchers
   }
 }

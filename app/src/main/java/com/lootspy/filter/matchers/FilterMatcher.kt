@@ -3,7 +3,11 @@ package com.lootspy.filter.matchers
 import com.lootspy.data.DestinyItem
 
 enum class MatcherType {
-  NAME,
+  NAME {
+    override fun printableName() = "Name"
+  };
+
+  abstract fun printableName(): String
 }
 
 interface FilterMatcher {

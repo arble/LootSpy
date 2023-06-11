@@ -4,7 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -62,7 +64,7 @@ fun NewMatcherDialog(
             modifier = Modifier.menuAnchor(),
             readOnly = true,
             label = { Text("Type") },
-            value = selectedType.name,
+            value = selectedType.printableName(),
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             colors = ExposedDropdownMenuDefaults.textFieldColors(),
             onValueChange = {}
@@ -109,7 +111,9 @@ fun AlertDialog(
   messageText: String,
   ackText: String,
   modifier: Modifier = Modifier,
+  confirmText: String? = null,
   onDismiss: () -> Unit,
+  onConfirm: () -> Unit = {},
 ) {
   Dialog(onDismissRequest = onDismiss) {
     Card(
@@ -135,12 +139,26 @@ fun AlertDialog(
             .fillMaxWidth(),
           style = MaterialTheme.typography.bodyMedium
         )
-        TextButton(onClick = onDismiss) {
-          Text(
-            text = ackText,
-            fontWeight = FontWeight.ExtraBold,
-            modifier = Modifier.padding(top = 5.dp, bottom = 5.dp)
-          )
+        Spacer(modifier = Modifier.height(12.dp))
+        Row(modifier = Modifier.fillMaxWidth()) {
+          TextButton(onClick = onDismiss) {
+            Text(
+              text = ackText,
+              textAlign = TextAlign.Center,
+              fontWeight = FontWeight.ExtraBold,
+              modifier = Modifier.padding(top = 5.dp, bottom = 5.dp)
+            )
+          }
+          if (confirmText != null) {
+            TextButton(onClick = onConfirm) {
+              Text(
+                text = confirmText,
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.ExtraBold,
+                modifier = Modifier.padding(top = 5.dp, bottom = 5.dp)
+              )
+            }
+          }
         }
       }
     }

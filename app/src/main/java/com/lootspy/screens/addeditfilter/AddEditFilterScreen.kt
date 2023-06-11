@@ -1,6 +1,5 @@
 package com.lootspy.screens.addeditfilter
 
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -44,7 +43,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.lootspy.R
@@ -62,17 +60,18 @@ fun AddEditFilterScreen(
   modifier: Modifier = Modifier,
   viewModel: AddEditFilterViewModel = hiltViewModel()
 ) {
-  val context = LocalContext.current
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val showNewMatcherDialog = remember { mutableStateOf(false) }
   var showAlreadyMatchedDialog by remember { mutableStateOf(false) }
   val snackbarHostState = remember { SnackbarHostState() }
-  BackHandler(onBack = onBack)
+  val innerOnBack = { onBack() }
+  BackHandler(onBack = innerOnBack)
   Scaffold(
     topBar = {
       AddEditFilterTopAppBar(
-        onBack = onBack,
-        addFilterMatcher = {})
+        onBack = innerOnBack,
+        addFilterMatcher = { showNewMatcherDialog.value = true },
+      )
     },
     snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
     modifier = modifier.fillMaxSize(),
@@ -92,8 +91,8 @@ fun AddEditFilterScreen(
         onSubmit = {
           showNewMatcherDialog.value = false
           viewModel.createBlankMatcher(it)
-          Toast.makeText(context, "New matcher: ${it.name}", Toast.LENGTH_SHORT).show()
-        })
+        },
+      )
     }
     if (showAlreadyMatchedDialog) {
       AlertDialog(
@@ -247,8 +246,10 @@ fun NameMatcherDetails(
   } else {
     ""
   }
-  Column(modifier = Modifier
-    .fillMaxWidth()) {
+  Column(
+    modifier = Modifier
+      .fillMaxWidth()
+  ) {
     Row {
       TextField(
         value = nameText,
