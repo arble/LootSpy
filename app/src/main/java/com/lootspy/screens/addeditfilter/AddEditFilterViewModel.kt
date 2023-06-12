@@ -64,6 +64,10 @@ class AddEditFilterViewModel @Inject constructor(
     }
   }
 
+  fun changeFilterName(name: String) {
+    _uiState.update { it.copy(name = name) }
+  }
+
   private fun loadFilter(filterId: String) {
     _uiState.update { it.copy(isLoading = true) }
 

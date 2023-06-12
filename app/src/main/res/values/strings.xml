@@ -19,4 +19,18 @@
     <string name="nav_bar_vendors">Vendors</string>
     <string name="vendor_title">Vendors</string>
     <string name="vendor_screen_no_vendors">No vendors available. This is a bug - please report it!</string>
+    <string name="validator_empty">Text cannot be empty</string>
+    <string name="validator_alphanum">Letters and numbers only</string>
+    <string name="validator_alphanum_space">Letters, numbers and spaces only</string>
+    <string name="validator_length_32">Must be at most 32 characters</string>
+    <string name="add_edit_filter_new_filter">New filter</string>
+    <string name="add_edit_filter_edit_name">Edit filter name</string>
+    <string name="add_edit_filter_edit_name_title">Change filter name</string>
+    <string name="add_edit_filter_edit_name_label">New filter name</string>
+    <string name="add_edit_filter_new_filter_name_title">Enter a name for this filter</string>
+    <string name="add_edit_filter_unsaved_changes">Unsaved changes</string>
+    <string name="add_edit_filter_unsaved_changes_message">You\'ve modified this filter since you last saved. Discard changes?</string>
+    <string name="add_edit_filter_already_matched_title">Already matched!</string>
+    <string name="add_edit_filter_already_matched_message">Other active matchers completely cover everything that this would match.</string>
+    <string name="add_edit_filter_removed_matchers">%1$d redundant matcher%2$s removed</string>
 </resources>

@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -76,24 +78,29 @@ private fun FilterItem(
   filter: Filter,
   onClickFilter: (Filter) -> Unit,
 ) {
-  Row(
-    verticalAlignment = Alignment.CenterVertically,
-    modifier = Modifier
-      .fillMaxWidth()
-      .padding(
-        horizontal = dimensionResource(id = R.dimen.horizontal_margin),
-        vertical = dimensionResource(id = R.dimen.loot_item_padding),
-      )
-      .clickable { onClickFilter(filter) }
+  Card(
+    shape = MaterialTheme.shapes.medium,
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
   ) {
-    Text(
-      text = filter.name,
-      style = MaterialTheme.typography.headlineSmall,
-      modifier = Modifier.padding(
-        start = dimensionResource(
-          id = R.dimen.horizontal_margin
+    Row(
+      verticalAlignment = Alignment.CenterVertically,
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(
+          horizontal = dimensionResource(id = R.dimen.horizontal_margin),
+          vertical = dimensionResource(id = R.dimen.loot_item_padding),
         )
-      ),
-    )
+        .clickable { onClickFilter(filter) }
+    ) {
+      Text(
+        text = filter.name,
+        style = MaterialTheme.typography.headlineSmall,
+        modifier = Modifier.padding(
+          start = dimensionResource(
+            id = R.dimen.horizontal_margin
+          )
+        ),
+      )
+    }
   }
 }

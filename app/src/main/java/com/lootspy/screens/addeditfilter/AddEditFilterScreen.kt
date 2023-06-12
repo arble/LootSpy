@@ -13,11 +13,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -43,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.lootspy.R
@@ -52,7 +56,9 @@ import com.lootspy.filter.matchers.NameMatcher
 import com.lootspy.util.AlertDialog
 import com.lootspy.util.NewMatcherDialog
 import com.lootspy.util.ScreenContentWithEmptyText
+import com.lootspy.util.SupportingErrorText
 import com.lootspy.util.TextInputDialog
+import com.lootspy.util.Validation
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,11 +68,13 @@ fun AddEditFilterScreen(
   viewModel: AddEditFilterViewModel = hiltViewModel()
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-  val showNewMatcherDialog = remember { mutableStateOf(false) }
-  var showAlreadyMatchedDialog by remember { mutableStateOf(false) }
   val snackbarHostState = remember { SnackbarHostState() }
+  var showNewMatcherDialog by remember { mutableStateOf(false) }
   var showUnsavedChangesAlert by remember { mutableStateOf(false) }
   var showEnterNicknameDialog by remember { mutableStateOf(false) }
+  var showAlreadyMatchedDialog by remember { mutableStateOf(false) }
+  var showEditFilterNameDialog by remember { mutableStateOf(false) }
+  val context = LocalContext.current
   val innerOnBack = {
     if (viewModel.checkModifiedFilter()) {
       showUnsavedChangesAlert = true
@@ -78,9 +86,10 @@ fun AddEditFilterScreen(
   Scaffold(
     topBar = {
       AddEditFilterTopAppBar(
-        filterName = uiState.name.ifEmpty { "New Filter" },
+        filterName = uiState.name.ifEmpty { stringResource(id = R.string.add_edit_filter_new_filter) },
         onBack = innerOnBack,
-        addFilterMatcher = { showNewMatcherDialog.value = true },
+        addFilterMatcher = { showNewMatcherDialog = true },
+        editFilterName = { showEditFilterNameDialog = true },
       )
     },
     snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -104,33 +113,45 @@ fun AddEditFilterScreen(
     val onMatcherClick: (FilterMatcher, Int) -> Unit = { _, index ->
       viewModel.updateSelectedMatcher(index)
     }
-    if (showNewMatcherDialog.value) {
+    if (showNewMatcherDialog) {
       NewMatcherDialog(
-        show = showNewMatcherDialog,
+        onDismiss = { showNewMatcherDialog = false },
         onSubmit = {
-          showNewMatcherDialog.value = false
+          showNewMatcherDialog = false
           viewModel.createBlankMatcher(it)
         },
       )
     }
     if (showEnterNicknameDialog) {
       TextInputDialog(
-        titleText = "Enter a name for this filter",
+        titleText = stringResource(id = R.string.add_edit_filter_new_filter_name_title),
         messageText = "",
-        labelText = "Filter name",
-        validators = listOf(
-          Pair({ it.isNotEmpty() }, "Name is empty")
-        ),
+        labelText = stringResource(R.string.add_edit_filter_edit_name_label),
+        initialFieldText = "",
+        validators = listOf(Validation.VALIDATOR_EMPTY),
         submitText = stringResource(id = R.string.dialog_submit),
         onSubmit = { viewModel.createNewFilter(it); showEnterNicknameDialog = false; onBack() },
         cancelText = stringResource(id = R.string.dialog_cancel),
         onCancel = { showEnterNicknameDialog = false }
       )
     }
+    if (showEditFilterNameDialog) {
+      TextInputDialog(
+        titleText = stringResource(R.string.add_edit_filter_edit_name_title),
+        messageText = "",
+        labelText = stringResource(R.string.add_edit_filter_edit_name_label),
+        initialFieldText = uiState.name,
+        validators = listOf(Validation.VALIDATOR_EMPTY),
+        submitText = stringResource(R.string.dialog_submit),
+        onSubmit = { viewModel.changeFilterName(it); showEditFilterNameDialog = false },
+        cancelText = stringResource(R.string.dialog_cancel),
+        onCancel = { showEditFilterNameDialog = false }
+      )
+    }
     if (showUnsavedChangesAlert) {
       AlertDialog(
-        titleText = "Unsaved changes",
-        messageText = "You've modified this filter since you last saved. Discard changes?",
+        titleText = stringResource(id = R.string.add_edit_filter_unsaved_changes),
+        messageText = stringResource(id = R.string.add_edit_filter_unsaved_changes_message),
         ackText = stringResource(id = R.string.dialog_cancel),
         confirmText = stringResource(id = R.string.dialog_discard),
         onDismiss = { showUnsavedChangesAlert = false },
@@ -139,8 +160,8 @@ fun AddEditFilterScreen(
     }
     if (showAlreadyMatchedDialog) {
       AlertDialog(
-        titleText = "Already matched!",
-        messageText = "Other active matchers completely cover everything that this would match.",
+        titleText = stringResource(id = R.string.add_edit_filter_already_matched_title),
+        messageText = stringResource(id = R.string.add_edit_filter_already_matched_message),
         ackText = stringResource(id = R.string.dialog_ok),
         onDismiss = { showAlreadyMatchedDialog = false }
       )
@@ -149,8 +170,13 @@ fun AddEditFilterScreen(
       LaunchedEffect(snackbarHostState) {
         snackbarHostState.showSnackbar(
           withDismissAction = true,
-          message = "${uiState.removedMatchers} redundant matcher" +
-              "${if (uiState.removedMatchers == 1) "" else "s"} removed"
+          message = context.resources.getString(
+            R.string.add_edit_filter_removed_matchers,
+            uiState.removedMatchers,
+            if (uiState.removedMatchers == 1) "" else "s",
+          )
+//          message = "${uiState.removedMatchers} redundant matcher" +
+//              "${if (uiState.removedMatchers == 1) "" else "s"} removed"
         )
         viewModel.onRedundantMatcherSnackbarDismiss()
       }
@@ -183,6 +209,7 @@ fun AddEditFilterTopAppBar(
   filterName: String,
   onBack: () -> Unit,
   addFilterMatcher: () -> Unit,
+  editFilterName: () -> Unit,
 ) {
   TopAppBar(
     title = { Text(text = filterName) },
@@ -192,6 +219,9 @@ fun AddEditFilterTopAppBar(
       }
     },
     actions = {
+      IconButton(onClick = editFilterName) {
+        Icon(Icons.Default.Edit, stringResource(id = R.string.add_edit_filter_edit_name))
+      }
       IconButton(onClick = addFilterMatcher) {
         Icon(Icons.Default.Add, stringResource(id = R.string.add_edit_filter_add_matcher))
       }
@@ -210,7 +240,7 @@ private fun FilterMatcherItem(
   onDeleteMatcher: () -> Unit,
 ) {
   val background =
-    if (selected) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surfaceTint
+    if (selected) MaterialTheme.colorScheme.surfaceTint else MaterialTheme.colorScheme.surfaceVariant
   LocalContext.current
   Card(
     shape = MaterialTheme.shapes.medium,
@@ -281,15 +311,7 @@ fun NameMatcherDetails(
   val newDetails = remember { mutableStateMapOf<String, String>() }
   newDetails["MATCHER_TYPE"] = MatcherType.NAME.name
   var nameText by remember { mutableStateOf(details["name"]!!) }
-  val emptyText = nameText.isEmpty()
-  val badCharacters = nameText.contains("[^a-zA-Z0-9 ]".toRegex())
-  val errorText = if (emptyText) {
-    "Cannot be empty"
-  } else if (badCharacters) {
-    "Can match only alphanumerics and spaces"
-  } else {
-    ""
-  }
+  val inputError = Validation.validate(nameText, Validation.VALIDATORS_NORMAL_TEXT)
   Column(
     modifier = Modifier
       .fillMaxWidth()
@@ -299,18 +321,21 @@ fun NameMatcherDetails(
         value = nameText,
         onValueChange = { nameText = it },
         label = { Text("Name") },
-        supportingText = {
-          Text(
-            text = errorText,
-            modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.error,
-          )
-        },
+        supportingText = { SupportingErrorText(inputError = inputError) },
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(
+          onDone = {
+            if (inputError == null) {
+              newDetails["name"] = nameText
+              onSaveMatcher(newDetails)
+            }
+          }
+        ),
         modifier = Modifier.weight(1f)
       )
       IconButton(
         onClick = { newDetails["name"] = nameText; onSaveMatcher(newDetails) },
-        enabled = !emptyText && !badCharacters,
+        enabled = inputError == null,
       ) {
         Icon(Icons.Default.Check, contentDescription = null)
       }
