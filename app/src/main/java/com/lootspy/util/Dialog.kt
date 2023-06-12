@@ -163,5 +163,89 @@ fun AlertDialog(
       }
     }
   }
+}
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TextInputDialog(
+  titleText: String,
+  messageText: String,
+  labelText: String,
+  modifier: Modifier = Modifier,
+  validators: List<Pair<(String) -> Boolean, String>>,
+  submitText: String,
+  onSubmit: (String) -> Unit,
+  cancelText: String,
+  onCancel: () -> Unit,
+) {
+  var nameText by remember { mutableStateOf("") }
+  var errorText = ""
+  for ((validator, errorMessage) in validators) {
+    if (!validator(nameText)) {
+      errorText = errorMessage
+      break
+    }
+  }
+  Dialog(onDismissRequest = onCancel) {
+    Card(
+      shape = RoundedCornerShape(10.dp),
+      modifier = Modifier.padding(10.dp, 5.dp, 10.dp, 10.dp)
+    ) {
+      Column(modifier.background(Color.White)) {
+        Text(
+          text = titleText,
+          textAlign = TextAlign.Center,
+          modifier = Modifier
+            .padding(top = 5.dp)
+            .fillMaxWidth(),
+          style = MaterialTheme.typography.labelLarge,
+          maxLines = 2,
+          overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+          text = messageText,
+          textAlign = TextAlign.Center,
+          modifier = Modifier
+            .padding(top = 10.dp, start = 25.dp, end = 25.dp)
+            .fillMaxWidth(),
+          style = MaterialTheme.typography.bodyMedium
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        TextField(
+          value = nameText,
+          onValueChange = { nameText = it },
+          label = { Text(labelText) },
+          supportingText = {
+            Text(
+              text = errorText,
+              modifier = Modifier.weight(1f),
+              color = MaterialTheme.colorScheme.error,
+            )
+          }
+        )
+        Row(modifier = Modifier.fillMaxWidth()) {
+          TextButton(onClick = onCancel, modifier = Modifier.weight(0.5f)) {
+            Text(
+              text = cancelText,
+              textAlign = TextAlign.Center,
+              fontWeight = FontWeight.ExtraBold,
+              modifier = Modifier.padding(top = 5.dp, bottom = 5.dp)
+            )
+          }
+          TextButton(
+            enabled = nameText.isNotEmpty(),
+            onClick = { onSubmit(nameText) },
+            modifier = Modifier.weight(0.5f)
+          ) {
+            Text(
+              text = submitText,
+              textAlign = TextAlign.Center,
+              fontWeight = FontWeight.ExtraBold,
+              modifier = Modifier.padding(top = 5.dp, bottom = 5.dp)
+            )
+          }
+        }
+      }
+    }
+  }
 }

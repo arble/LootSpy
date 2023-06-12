@@ -1,6 +1,7 @@
 package com.lootspy.filter.matchers
 
 import com.lootspy.data.DestinyItem
+import kotlinx.serialization.Serializable
 
 enum class MatcherType {
   NAME {
@@ -10,7 +11,9 @@ enum class MatcherType {
   abstract fun printableName(): String
 }
 
-interface FilterMatcher {
+//@Serializable(with = MatcherSerializer::class)
+@Serializable
+sealed interface FilterMatcher {
 
   fun type(): MatcherType
 

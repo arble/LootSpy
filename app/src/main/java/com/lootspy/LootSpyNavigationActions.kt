@@ -69,5 +69,8 @@ class LootSpyNavigationActions(private val navController: NavHostController) {
   }
 
   fun navigateToAddEditFilter(filterId: String?) =
-    navController.navigate("$ADD_EDIT_FILTER_SCREEN/${filterId ?: ""}")
+    navController.navigate(
+      "$ADD_EDIT_FILTER_SCREEN/" +
+          if (filterId != null) "?$FILTER_ID_ARG=$filterId" else ""
+    )
 }

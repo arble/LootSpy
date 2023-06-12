@@ -55,15 +55,18 @@ fun FilterScreen(
     },
   ) { paddingValues ->
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val onFilterClick: (Filter) -> Unit = {
-      Toast.makeText(context, "Filter is: $it", Toast.LENGTH_SHORT).show()
+    if (uiState.userMessage != null) {
+      Toast.makeText(context, stringResource(id = uiState.userMessage!!), Toast.LENGTH_SHORT).show()
     }
+//    val onFilterClick: (Filter) -> Unit = {
+//      Toast.makeText(context, "Filter is: $it", Toast.LENGTH_SHORT).show()
+//    }
 
     ScreenContentWithEmptyText(
       loading = uiState.isLoading,
       items = uiState.items,
       itemContent = { _, filter ->
-        FilterItem(filter = filter, onFilterClick = onFilterClick)
+        FilterItem(filter = filter, onClickFilter = onClickFilter)
       },
       emptyText = stringResource(id = R.string.filter_screen_empty),
       modifier = Modifier.padding(paddingValues)
@@ -74,7 +77,7 @@ fun FilterScreen(
 @Composable
 private fun FilterItem(
   filter: Filter,
-  onFilterClick: (Filter) -> Unit,
+  onClickFilter: (Filter) -> Unit,
 ) {
   Row(
     verticalAlignment = Alignment.CenterVertically,
@@ -84,10 +87,10 @@ private fun FilterItem(
         horizontal = dimensionResource(id = R.dimen.horizontal_margin),
         vertical = dimensionResource(id = R.dimen.loot_item_padding),
       )
-      .clickable { onFilterClick(filter) }
+      .clickable { onClickFilter(filter) }
   ) {
     Text(
-      text = filter.name ?: filter.id,
+      text = filter.name,
       style = MaterialTheme.typography.headlineSmall,
       modifier = Modifier.padding(
         start = dimensionResource(

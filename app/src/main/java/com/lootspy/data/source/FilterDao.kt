@@ -14,10 +14,10 @@ interface FilterDao {
   fun observeById(filterId: String): Flow<LocalFilter>
 
   @Query("SELECT * FROM filters")
-  fun getAll(): List<LocalFilter>
+  suspend fun getAll(): List<LocalFilter>
 
   @Query("SELECT * FROM filters WHERE id = :filterId")
-  fun getById(filterId: String): LocalFilter?
+  suspend fun getById(filterId: String): LocalFilter?
 
   @Upsert
   suspend fun upsert(lootEntry: LocalFilter)

@@ -12,7 +12,6 @@ import com.lootspy.filter.matchers.MatcherType
 import com.lootspy.filter.matchers.NameMatcher
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -40,7 +39,7 @@ class AddEditFilterViewModel @Inject constructor(
   private val filterId: String? = savedStateHandle[LootSpyDestinationArgs.FILTER_ID_ARG]
 
   private val _uiState = MutableStateFlow(AddEditFilterUiState())
-  val uiState: StateFlow<AddEditFilterUiState> = _uiState.asStateFlow()
+  val uiState = _uiState.asStateFlow()
 
   init {
     if (filterId != null) {
@@ -48,31 +47,12 @@ class AddEditFilterViewModel @Inject constructor(
     }
   }
 
-  fun saveFilter() {
-    if (uiState.value.name.isEmpty()) {
-      _uiState.update {
-        it.copy(userMessage = R.string.empty_filter_name_message)
-      }
-    }
-    if (uiState.value.matchers.isEmpty()) {
-      _uiState.update {
-        it.copy(userMessage = R.string.empty_filter_matchers_message)
-      }
-    }
-
-    if (filterId == null) {
-      createNewFilter()
-    } else {
-      updateFilter()
-    }
-  }
-
-  private fun createNewFilter() = viewModelScope.launch {
-//    filterRepository.saveFilter(uiState.value.id, uiState.value.name, uiState.value.matchers)
+  fun createNewFilter(name: String) = viewModelScope.launch {
+    filterRepository.saveNewFilter(name, uiState.value.matchers)
     _uiState.update { it.copy() }
   }
 
-  private fun updateFilter() {
+  fun updateFilter() {
     if (filterId == null) {
       throw RuntimeException("updateFilter on null filterId")
     }
@@ -94,12 +74,13 @@ class AddEditFilterViewModel @Inject constructor(
             it.copy(
               name = filter.name,
               filter = filter,
-              matchers = filter.matchers
+              matchers = filter.matchers,
+              isLoading = false
             )
           }
         } else {
           _uiState.update {
-            it.copy(isLoading = false)
+            it.copy(isLoading = false, userMessage = R.string.loading_filters_error)
           }
         }
       }
@@ -222,9 +203,10 @@ class AddEditFilterViewModel @Inject constructor(
   }
 
   fun checkModifiedFilter(): Boolean {
-    if (filterId == null) {
+    if (filterId == null && uiState.value.matchers.isNotEmpty()) {
       return true
     }
-    return uiState.value.filter?.matchers == uiState.value.matchers
+    return uiState.value.matchers.isNotEmpty() &&
+        uiState.value.filter?.matchers != uiState.value.matchers
   }
 }

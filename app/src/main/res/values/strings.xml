@@ -1,23 +1,17 @@
 <resources>
     <string name="app_name">LootSpy</string>
-    <string name="title_activity_dummy">DummyActivity</string>
-    <string name="tasks_header_image_content_description">LootSpy</string>
-    <string name="navigation_view_header_title">Navigation</string>
-    <string name="loot_title">Loot For You</string>
-    <string name="filters_title">Filters</string>
-    <string name="vendors_title">Vendors</string>
-    <string name="open_drawer">Open Menu</string>
     <string name="loading_tasks_error">Error loading loot</string>
     <string name="label_all_filter">Show all loot</string>
     <string name="label_vendor_filter">Show vendor loot</string>
     <string name="loading_filters_error">Error loading filters</string>
-    <string name="empty_filter_name_message">Name cannot be empty</string>
-    <string name="empty_filter_matchers_message">Filters must have at least one matcher</string>
-    <string name="add_filter_matcher_title">Edit Filter</string>
     <string name="filter_title">Filters</string>
-    <string name="add_edit_filter_screen_empty">No matchers. Tap below to start adding some!</string>
+    <string name="add_edit_filter_screen_empty">No matchers. Tap above to start adding some!</string>
     <string name="filter_screen_empty">No filters. Tap below to start adding some!</string>
     <string name="loot_screen_empty">No loot right now. Check back later or modify your filters!</string>
     <string name="add_edit_filter_add_matcher">Add Matcher</string>
     <string name="back">Back</string>
+    <string name="dialog_submit">Submit</string>
+    <string name="dialog_cancel">Cancel</string>
+    <string name="dialog_ok">OK</string>
+    <string name="dialog_discard">Discard</string>
 </resources>

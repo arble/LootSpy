@@ -39,7 +39,8 @@ object DatabaseModule {
       context.applicationContext,
       LootSpyDatabase::class.java,
       "matched_loot.db"
-    ).build()
+    ).fallbackToDestructiveMigration()
+      .build()
   }
 
   @Provides

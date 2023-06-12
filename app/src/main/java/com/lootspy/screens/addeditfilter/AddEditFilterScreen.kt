@@ -52,6 +52,7 @@ import com.lootspy.filter.matchers.NameMatcher
 import com.lootspy.util.AlertDialog
 import com.lootspy.util.NewMatcherDialog
 import com.lootspy.util.ScreenContentWithEmptyText
+import com.lootspy.util.TextInputDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,11 +65,20 @@ fun AddEditFilterScreen(
   val showNewMatcherDialog = remember { mutableStateOf(false) }
   var showAlreadyMatchedDialog by remember { mutableStateOf(false) }
   val snackbarHostState = remember { SnackbarHostState() }
-  val innerOnBack = { onBack() }
+  var showUnsavedChangesAlert by remember { mutableStateOf(false) }
+  var showEnterNicknameDialog by remember { mutableStateOf(false) }
+  val innerOnBack = {
+    if (viewModel.checkModifiedFilter()) {
+      showUnsavedChangesAlert = true
+    } else {
+      onBack()
+    }
+  }
   BackHandler(onBack = innerOnBack)
   Scaffold(
     topBar = {
       AddEditFilterTopAppBar(
+        filterName = uiState.name.ifEmpty { "New Filter" },
         onBack = innerOnBack,
         addFilterMatcher = { showNewMatcherDialog.value = true },
       )
@@ -76,8 +86,17 @@ fun AddEditFilterScreen(
     snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
     modifier = modifier.fillMaxSize(),
     floatingActionButton = {
-      FloatingActionButton(onClick = { showNewMatcherDialog.value = true }) {
-        Icon(imageVector = Icons.Filled.Add, contentDescription = null)
+      if (uiState.matchers.isNotEmpty() && uiState.selectedMatcher == null) {
+        FloatingActionButton(onClick = {
+          if (uiState.name.isEmpty()) {
+            showEnterNicknameDialog = true
+          } else {
+            viewModel.updateFilter()
+            onBack()
+          }
+        }) {
+          Icon(imageVector = Icons.Filled.Check, contentDescription = null)
+        }
       }
     }
   ) { paddingValues ->
@@ -94,11 +113,35 @@ fun AddEditFilterScreen(
         },
       )
     }
+    if (showEnterNicknameDialog) {
+      TextInputDialog(
+        titleText = "Enter a name for this filter",
+        messageText = "",
+        labelText = "Filter name",
+        validators = listOf(
+          Pair({ it.isNotEmpty() }, "Name is empty")
+        ),
+        submitText = stringResource(id = R.string.dialog_submit),
+        onSubmit = { viewModel.createNewFilter(it); showEnterNicknameDialog = false; onBack() },
+        cancelText = stringResource(id = R.string.dialog_cancel),
+        onCancel = { showEnterNicknameDialog = false }
+      )
+    }
+    if (showUnsavedChangesAlert) {
+      AlertDialog(
+        titleText = "Unsaved changes",
+        messageText = "You've modified this filter since you last saved. Discard changes?",
+        ackText = stringResource(id = R.string.dialog_cancel),
+        confirmText = stringResource(id = R.string.dialog_discard),
+        onDismiss = { showUnsavedChangesAlert = false },
+        onConfirm = { showUnsavedChangesAlert = false; onBack() }
+      )
+    }
     if (showAlreadyMatchedDialog) {
       AlertDialog(
         titleText = "Already matched!",
         messageText = "Other active matchers completely cover everything that this would match.",
-        ackText = "OK",
+        ackText = stringResource(id = R.string.dialog_ok),
         onDismiss = { showAlreadyMatchedDialog = false }
       )
     }
@@ -137,11 +180,12 @@ fun AddEditFilterScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditFilterTopAppBar(
+  filterName: String,
   onBack: () -> Unit,
   addFilterMatcher: () -> Unit,
 ) {
   TopAppBar(
-    title = { Text(text = stringResource(id = R.string.add_filter_matcher_title)) },
+    title = { Text(text = filterName) },
     navigationIcon = {
       IconButton(onClick = onBack) {
         Icon(Icons.Filled.ArrowBack, stringResource(id = R.string.back))

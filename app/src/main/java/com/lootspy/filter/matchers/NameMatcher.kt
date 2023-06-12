@@ -1,11 +1,12 @@
 package com.lootspy.filter.matchers
 
-import android.os.Parcelable
 import com.lootspy.data.DestinyItem
-import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@Parcelize
-class NameMatcher(var name: String) : FilterMatcher, Parcelable {
+@Serializable
+@SerialName("NameMatcher")
+class NameMatcher(var name: String) : FilterMatcher {
 
   override fun type() = MatcherType.NAME
 

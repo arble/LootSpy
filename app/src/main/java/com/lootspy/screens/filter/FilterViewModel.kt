@@ -1,5 +1,6 @@
 package com.lootspy.screens.filter
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lootspy.R
@@ -28,8 +29,13 @@ class FilterViewModel @Inject constructor(
 ) : ViewModel() {
   private val _isLoading = MutableStateFlow(false)
   private val _userMessage: MutableStateFlow<Int?> = MutableStateFlow(null)
-  private val _filtersAsync = filterRepository.getFiltersStream().map { Async.Success(it) }
-    .catch<Async<List<Filter>>> { emit(Async.Error(R.string.loading_filters_error)) }
+  private val _filtersAsync = filterRepository.getFiltersStream().map {
+    Async.Success(it)
+  }
+    .catch<Async<List<Filter>>> {
+      Log.e("LootSpy", "filterGet", it)
+      emit(Async.Error(R.string.loading_filters_error))
+    }
 
   val uiState: StateFlow<FilterUiState> =
     combine(_filtersAsync, _isLoading, _userMessage) { filtersAsync, isLoading, userMessage ->

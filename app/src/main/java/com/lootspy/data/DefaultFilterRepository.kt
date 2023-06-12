@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -43,10 +44,12 @@ class DefaultFilterRepository @Inject constructor(
     return localDataSource.getById(filterId)?.toExternal()
   }
 
-  override suspend fun saveFilter(filterId: String, name: String, matchers: List<FilterMatcher>) =
+  override suspend fun saveNewFilter(name: String, matchers: List<FilterMatcher>) {
+    val filterId = withContext(dispatcher) { UUID.randomUUID().toString() }
     localDataSource.upsert(
       LocalFilter(filterId, name, Json.encodeToString(matchers))
     )
+  }
 
   override suspend fun updateFilter(filterId: String, name: String, matchers: List<FilterMatcher>) =
     localDataSource.upsert(
