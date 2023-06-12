@@ -14,4 +14,9 @@
     <string name="dialog_cancel">Cancel</string>
     <string name="dialog_ok">OK</string>
     <string name="dialog_discard">Discard</string>
+    <string name="nav_bar_loot">Loot</string>
+    <string name="nav_bar_filters">Filters</string>
+    <string name="nav_bar_vendors">Vendors</string>
+    <string name="vendor_title">Vendors</string>
+    <string name="vendor_screen_no_vendors">No vendors available. This is a bug - please report it!</string>
 </resources>

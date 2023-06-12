@@ -49,3 +49,13 @@ fun FilterTopAppBar(
   )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun VendorTopAppBar(
+
+) {
+  TopAppBar(
+    title = { Text(text = stringResource(R.string.vendor_title)) }
+  )
+}
+

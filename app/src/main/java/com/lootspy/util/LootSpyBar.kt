@@ -12,8 +12,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.lootspy.R
 import com.lootspy.LootSpyDestinations
 import com.lootspy.LootSpyNavigationActions
 import kotlinx.coroutines.CoroutineScope
@@ -30,7 +32,7 @@ fun LootSpyNavBar(
   NavigationBar {
     NavigationBarItem(
       icon = { Icon(Icons.Default.Home, null) },
-      label = { Text("Loot") },
+      label = { Text(stringResource(id = R.string.nav_bar_loot)) },
       selected = selectedRoute.value == LootSpyDestinations.LOOT_ROUTE,
       onClick = {
         if (navBackStackEntry?.destination?.route == LootSpyDestinations.LOOT_ROUTE) {
@@ -44,7 +46,7 @@ fun LootSpyNavBar(
     )
     NavigationBarItem(
       icon = { Icon(Icons.Default.Favorite, null) },
-      label = { Text("Filters") },
+      label = { Text(stringResource(id = R.string.nav_bar_filters)) },
       selected = selectedRoute.value == LootSpyDestinations.FILTERS_ROUTE,
       onClick = {
         if (navBackStackEntry?.destination?.route == LootSpyDestinations.FILTERS_ROUTE) {
@@ -58,7 +60,7 @@ fun LootSpyNavBar(
     )
     NavigationBarItem(
       icon = { Icon(Icons.Default.Star, null) },
-      label = { Text("Vendors") },
+      label = { Text(stringResource(id = R.string.nav_bar_vendors)) },
       selected = selectedRoute.value == LootSpyDestinations.VENDORS_ROUTE,
       onClick = {
         if (navBackStackEntry?.destination?.route == LootSpyDestinations.VENDORS_ROUTE) {

@@ -58,9 +58,6 @@ fun FilterScreen(
     if (uiState.userMessage != null) {
       Toast.makeText(context, stringResource(id = uiState.userMessage!!), Toast.LENGTH_SHORT).show()
     }
-//    val onFilterClick: (Filter) -> Unit = {
-//      Toast.makeText(context, "Filter is: $it", Toast.LENGTH_SHORT).show()
-//    }
 
     ScreenContentWithEmptyText(
       loading = uiState.isLoading,

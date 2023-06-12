@@ -103,6 +103,14 @@ fun LootSpyNavGraph(
         onBack = { navController.popBackStack() },
       )
     }
+    composable(
+      LootSpyDestinations.VENDORS_ROUTE,
+      arguments = listOf(navArgument(USER_MESSAGE_ARG) {
+        type = NavType.IntType; defaultValue = 0
+      }),
+    ) {
+
+    }
   }
 }
 
