@@ -27,12 +27,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.example.lootspy.R
 import com.lootspy.filter.matchers.MatcherType
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,7 +49,7 @@ fun NewMatcherDialog(
       modifier = Modifier.padding(10.dp, 5.dp, 10.dp, 10.dp)
     ) {
       Text(
-        text = "Select a type for this matcher",
+        text = stringResource(id = R.string.add_matcher_dialog_text),
         textAlign = TextAlign.Center,
         modifier = Modifier
           .padding(top = 5.dp)
@@ -64,7 +66,7 @@ fun NewMatcherDialog(
         TextField(
           modifier = Modifier.menuAnchor(),
           readOnly = true,
-          label = { Text("Type") },
+          label = { Text(stringResource(id = R.string.add_matcher_type_dropdown_label)) },
           value = selectedType.printableName(),
           trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
           colors = ExposedDropdownMenuDefaults.textFieldColors(),
@@ -72,13 +74,17 @@ fun NewMatcherDialog(
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
           MatcherType.values().forEach {
-            DropdownMenuItem(text = { Text(it.name) }, onClick = {
+            DropdownMenuItem(text = { Text(it.printableName()) }, onClick = {
               selectedType = it
               expanded = false
             })
           }
         }
       }
+      Text(
+        text = stringResource(id = selectedType.descriptionResource()),
+        modifier = Modifier.padding(all = 8.dp)
+      )
       Row(
         modifier = Modifier
           .fillMaxWidth()
@@ -141,21 +147,25 @@ fun AlertDialog(
         )
         Spacer(modifier = Modifier.height(12.dp))
         Row(modifier = Modifier.fillMaxWidth()) {
-          TextButton(onClick = onDismiss) {
+          TextButton(
+            onClick = onDismiss,
+            modifier = Modifier.weight(if (confirmText != null) 0.5f else 1f)
+          ) {
             Text(
               text = ackText,
               textAlign = TextAlign.Center,
               fontWeight = FontWeight.ExtraBold,
-              modifier = Modifier.padding(top = 5.dp, bottom = 5.dp)
             )
           }
           if (confirmText != null) {
-            TextButton(onClick = onConfirm) {
+            TextButton(
+              onClick = onConfirm,
+              modifier = Modifier.weight(0.5f)
+            ) {
               Text(
                 text = confirmText,
                 textAlign = TextAlign.Center,
                 fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.padding(top = 5.dp, bottom = 5.dp)
               )
             }
           }
