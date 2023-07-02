@@ -101,10 +101,6 @@ class LootSpyViewModel @Inject constructor(
     _isDoingAuth.value = true
   }
 
-  fun saveAuthInfo(accessToken: String, membershipId: String) {
-
-  }
-
   fun handleAuthResponse(result: ActivityResult, authService: AuthorizationService) {
     if (result.resultCode == Activity.RESULT_OK) {
       val intent = result.data ?: return
