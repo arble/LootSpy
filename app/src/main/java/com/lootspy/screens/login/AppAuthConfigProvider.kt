@@ -9,5 +9,6 @@ class AppAuthConfigProvider {
       Uri.parse("https://www.bungie.net/en/oauth/authorize"),
       Uri.parse("https://www.bungie.net/platform/app/oauth/token/")
     )
+    val OAUTH_CLIENT_ID = 44724
   }
 }

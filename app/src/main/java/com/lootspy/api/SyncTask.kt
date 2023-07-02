@@ -7,14 +7,13 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.CoroutineWorker
-import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.lootspy.client.ApiCallback
 import com.lootspy.client.ApiClient
+import com.lootspy.client.ApiException
+import com.lootspy.client.model.DestinyResponsesDestinyLinkedProfilesResponse
 import com.lootspy.util.UserStore
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 
 class SyncTask(private val context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
   private val userStore = UserStore(context)
@@ -55,8 +54,35 @@ class SyncTask(private val context: Context, params: WorkerParameters) : Corouti
       null,
       null,
       null,
-      ApiCallback<>
+      getLinkedProfilesCallback()
     )
     return Result.success()
+  }
+
+  private fun getLinkedProfilesCallback(): ApiCallback<DestinyResponsesDestinyLinkedProfilesResponse> {
+    return object : ApiCallback<DestinyResponsesDestinyLinkedProfilesResponse> {
+      override fun onFailure(
+        p0: ApiException?,
+        p1: Int,
+        p2: MutableMap<String, MutableList<String>>?
+      ) {
+        TODO("Not yet implemented")
+      }
+
+      override fun onUploadProgress(p0: Long, p1: Long, p2: Boolean) = Unit
+
+      override fun onDownloadProgress(p0: Long, p1: Long, p2: Boolean) = Unit
+
+      override fun onSuccess(
+        response: DestinyResponsesDestinyLinkedProfilesResponse?,
+        status: Int,
+        headers: MutableMap<String, MutableList<String>>?
+      ) {
+        val profiles = response?.profiles
+        if (profiles != null) {
+
+        }
+      }
+    }
   }
 }

@@ -42,4 +42,6 @@
     <string name="notify_channel_api_failure">Bungie.net problems</string>
     <string name="notify_channel_api_failure_desc">Errors and issues with accessing Bungie\'s services. For example, you may need to log in again.</string>
     <string name="notify_channel_api_id">lootspyApi</string>
+    <string name="loading_token_error">Error loading token</string>
+    <string name="loading_membership_error">Error loading Bungie membership</string>
 </resources>

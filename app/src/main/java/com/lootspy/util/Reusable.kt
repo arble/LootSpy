@@ -28,6 +28,7 @@ fun <T> ScreenContent(
   items: List<T>,
   itemContent: @Composable (Int, T) -> Unit,
   modifier: Modifier = Modifier,
+  loadingText: String = "",
   emptyComposable: @Composable () -> Unit,
 ) {
   if (loading) {

@@ -19,6 +19,10 @@ class UserStore(private val context: Context) {
   val tokenFlow: Flow<String> = context.dataStore.data.map { it[TOKEN_KEY] ?: "" }
   val membershipFlow: Flow<String> = context.dataStore.data.map { it[MEMBERSHIP_ID] ?: "" }
 
-  suspend fun saveToken(token: String) = context.dataStore.edit { it[TOKEN_KEY] = token }
-  suspend fun saveMembershipId(id: String) = context.dataStore.edit { it[MEMBERSHIP_ID] = id }
+  suspend fun saveAuthInfo(token: String, membershipId: String) {
+    context.dataStore.edit {
+      it[TOKEN_KEY] = token
+      it[MEMBERSHIP_ID] = membershipId
+    }
+  }
 }
