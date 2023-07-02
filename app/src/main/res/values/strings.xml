@@ -37,4 +37,9 @@
     <string name="add_matcher_dialog_text">Select a type for this matcher</string>
     <string name="add_matcher_type_dropdown_label">Type</string>
     <string name="matcher_type_desc_name">Match an exact item name. Suggestions will be displayed as you type.</string>
+    <string name="login_prompt">Click below to log in with Bungie</string>
+    <string name="login_button">Login</string>
+    <string name="notify_channel_api_failure">Bungie.net problems</string>
+    <string name="notify_channel_api_failure_desc">Errors and issues with accessing Bungie\'s services. For example, you may need to log in again.</string>
+    <string name="notify_channel_api_id">lootspyApi</string>
 </resources>

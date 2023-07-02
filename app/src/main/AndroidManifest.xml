@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application
         android:name="com.lootspy.LootSpyApplication"
         android:allowBackup="true"
@@ -16,12 +17,23 @@
         <activity
             android:name="com.lootspy.LootSpyActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.LootSpy">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name="com.lootspy.DummyActivity"
+            tools:node="replace"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="dummy.lootspy.app" />
             </intent-filter>
         </activity>
     </application>
