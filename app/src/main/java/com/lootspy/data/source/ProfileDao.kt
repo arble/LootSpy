@@ -11,13 +11,13 @@ interface ProfileDao {
   fun observeAll(): Flow<List<LocalProfile>>
 
   @Query("SELECT * FROM profiles WHERE id = :membershipId")
-  fun observeById(membershipId: Long)
+  fun observeById(membershipId: Long): Flow<LocalProfile>
 
   @Query("SELECT * FROM profiles")
   suspend fun getAll(): List<LocalProfile>
 
   @Query("SELECT * from profiles WHERE id = :membershipId")
-  suspend fun getbyId(membershipId: Long)
+  suspend fun getById(membershipId: Long): LocalProfile?
 
   @Upsert
   suspend fun upsert(profile: LocalProfile)

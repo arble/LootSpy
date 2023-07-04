@@ -12,6 +12,8 @@ abstract class LootSpyDatabase : RoomDatabase() {
 
   abstract fun filterDao(): FilterDao
 
+  abstract fun profileDao(): ProfileDao
+
   companion object {
     @Volatile
     private var instance: LootSpyDatabase? = null

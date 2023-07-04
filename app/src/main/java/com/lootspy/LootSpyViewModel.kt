@@ -21,51 +21,45 @@ import net.openid.appauth.AuthorizationException
 import net.openid.appauth.AuthorizationResponse
 import net.openid.appauth.AuthorizationService
 import net.openid.appauth.TokenResponse
-import java.util.concurrent.Executors
 import javax.inject.Inject
 
 data class MainUiState(
-  val pendingAuth: Boolean = false,
   val pendingToken: Boolean = false,
   val accessToken: String? = null,
   val membershipId: String? = null,
   val userMessage: Int? = null,
 ) {
-  fun isLoggedOut() = !pendingAuth && accessToken == null && membershipId == null
+  fun isLoggedOut() = accessToken == null && membershipId == null
 }
 
 @HiltViewModel
 class LootSpyViewModel @Inject constructor(
   private val userStore: UserStore,
 ) : ViewModel() {
-  private val _isDoingAuth = MutableStateFlow(false)
   private val _isDoingToken = MutableStateFlow(false)
-  private val executor = Executors.newSingleThreadExecutor()
 
   val uiState: StateFlow<MainUiState> =
     combine(
       _isDoingToken,
-      _isDoingAuth,
       userStore.accessToken,
       userStore.membershipId
-    ) { isDoingToken, isDoingAuth, token, membershipId ->
+    ) { isDoingToken, token, membershipId ->
       if (isDoingToken) {
         MainUiState(pendingToken = true)
-      } else if (isDoingAuth) {
-        MainUiState(pendingAuth = true)
       } else {
         MainUiState(accessToken = token, membershipId = membershipId)
       }
     }.stateIn(
-      viewModelScope, started = SharingStarted.WhileSubscribed(5000),
+      scope = viewModelScope,
+      started = SharingStarted.WhileSubscribed(5000),
       initialValue = MainUiState()
     )
 
-  fun beginPendingAuth(pendingAuth: Boolean) {
-    _isDoingAuth.value = true
-  }
-
-  fun handleAuthResponse(result: ActivityResult, authService: AuthorizationService, context: Context) {
+  fun handleAuthResponse(
+    result: ActivityResult,
+    authService: AuthorizationService,
+    context: Context
+  ) {
     if (result.resultCode == Activity.RESULT_OK) {
       val intent = result.data ?: return
       val response = AuthorizationResponse.fromIntent(intent)

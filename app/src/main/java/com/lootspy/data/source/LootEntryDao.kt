@@ -26,7 +26,7 @@ interface LootEntryDao {
   suspend fun upsertAll(loot: List<LocalLootEntry>)
 
   @Query("DELETE FROM matched_loot WHERE id = :lootEntryId")
-  suspend fun deleteById(lootEntryId: String): Int
+  suspend fun deleteById(lootEntryId: String)
 
   @Query("DELETE FROM matched_loot")
   suspend fun deleteAll()

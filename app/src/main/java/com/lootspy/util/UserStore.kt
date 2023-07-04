@@ -14,10 +14,10 @@ import javax.inject.Singleton
 @Singleton
 class UserStore(private val context: Context) {
   companion object {
-    val Context.dataStore: DataStore<Preferences> by preferencesDataStore("lootspy")
-    val TOKEN_KEY = stringPreferencesKey("access_token")
-    val MEMBERSHIP_ID = stringPreferencesKey("membership_id")
-    val LAST_SYNC_TIME = longPreferencesKey("last_sync_time")
+    private val Context.dataStore: DataStore<Preferences> by preferencesDataStore("lootspy")
+    private val TOKEN_KEY = stringPreferencesKey("access_token")
+    private val MEMBERSHIP_ID = stringPreferencesKey("membership_id")
+    private val LAST_SYNC_TIME = longPreferencesKey("last_sync_time")
   }
 
   val accessToken: Flow<String> = context.dataStore.data.map { it[TOKEN_KEY] ?: "" }
@@ -28,6 +28,13 @@ class UserStore(private val context: Context) {
     context.dataStore.edit {
       it[TOKEN_KEY] = token
       it[MEMBERSHIP_ID] = membershipId
+    }
+  }
+
+  suspend fun deleteAuthInfo() {
+    context.dataStore.edit {
+      it.remove(TOKEN_KEY)
+      it.remove(MEMBERSHIP_ID)
     }
   }
 

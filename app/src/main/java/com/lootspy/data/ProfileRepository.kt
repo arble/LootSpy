@@ -8,9 +8,9 @@ interface ProfileRepository {
 
   suspend fun getProfiles(): List<DestinyResponsesDestinyProfileUserInfoCard>
 
-  fun getProfileStream(membershipId: String): Flow<DestinyResponsesDestinyProfileUserInfoCard?>
+  fun getProfileStream(membershipId: Long): Flow<DestinyResponsesDestinyProfileUserInfoCard?>
 
-  suspend fun getProfile(membershipId: String): DestinyResponsesDestinyProfileUserInfoCard?
+  suspend fun getProfile(membershipId: Long): DestinyResponsesDestinyProfileUserInfoCard?
 
   suspend fun saveProfiles(profiles: List<DestinyResponsesDestinyProfileUserInfoCard>)
 }

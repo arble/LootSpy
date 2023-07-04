@@ -9,6 +9,7 @@ import com.lootspy.data.LootRepository
 import com.lootspy.data.source.FilterDao
 import com.lootspy.data.source.LootEntryDao
 import com.lootspy.data.source.LootSpyDatabase
+import com.lootspy.data.source.ProfileDao
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -42,4 +43,7 @@ object DatabaseModule {
 
   @Provides
   fun provideFilterDao(database: LootSpyDatabase): FilterDao = database.filterDao()
+
+  @Provides
+  fun provideProfileDao(database: LootSpyDatabase): ProfileDao = database.profileDao()
 }

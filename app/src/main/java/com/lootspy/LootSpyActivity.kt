@@ -1,12 +1,10 @@
 package com.lootspy
 
-import android.app.Activity
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.padding
@@ -20,26 +18,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewModelScope
-import androidx.work.Data
-import androidx.work.OneTimeWorkRequest
-import androidx.work.WorkManager
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
-import com.lootspy.api.SyncTask
-import com.lootspy.client.model.DestinyResponsesDestinyProfileUserInfoCard
 import com.lootspy.screens.login.AppAuthConfigProvider
 import com.lootspy.screens.login.AppAuthConfigProvider.Companion.OAUTH_CLIENT_ID
 import com.lootspy.ui.theme.LootSpyTheme
 import com.lootspy.util.LootSpyNavBar
-import com.lootspy.util.UserStore.Companion.dataStore
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
-import net.openid.appauth.AuthorizationException
 import net.openid.appauth.AuthorizationRequest
-import net.openid.appauth.AuthorizationResponse
 import net.openid.appauth.AuthorizationService
 import net.openid.appauth.ResponseTypeValues
-import net.openid.appauth.TokenResponse
 
 @AndroidEntryPoint
 class LootSpyActivity : ComponentActivity() {
@@ -56,12 +43,7 @@ class LootSpyActivity : ComponentActivity() {
     viewModel: LootSpyViewModel = hiltViewModel()
   ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val authRequest = AuthorizationRequest.Builder(
-      AppAuthConfigProvider.SERVICE_CONFIG,
-      OAUTH_CLIENT_ID.toString(),
-      ResponseTypeValues.CODE,
-      Uri.parse("https://api.lootspy.app/oauth")
-    ).build()
+
     val authService = AuthorizationService(this)
     val context = LocalContext.current
     val launcherForResult = rememberLauncherForActivityResult(
@@ -78,7 +60,16 @@ class LootSpyActivity : ComponentActivity() {
       val selectedRoute = remember { mutableStateOf(LootSpyDestinations.LOOT_ROUTE) }
       if (uiState.isLoggedOut()) {
         LootSpyLoginPrompt {
-          launcherForResult.launch(authService.getAuthorizationRequestIntent(authRequest))
+          launcherForResult.launch(
+            authService.getAuthorizationRequestIntent(
+              AuthorizationRequest.Builder(
+                AppAuthConfigProvider.SERVICE_CONFIG,
+                OAUTH_CLIENT_ID.toString(),
+                ResponseTypeValues.CODE,
+                Uri.parse("https://api.lootspy.app/oauth")
+              ).build()
+            )
+          )
         }
       } else if (uiState.pendingToken) {
         LootSpyTokenPlaceholder()

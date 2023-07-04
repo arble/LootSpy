@@ -7,47 +7,37 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.datastore.preferences.core.edit
+import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.lootspy.client.ApiCallback
 import com.lootspy.client.ApiClient
 import com.lootspy.client.ApiException
 import com.lootspy.client.model.DestinyResponsesDestinyLinkedProfilesResponse
+import com.lootspy.data.ProfileRepository
 import com.lootspy.util.UserStore
-import com.lootspy.util.UserStore.Companion.dataStore
-import java.time.LocalDate
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
+import kotlinx.coroutines.flow.first
 
-class SyncTask(private val context: Context, params: WorkerParameters) :
-  CoroutineWorker(context, params) {
+@HiltWorker
+class SyncTask @AssistedInject constructor(
+  @Assisted private val context: Context,
+  @Assisted params: WorkerParameters,
+  private val userStore: UserStore,
+  private val profileRepository: ProfileRepository,
+) : CoroutineWorker(context, params) {
 
   override suspend fun doWork(): Result {
+    val accessToken = userStore.accessToken.first()
+    val membershipId = userStore.membershipId.first()
     val notifyChannel = inputData.getString("notify_channel") ?: return Result.failure()
-    val token = inputData.getString("access_token") ?: return Result.failure()
-    val membershipId = inputData.getString("membership_id") ?: return Result.failure()
 
-    inputData.keyValueMap
+    if (accessToken.isEmpty()) {
 
-    if (token.isEmpty()) {
-      val builder = NotificationCompat.Builder(context, notifyChannel)
-        .setContentTitle("LootSpy sync failed")
-        .setContentText("Couldn't get loot. You may need to log in again.")
-        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-        .setAutoCancel(true)
-        .setTimeoutAfter(5000)
-      with(NotificationManagerCompat.from(context)) {
-        if (ActivityCompat.checkSelfPermission(
-            context,
-            Manifest.permission.POST_NOTIFICATIONS
-          ) == PackageManager.PERMISSION_GRANTED
-        ) {
-          notify(0, builder.build())
-        }
-      }
-      return Result.failure()
     }
     val apiClient = ApiClient()
-    apiClient.setAccessToken(token)
+    apiClient.setAccessToken(accessToken)
     apiClient.setApiKey("50ef71cc77324212886181190ea75ba7")
     val call = apiClient.buildCall(
       "https://www.bungie.net/Platform",
@@ -64,10 +54,28 @@ class SyncTask(private val context: Context, params: WorkerParameters) :
     )
     val apiResponse = apiClient.execute<DestinyResponsesDestinyLinkedProfilesResponse>(call)
     if (apiResponse.statusCode != 200) {
+      val builder = NotificationCompat.Builder(context, notifyChannel)
+        .setContentTitle("LootSpy sync failed")
+        .setContentText("Couldn't get loot. You may need to log in again.")
+        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+        .setAutoCancel(true)
+        .setTimeoutAfter(5000)
+      with(NotificationManagerCompat.from(context)) {
+        if (ActivityCompat.checkSelfPermission(
+            context,
+            Manifest.permission.POST_NOTIFICATIONS
+          ) == PackageManager.PERMISSION_GRANTED
+        ) {
+          notify(0, builder.build())
+        }
+      }
+      userStore.deleteAuthInfo()
+      return Result.failure()
     }
     val profiles = apiResponse?.data?.profiles ?: return Result.failure()
     profiles.forEach { profile -> profile.displayName?.let { Log.i("SyncTask", it) } }
-    context.dataStore.edit { it[UserStore.LAST_SYNC_TIME] = System.currentTimeMillis() }
+    profileRepository.saveProfiles(profiles)
+    userStore.saveLastSyncTime(System.currentTimeMillis())
     return Result.success()
   }
 

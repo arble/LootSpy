@@ -21,18 +21,18 @@ class DefaultProfileRepository @Inject constructor(
   }
 
   override suspend fun getProfiles(): List<DestinyResponsesDestinyProfileUserInfoCard> {
-    TODO("Not yet implemented")
+    return withContext(dispatcher) { localDataSource.getAll().toExternal() }
   }
 
-  override fun getProfileStream(membershipId: String): Flow<DestinyResponsesDestinyProfileUserInfoCard?> {
-    TODO("Not yet implemented")
+  override fun getProfileStream(membershipId: Long): Flow<DestinyResponsesDestinyProfileUserInfoCard?> {
+    return localDataSource.observeById(membershipId).map { it.toExternal() }
   }
 
-  override suspend fun getProfile(membershipId: String): DestinyResponsesDestinyProfileUserInfoCard? {
-    TODO("Not yet implemented")
+  override suspend fun getProfile(membershipId: Long): DestinyResponsesDestinyProfileUserInfoCard? {
+    return localDataSource.getById(membershipId)?.toExternal()
   }
 
   override suspend fun saveProfiles(profiles: List<DestinyResponsesDestinyProfileUserInfoCard>) {
-    TODO("Not yet implemented")
+    localDataSource.upsertAll(profiles.toLocal())
   }
 }
