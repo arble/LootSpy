@@ -34,14 +34,8 @@ abstract class RepositoryModule {
 object DatabaseModule {
   @Singleton
   @Provides
-  fun provideLootSpyDatabase(@ApplicationContext context: Context): LootSpyDatabase {
-    return Room.databaseBuilder(
-      context.applicationContext,
-      LootSpyDatabase::class.java,
-      "matched_loot.db"
-    ).fallbackToDestructiveMigration()
-      .build()
-  }
+  fun provideLootSpyDatabase(@ApplicationContext context: Context) =
+    LootSpyDatabase.getInstance(context)
 
   @Provides
   fun provideLootDao(database: LootSpyDatabase): LootEntryDao = database.lootEntryDao()

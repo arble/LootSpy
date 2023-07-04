@@ -31,11 +31,10 @@ class FilterViewModel @Inject constructor(
   private val _userMessage: MutableStateFlow<Int?> = MutableStateFlow(null)
   private val _filtersAsync = filterRepository.getFiltersStream().map {
     Async.Success(it)
+  }.catch<Async<List<Filter>>> {
+    Log.e("LootSpy", "filterGet", it)
+    emit(Async.Error(R.string.loading_filters_error))
   }
-    .catch<Async<List<Filter>>> {
-      Log.e("LootSpy", "filterGet", it)
-      emit(Async.Error(R.string.loading_filters_error))
-    }
 
   val uiState: StateFlow<FilterUiState> =
     combine(_filtersAsync, _isLoading, _userMessage) { filtersAsync, isLoading, userMessage ->

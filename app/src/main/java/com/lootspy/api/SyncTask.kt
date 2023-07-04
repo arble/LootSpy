@@ -3,9 +3,11 @@ package com.lootspy.api
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.datastore.preferences.core.edit
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.lootspy.client.ApiCallback
@@ -13,17 +15,21 @@ import com.lootspy.client.ApiClient
 import com.lootspy.client.ApiException
 import com.lootspy.client.model.DestinyResponsesDestinyLinkedProfilesResponse
 import com.lootspy.util.UserStore
-import kotlinx.coroutines.flow.first
+import com.lootspy.util.UserStore.Companion.dataStore
+import java.time.LocalDate
 
-class SyncTask(private val context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
-  private val userStore = UserStore(context)
+class SyncTask(private val context: Context, params: WorkerParameters) :
+  CoroutineWorker(context, params) {
 
   override suspend fun doWork(): Result {
-    val token = userStore.tokenFlow.first()
-    val membershipId = userStore.membershipFlow.first()
+    val notifyChannel = inputData.getString("notify_channel") ?: return Result.failure()
+    val token = inputData.getString("access_token") ?: return Result.failure()
+    val membershipId = inputData.getString("membership_id") ?: return Result.failure()
+
+    inputData.keyValueMap
 
     if (token.isEmpty()) {
-      val builder = NotificationCompat.Builder(context, "foo")
+      val builder = NotificationCompat.Builder(context, notifyChannel)
         .setContentTitle("LootSpy sync failed")
         .setContentText("Couldn't get loot. You may need to log in again.")
         .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -54,19 +60,24 @@ class SyncTask(private val context: Context, params: WorkerParameters) : Corouti
       null,
       null,
       null,
-      getLinkedProfilesCallback()
+      null,
     )
+    val apiResponse = apiClient.execute<DestinyResponsesDestinyLinkedProfilesResponse>(call)
+    if (apiResponse.statusCode != 200) {
+    }
+    val profiles = apiResponse?.data?.profiles ?: return Result.failure()
+    profiles.forEach { profile -> profile.displayName?.let { Log.i("SyncTask", it) } }
+    context.dataStore.edit { it[UserStore.LAST_SYNC_TIME] = System.currentTimeMillis() }
     return Result.success()
   }
 
   private fun getLinkedProfilesCallback(): ApiCallback<DestinyResponsesDestinyLinkedProfilesResponse> {
     return object : ApiCallback<DestinyResponsesDestinyLinkedProfilesResponse> {
       override fun onFailure(
-        p0: ApiException?,
-        p1: Int,
-        p2: MutableMap<String, MutableList<String>>?
+        exception: ApiException?,
+        statusCode: Int,
+        responseHeaders: MutableMap<String, MutableList<String>>?
       ) {
-        TODO("Not yet implemented")
       }
 
       override fun onUploadProgress(p0: Long, p1: Long, p2: Boolean) = Unit

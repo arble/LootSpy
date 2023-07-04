@@ -57,6 +57,7 @@ dependencies {
 
      implementation files('libs\\lootspy-client-2.18.0.jar')
     implementation files('libs\\okhttp-4.10.0.jar')
+    implementation 'androidx.core:core-ktx:+'
     def room_version = "2.5.1"
     def work_version = "2.8.1"
 //    def room_version = "2.4.0-alpha03"

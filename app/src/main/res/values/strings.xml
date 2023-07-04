@@ -44,4 +44,5 @@
     <string name="notify_channel_api_id">lootspyApi</string>
     <string name="loading_token_error">Error loading token</string>
     <string name="loading_membership_error">Error loading Bungie membership</string>
+    <string name="getting_access_token">Getting credentials from Bungie...</string>
 </resources>
