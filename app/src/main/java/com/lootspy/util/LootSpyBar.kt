@@ -15,9 +15,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.lootspy.R
 import com.lootspy.LootSpyDestinations
 import com.lootspy.LootSpyNavigationActions
+import com.lootspy.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 

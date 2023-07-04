@@ -42,9 +42,9 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.lootspy.R
-import com.lootspy.filter.matchers.FilterMatcher
-import com.lootspy.filter.matchers.NameMatcher
+import com.lootspy.R
+import com.lootspy.data.matcher.FilterMatcher
+import com.lootspy.data.matcher.NameMatcher
 import com.lootspy.screens.addeditfilter.matcher.NameMatcherDetails
 import com.lootspy.util.AlertDialog
 import com.lootspy.util.NewMatcherDialog

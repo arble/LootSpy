@@ -3,7 +3,7 @@ package com.lootspy.screens.loot
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.lootspy.R
+import com.lootspy.R
 import com.lootspy.data.LootEntry
 import com.lootspy.data.LootRepository
 import com.lootspy.util.Async

@@ -22,7 +22,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.lootspy.R
+import com.lootspy.R
 import com.lootspy.data.LootEntry
 import com.lootspy.util.LootTopAppBar
 import com.lootspy.util.ScreenContentWithEmptyText

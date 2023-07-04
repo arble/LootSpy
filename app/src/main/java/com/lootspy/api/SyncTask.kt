@@ -15,7 +15,7 @@ import com.lootspy.client.ApiClient
 import com.lootspy.client.ApiException
 import com.lootspy.client.model.DestinyResponsesDestinyLinkedProfilesResponse
 import com.lootspy.data.ProfileRepository
-import com.lootspy.util.UserStore
+import com.lootspy.data.UserStore
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first

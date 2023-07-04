@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace 'com.example.lootspy'
+    namespace 'com.lootspy'
     compileSdk 33
 
     defaultConfig {
@@ -44,7 +44,7 @@ android {
         compose true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion '1.4.6'
+        kotlinCompilerExtensionVersion '1.4.8'
     }
     packagingOptions {
         resources {
@@ -55,11 +55,12 @@ android {
 
 dependencies {
 
-    implementation files('libs/lootspy-client-2.18.0.jar')
-    implementation files('libs/okhttp-4.10.0.jar')
-    def room_version = "2.5.2"
+//    implementation files('libs/lootspy-client-2.18.0.jar')
+//    implementation files('libs/okhttp-4.10.0.jar')
     def work_version = "2.8.1"
 //    def room_version = "2.4.0-alpha03"
+
+    implementation project(":app:data")
 
     kapt "org.xerial:sqlite-jdbc:3.36.0"
     implementation 'androidx.core:core-ktx:1.10.1'
@@ -77,9 +78,6 @@ dependencies {
     implementation 'androidx.hilt:hilt-work:1.0.0'
     implementation "androidx.lifecycle:lifecycle-runtime-compose:2.6.1"
     implementation 'androidx.navigation:navigation-compose:2.6.0'
-    implementation "androidx.room:room-ktx:$room_version"
-    implementation "androidx.room:room-runtime:$room_version"
-    annotationProcessor "androidx.room:room-compiler:$room_version"
     implementation "androidx.work:work-runtime-ktx:$work_version"
     implementation 'com.google.accompanist:accompanist-appcompat-theme:0.28.0'
     implementation 'com.google.accompanist:accompanist-flowlayout:0.28.0'
@@ -93,7 +91,6 @@ dependencies {
     implementation platform('androidx.compose:compose-bom:2022.10.00')
     androidTestImplementation platform('androidx.compose:compose-bom:2022.10.00')
     kapt "com.google.dagger:hilt-compiler:2.44"
-    kapt "androidx.room:room-compiler:$room_version"
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'

@@ -2,6 +2,7 @@ package com.lootspy
 
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -60,16 +61,18 @@ class LootSpyActivity : ComponentActivity() {
       val selectedRoute = remember { mutableStateOf(LootSpyDestinations.LOOT_ROUTE) }
       if (uiState.isLoggedOut()) {
         LootSpyLoginPrompt {
+          Log.d("LootSpyMain", "Launching oauth flow")
           launcherForResult.launch(
             authService.getAuthorizationRequestIntent(
               AuthorizationRequest.Builder(
                 AppAuthConfigProvider.SERVICE_CONFIG,
                 OAUTH_CLIENT_ID.toString(),
                 ResponseTypeValues.CODE,
-                Uri.parse("https://api.lootspy.app/oauth")
+                Uri.parse("dummy.lootspy.app://oauth")
               ).build()
             )
           )
+          viewModel.beginGetToken()
         }
       } else if (uiState.pendingToken) {
         LootSpyTokenPlaceholder()

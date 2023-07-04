@@ -3,13 +3,13 @@ package com.lootspy.screens.addeditfilter
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.lootspy.R
 import com.lootspy.LootSpyDestinationArgs
+import com.lootspy.R
 import com.lootspy.data.Filter
 import com.lootspy.data.FilterRepository
-import com.lootspy.filter.matchers.FilterMatcher
-import com.lootspy.filter.matchers.MatcherType
-import com.lootspy.filter.matchers.NameMatcher
+import com.lootspy.data.matcher.FilterMatcher
+import com.lootspy.data.matcher.MatcherType
+import com.lootspy.data.matcher.NameMatcher
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

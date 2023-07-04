@@ -3,7 +3,6 @@
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel target="11">
       <module name="LootSpy.app.auth" target="18" />
-      <module name="LootSpy.app.data" target="18" />
     </bytecodeTargetLevel>
   </component>
 </project>

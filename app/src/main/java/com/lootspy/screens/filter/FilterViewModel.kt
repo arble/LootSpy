@@ -3,7 +3,7 @@ package com.lootspy.screens.filter
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.lootspy.R
+import com.lootspy.R
 import com.lootspy.data.Filter
 import com.lootspy.data.FilterRepository
 import com.lootspy.util.Async

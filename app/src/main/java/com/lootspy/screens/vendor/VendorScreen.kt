@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.lootspy.R
+import com.lootspy.R
 import com.lootspy.util.ScreenContentWithEmptyText
 import com.lootspy.util.VendorTopAppBar
 

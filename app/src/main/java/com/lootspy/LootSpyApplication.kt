@@ -7,13 +7,12 @@ import android.content.Context
 import android.os.Build
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
-import com.example.lootspy.R
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
 @HiltAndroidApp
 class LootSpyApplication : Application(), Configuration.Provider {
-  @Inject private lateinit var workerFactory: HiltWorkerFactory
+  @Inject lateinit var workerFactory: HiltWorkerFactory
 
   override fun onCreate() {
     super.onCreate()
@@ -31,6 +30,8 @@ class LootSpyApplication : Application(), Configuration.Provider {
   }
 
   override fun getWorkManagerConfiguration(): Configuration {
-    TODO("Not yet implemented")
+    return Configuration.Builder()
+      .setWorkerFactory(workerFactory)
+      .build()
   }
 }

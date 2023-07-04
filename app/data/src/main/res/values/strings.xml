@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="matcher_type_desc_name">Match an exact item name. Suggestions will be displayed as you type.</string>
+</resources>

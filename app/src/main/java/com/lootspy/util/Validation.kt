@@ -1,6 +1,6 @@
 package com.lootspy.util
 
-import com.example.lootspy.R
+import com.lootspy.R
 
 typealias Validator = Pair<(String) -> Boolean, Int>
 
