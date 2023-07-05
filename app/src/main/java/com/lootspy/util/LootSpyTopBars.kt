@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -18,6 +19,7 @@ import com.lootspy.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LootTopAppBar(
+  isSyncing: Boolean,
   onChangeFilter: () -> Unit,
   onRefresh: () -> Unit,
 ) {
@@ -29,8 +31,12 @@ fun LootTopAppBar(
       IconButton(onClick = onChangeFilter) {
         Icon(Icons.Default.List, null)
       }
-      IconButton(onClick = onRefresh) {
-        Icon(Icons.Default.Refresh, null)
+      if (isSyncing) {
+        CircularProgressIndicator()
+      } else {
+        IconButton(onClick = onRefresh) {
+          Icon(Icons.Default.Refresh, null)
+        }
       }
     }
   )

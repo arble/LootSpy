@@ -3,8 +3,10 @@ package com.lootspy.di
 import android.content.Context
 import com.lootspy.data.DefaultFilterRepository
 import com.lootspy.data.DefaultLootRepository
+import com.lootspy.data.DefaultProfileRepository
 import com.lootspy.data.FilterRepository
 import com.lootspy.data.LootRepository
+import com.lootspy.data.ProfileRepository
 import com.lootspy.data.UserStore
 import dagger.Binds
 import dagger.Module
@@ -24,6 +26,10 @@ abstract class RepositoryModule {
   @Singleton
   @Binds
   abstract fun bindFilterRepository(repository: DefaultFilterRepository): FilterRepository
+
+  @Singleton
+  @Binds
+  abstract fun bindProfileRepository(repository: DefaultProfileRepository): ProfileRepository
 }
 
 @Module

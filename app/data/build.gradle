@@ -37,7 +37,6 @@ android {
 dependencies {
 
     api files('libs/lootspy-client-2.18.0.jar')
-    api files('libs/okhttp-4.10.0.jar')
 
     def room_version = "2.5.2"
 

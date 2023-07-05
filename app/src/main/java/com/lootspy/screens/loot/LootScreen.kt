@@ -13,8 +13,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -22,10 +21,14 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import com.lootspy.R
+import com.lootspy.api.SyncTask
 import com.lootspy.data.LootEntry
 import com.lootspy.util.LootTopAppBar
 import com.lootspy.util.ScreenContentWithEmptyText
+import com.lootspy.util.WorkBuilders
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,12 +37,21 @@ fun LootScreen(
   viewModel: LootViewModel = hiltViewModel()
 ) {
   val context = LocalContext.current
-  remember { mutableStateOf(false) }
+  val syncWorkInfo = WorkManager.getInstance(context).getWorkInfosForUniqueWorkLiveData("sync_loot")
+    .observeAsState()
   Scaffold(
     topBar = {
       LootTopAppBar(
+        isSyncing = syncWorkInfo.value?.any { it.state == WorkInfo.State.RUNNING } ?: false,
         onChangeFilter = {},
-        onRefresh = {},
+        onRefresh = {
+          WorkBuilders.dispatchUniqueWorker(
+            context,
+            SyncTask::class.java,
+            "sync_loot",
+            mapOf("notify_channel" to "lootspyApi")
+          )
+        },
       )
     },
     modifier = modifier.fillMaxSize(),

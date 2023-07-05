@@ -6,11 +6,9 @@ import android.util.Log
 import androidx.activity.result.ActivityResult
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.work.Data
-import androidx.work.OneTimeWorkRequest
-import androidx.work.WorkManager
 import com.lootspy.api.SyncTask
 import com.lootspy.data.UserStore
+import com.lootspy.util.WorkBuilders
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -81,15 +79,12 @@ class LootSpyViewModel @Inject constructor(
               Log.d("LootSpyAuth", "Got data: $accessToken and $membershipId")
               viewModelScope.launch {
                 userStore.saveAuthInfo(accessToken, membershipId)
-                val workManager = WorkManager.getInstance(context)
-                val data = Data.Builder()
-                  .putString("notify_channel", "lootspyApi")
-                  .build()
-                val syncRequest = OneTimeWorkRequest.Builder(SyncTask::class.java)
-                  .setInputData(data)
-                  .build()
-                workManager.enqueue(syncRequest)
-                workManager.getWorkInfoById(syncRequest.id)
+                WorkBuilders.dispatchUniqueWorker(
+                  context,
+                  SyncTask::class.java,
+                  "sync_loot",
+                  mapOf("notify_channel" to "lootspyApi")
+                )
               }
             }
           }

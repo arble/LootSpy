@@ -29,6 +29,7 @@ class SyncTask @AssistedInject constructor(
 ) : CoroutineWorker(context, params) {
 
   override suspend fun doWork(): Result {
+    Log.d("LootSpy API Sync", "Beginning sync")
     val accessToken = userStore.accessToken.first()
     val membershipId = userStore.membershipId.first()
     val notifyChannel = inputData.getString("notify_channel") ?: return Result.failure()
@@ -38,22 +39,27 @@ class SyncTask @AssistedInject constructor(
     }
     val apiClient = ApiClient()
     apiClient.setAccessToken(accessToken)
-    apiClient.setApiKey("50ef71cc77324212886181190ea75ba7")
+//    apiClient.setApiKey("50ef71cc77324212886181190ea75ba7")
     val call = apiClient.buildCall(
       "https://www.bungie.net/Platform",
-      "Destiny2/254/Profile/${membershipId}/LinkedProfiles",
+      "/Destiny2/254/Profile/${membershipId}/LinkedProfiles",
       "GET",
+      emptyList(),
+      emptyList(),
       null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
+      mapOf("X-API-Key" to "50ef71cc77324212886181190ea75ba7"),
+      emptyMap(),
+      emptyMap(),
+      emptyArray(),
       null,
     )
     val apiResponse = apiClient.execute<DestinyResponsesDestinyLinkedProfilesResponse>(call)
+    Log.d("LootSpy API Sync", "Executed API call")
     if (apiResponse.statusCode != 200) {
+      Log.d(
+        "LootSpy API Sync",
+        "Sync failed due to error code from server: ${apiResponse.statusCode}"
+      )
       val builder = NotificationCompat.Builder(context, notifyChannel)
         .setContentTitle("LootSpy sync failed")
         .setContentText("Couldn't get loot. You may need to log in again.")
@@ -73,7 +79,8 @@ class SyncTask @AssistedInject constructor(
       return Result.failure()
     }
     val profiles = apiResponse?.data?.profiles ?: return Result.failure()
-    profiles.forEach { profile -> profile.displayName?.let { Log.i("SyncTask", it) } }
+    Log.d("LootSpy API Sync", "Received the following linked profiles:")
+    profiles.forEach { profile -> profile.displayName?.let { Log.i("LootSpy API Sync", it) } }
     profileRepository.saveProfiles(profiles)
     userStore.saveLastSyncTime(System.currentTimeMillis())
     return Result.success()
