@@ -13,7 +13,11 @@ import androidx.work.WorkerParameters
 import com.lootspy.client.ApiCallback
 import com.lootspy.client.ApiClient
 import com.lootspy.client.ApiException
+import com.lootspy.client.model.ConfigUserTheme
 import com.lootspy.client.model.DestinyResponsesDestinyLinkedProfilesResponse
+import com.lootspy.client.model.UserGetAvailableThemes200Response
+import com.lootspy.client.model.UserGetMembershipDataById200Response
+import com.lootspy.client.model.UserUserMembershipData
 import com.lootspy.data.ProfileRepository
 import com.lootspy.data.UserStore
 import dagger.assisted.Assisted
@@ -29,9 +33,9 @@ class SyncTask @AssistedInject constructor(
 ) : CoroutineWorker(context, params) {
 
   override suspend fun doWork(): Result {
-    Log.d("LootSpy API Sync", "Beginning sync")
     val accessToken = userStore.accessToken.first()
     val membershipId = userStore.membershipId.first()
+    Log.d("LootSpy API Sync", "Beginning sync. Membership ID is $membershipId")
     val notifyChannel = inputData.getString("notify_channel") ?: return Result.failure()
 
     if (accessToken.isEmpty()) {
@@ -42,7 +46,8 @@ class SyncTask @AssistedInject constructor(
 //    apiClient.setApiKey("50ef71cc77324212886181190ea75ba7")
     val call = apiClient.buildCall(
       "https://www.bungie.net/Platform",
-      "/Destiny2/254/Profile/${membershipId}/LinkedProfiles",
+//      "/Destiny2/254/Profile/${membershipId}/LinkedProfiles",
+      "/User/GetMembershipsById/$membershipId/254",
       "GET",
       emptyList(),
       emptyList(),
@@ -53,7 +58,11 @@ class SyncTask @AssistedInject constructor(
       emptyArray(),
       null,
     )
-    val apiResponse = apiClient.execute<DestinyResponsesDestinyLinkedProfilesResponse>(call)
+//    val apiResponse = apiClient.execute<DestinyResponsesDestinyLinkedProfilesResponse>(call)
+    val apiResponse = apiClient.execute<UserGetMembershipDataById200Response>(
+      call,
+      UserGetMembershipDataById200Response::class.java
+    )
     Log.d("LootSpy API Sync", "Executed API call")
     if (apiResponse.statusCode != 200) {
       Log.d(
@@ -75,13 +84,20 @@ class SyncTask @AssistedInject constructor(
           notify(0, builder.build())
         }
       }
-      userStore.deleteAuthInfo()
+//      userStore.deleteAuthInfo()
       return Result.failure()
     }
-    val profiles = apiResponse?.data?.profiles ?: return Result.failure()
-    Log.d("LootSpy API Sync", "Received the following linked profiles:")
-    profiles.forEach { profile -> profile.displayName?.let { Log.i("LootSpy API Sync", it) } }
-    profileRepository.saveProfiles(profiles)
+    val memberships = apiResponse.data?.response?.destinyMemberships
+    Log.d("LootSpy API Sync", "Response was ${apiResponse.data}")
+    if (memberships != null) {
+      memberships.forEach { Log.d("LootSpy API Sync", it.toString()) }
+    } else {
+      Log.d("LootSpy API Sync", "No memberships")
+    }
+//    val profiles = apiResponse?.data?.profiles ?: return Result.failure()
+//    Log.d("LootSpy API Sync", "Received the following linked profiles:")
+//    profiles.forEach { profile -> profile.displayName?.let { Log.i("LootSpy API Sync", it) } }
+//    profileRepository.saveProfiles(profiles)
     userStore.saveLastSyncTime(System.currentTimeMillis())
     return Result.success()
   }
