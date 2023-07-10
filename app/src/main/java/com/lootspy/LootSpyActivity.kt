@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -25,6 +26,7 @@ import com.lootspy.screens.login.AppAuthConfigProvider.Companion.OAUTH_CLIENT_ID
 import com.lootspy.ui.theme.LootSpyTheme
 import com.lootspy.util.LootSpyNavBar
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import net.openid.appauth.AuthorizationRequest
 import net.openid.appauth.AuthorizationService
 import net.openid.appauth.ResponseTypeValues
@@ -44,6 +46,7 @@ class LootSpyActivity : ComponentActivity() {
     viewModel: LootSpyViewModel = hiltViewModel()
   ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
 
     val authService = AuthorizationService(this)
     val context = LocalContext.current
@@ -76,6 +79,10 @@ class LootSpyActivity : ComponentActivity() {
         }
       } else if (uiState.pendingToken) {
         LootSpyTokenPlaceholder()
+      } else if (uiState.allMemberships.isNotEmpty() && uiState.activeMembership == 0L) {
+        LootSpyProfilePrompt(profiles = uiState.allMemberships) {
+          scope.launch { viewModel.saveActiveMembership(it) }
+        }
       } else {
         Scaffold(bottomBar = {
           LootSpyNavBar(

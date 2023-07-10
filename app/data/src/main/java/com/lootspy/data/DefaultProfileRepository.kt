@@ -1,14 +1,11 @@
 package com.lootspy.data
 
-import com.lootspy.client.model.DestinyResponsesDestinyProfileUserInfoCard
-import com.lootspy.client.model.GroupsV2GroupUserInfoCard
 import com.lootspy.data.source.DestinyProfile
 import com.lootspy.di.ApplicationScope
 import com.lootspy.di.DefaultDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 

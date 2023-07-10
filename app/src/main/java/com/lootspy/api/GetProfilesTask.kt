@@ -81,12 +81,13 @@ class GetProfilesTask @AssistedInject constructor(
     val memberships = apiResponse.data?.response?.destinyMemberships
     if (memberships != null) {
       val profiles = memberships.mapNotNull {
+        Log.d("LootSpy API Sync", it.toString())
         try {
           DestinyProfile(
             it.membershipId!!,
             it.membershipType!!,
             it.displayName!!,
-            it.supplementalDisplayName!!,
+            it.supplementalDisplayName ?: it.displayName!!,
             it.iconPath!!,
             it.bungieGlobalDisplayName!!,
             it.bungieGlobalDisplayNameCode!!,

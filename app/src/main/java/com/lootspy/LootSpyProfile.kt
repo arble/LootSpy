@@ -23,12 +23,14 @@ import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.lootspy.data.source.DestinyProfile
 import com.lootspy.util.BungiePathHelper
+import com.lootspy.util.ScreenContent
+import com.lootspy.util.ScreenContentWithEmptyText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LootSpyProfilePrompt(
   profiles: List<DestinyProfile>,
-  profileSelectedAction: () -> Unit,
+  profileSelectedAction: (DestinyProfile) -> Unit,
 ) {
   Scaffold(modifier = Modifier.fillMaxSize()) {
     Column(
@@ -38,8 +40,17 @@ fun LootSpyProfilePrompt(
       horizontalAlignment = Alignment.CenterHorizontally,
       verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+      if (profiles.isEmpty()) {
+        return@Column
+      }
       Text(text = stringResource(id = R.string.profile_choose_header))
-
+      ScreenContent(
+        loading = false, items = profiles, itemContent = { _, profile ->
+          ProfileCard(profile = profile, onClickProfile = profileSelectedAction)
+        }, emptyComposable = {
+          Text(text = stringResource(id = R.string.profile_no_profiles))
+        }
+      )
     }
   }
 }

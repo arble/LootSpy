@@ -33,6 +33,7 @@ fun <T> ScreenContent(
 ) {
   if (loading) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Center) {
+      Text(text = loadingText)
       CircularProgressIndicator(modifier = modifier)
     }
   } else if (items.isNotEmpty()) {

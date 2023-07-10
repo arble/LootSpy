@@ -7,7 +7,10 @@ import androidx.activity.result.ActivityResult
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lootspy.api.GetProfilesTask
+import com.lootspy.data.DefaultProfileRepository
+import com.lootspy.data.ProfileRepository
 import com.lootspy.data.UserStore
+import com.lootspy.data.source.DestinyProfile
 import com.lootspy.util.WorkBuilders
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +29,8 @@ data class MainUiState(
   val pendingToken: Boolean = false,
   val accessToken: String = "",
   val membershipId: String = "",
+  val allMemberships: List<DestinyProfile> = listOf(),
+  val activeMembership: Long = 0,
   val userMessage: Int? = null,
 ) {
   fun isLoggedOut() = accessToken.isEmpty() && membershipId.isEmpty()
@@ -34,6 +39,7 @@ data class MainUiState(
 @HiltViewModel
 class LootSpyViewModel @Inject constructor(
   private val userStore: UserStore,
+  profileRepository: ProfileRepository
 ) : ViewModel() {
   private val _isDoingToken = MutableStateFlow(false)
 
@@ -41,12 +47,19 @@ class LootSpyViewModel @Inject constructor(
     combine(
       _isDoingToken,
       userStore.accessToken,
-      userStore.membershipId
-    ) { isDoingToken, token, membershipId ->
+      userStore.membershipId,
+      profileRepository.getProfilesStream(),
+      userStore.activeMembership,
+    ) { isDoingToken, token, membershipId, allMemberships, activeMembership ->
       if (isDoingToken) {
         MainUiState(pendingToken = true)
       } else {
-        MainUiState(accessToken = token, membershipId = membershipId)
+        MainUiState(
+          accessToken = token,
+          membershipId = membershipId,
+          allMemberships = allMemberships,
+          activeMembership = activeMembership
+        )
       }
     }.stateIn(
       scope = viewModelScope,
@@ -56,6 +69,10 @@ class LootSpyViewModel @Inject constructor(
 
   fun beginGetToken() {
     _isDoingToken.value = true
+  }
+
+  suspend fun saveActiveMembership(profile: DestinyProfile) {
+    userStore.saveActiveMembership(profile.membershipId)
   }
 
   fun handleAuthResponse(
