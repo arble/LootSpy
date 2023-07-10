@@ -89,6 +89,7 @@ dependencies {
     implementation "com.google.dagger:hilt-android:2.44"
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'com.squareup.okhttp3:okhttp:4.10.0'
+    implementation 'io.coil-kt:coil-compose:2.4.0'
     implementation 'io.gsonfire:gson-fire:1.8.5'
     implementation 'net.openid:appauth:0.11.1'
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0'

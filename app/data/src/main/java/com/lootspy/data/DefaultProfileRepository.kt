@@ -1,6 +1,8 @@
 package com.lootspy.data
 
 import com.lootspy.client.model.DestinyResponsesDestinyProfileUserInfoCard
+import com.lootspy.client.model.GroupsV2GroupUserInfoCard
+import com.lootspy.data.source.DestinyProfile
 import com.lootspy.di.ApplicationScope
 import com.lootspy.di.DefaultDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
@@ -15,23 +17,23 @@ class DefaultProfileRepository @Inject constructor(
   @DefaultDispatcher private val dispatcher: CoroutineDispatcher,
   @ApplicationScope private val scope: CoroutineScope,
 ) : ProfileRepository {
-  override fun getProfilesStream(): Flow<List<DestinyResponsesDestinyProfileUserInfoCard>> {
-    return localDataSource.observeAll().map { withContext(dispatcher) { it.toExternal() } }
+  override fun getProfilesStream(): Flow<List<DestinyProfile>> {
+    return localDataSource.observeAll()
   }
 
-  override suspend fun getProfiles(): List<DestinyResponsesDestinyProfileUserInfoCard> {
-    return withContext(dispatcher) { localDataSource.getAll().toExternal() }
+  override suspend fun getProfiles(): List<DestinyProfile> {
+    return withContext(dispatcher) { localDataSource.getAll() }
   }
 
-  override fun getProfileStream(membershipId: Long): Flow<DestinyResponsesDestinyProfileUserInfoCard?> {
-    return localDataSource.observeById(membershipId).map { it.toExternal() }
+  override fun getProfileStream(membershipId: Long): Flow<DestinyProfile?> {
+    return localDataSource.observeById(membershipId)
   }
 
-  override suspend fun getProfile(membershipId: Long): DestinyResponsesDestinyProfileUserInfoCard? {
-    return localDataSource.getById(membershipId)?.toExternal()
+  override suspend fun getProfile(membershipId: Long): DestinyProfile? {
+    return localDataSource.getById(membershipId)
   }
 
-  override suspend fun saveProfiles(profiles: List<DestinyResponsesDestinyProfileUserInfoCard>) {
-    localDataSource.upsertAll(profiles.toLocal())
+  override suspend fun saveProfiles(profiles: List<DestinyProfile>) {
+    localDataSource.upsertAll(profiles)
   }
 }

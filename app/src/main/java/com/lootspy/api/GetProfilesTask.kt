@@ -10,21 +10,17 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.lootspy.client.ApiCallback
 import com.lootspy.client.ApiClient
-import com.lootspy.client.ApiException
-import com.lootspy.client.ApiResponse
-import com.lootspy.client.model.DestinyResponsesDestinyLinkedProfilesResponse
 import com.lootspy.client.model.UserGetMembershipDataById200Response
 import com.lootspy.data.ProfileRepository
 import com.lootspy.data.UserStore
+import com.lootspy.data.source.DestinyProfile
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
-import okhttp3.Call
 
 @HiltWorker
-class SyncTask @AssistedInject constructor(
+class GetProfilesTask @AssistedInject constructor(
   @Assisted private val context: Context,
   @Assisted params: WorkerParameters,
   private val userStore: UserStore,
@@ -34,12 +30,12 @@ class SyncTask @AssistedInject constructor(
   override suspend fun doWork(): Result {
     val accessToken = userStore.accessToken.first()
     val membershipId = userStore.membershipId.first()
-    Log.d("LootSpy API Sync", "Beginning sync. Membership ID is $membershipId")
+    if (accessToken.isEmpty() || membershipId.isEmpty()) {
+      return Result.failure()
+    }
     val notifyChannel = inputData.getString("notify_channel") ?: return Result.failure()
 
-    if (accessToken.isEmpty()) {
-
-    }
+    Log.d("LootSpy API Sync", "Beginning sync. Membership ID is $membershipId")
     val apiClient = ApiClient()
     apiClient.setAccessToken(accessToken)
     val call = apiClient.buildCall(
@@ -80,44 +76,42 @@ class SyncTask @AssistedInject constructor(
 //      userStore.deleteAuthInfo()
       return Result.failure()
     }
+    val membershipData = apiResponse.data?.response ?: return Result.failure()
+
     val memberships = apiResponse.data?.response?.destinyMemberships
-    Log.d("LootSpy API Sync", "Response was ${apiResponse.data}")
     if (memberships != null) {
-      memberships.forEach { Log.d("LootSpy API Sync", it.toString()) }
+      val profiles = memberships.mapNotNull {
+        try {
+          DestinyProfile(
+            it.membershipId!!,
+            it.membershipType!!,
+            it.displayName!!,
+            it.supplementalDisplayName!!,
+            it.iconPath!!,
+            it.bungieGlobalDisplayName!!,
+            it.bungieGlobalDisplayNameCode!!,
+          )
+        } catch (e: NullPointerException) {
+          Log.e("LootSpy API Sync", "Received a membership lacking essential data")
+          null
+        }
+      }
+      if (profiles.isEmpty()) {
+        Log.e("LootSpy API Sync", "No received profiles were valid")
+        return Result.failure()
+      }
+      profileRepository.saveProfiles(profiles)
+      Log.d("LootSpy API Sync", "Retrieved ${profiles.size} memberships from Bungie")
+      val primaryMembershipId =
+        membershipData.primaryMembershipId ?: profiles.getOrNull(0)?.membershipId
+      if (primaryMembershipId != null) {
+        // may not always be set (e.g. for non-cross save players)
+        userStore.savePrimaryMembership(primaryMembershipId)
+      }
     } else {
       Log.d("LootSpy API Sync", "No memberships")
     }
-//    val profiles = apiResponse?.data?.profiles ?: return Result.failure()
-//    Log.d("LootSpy API Sync", "Received the following linked profiles:")
-//    profiles.forEach { profile -> profile.displayName?.let { Log.i("LootSpy API Sync", it) } }
-//    profileRepository.saveProfiles(profiles)
     userStore.saveLastSyncTime(System.currentTimeMillis())
     return Result.success()
-  }
-
-  private fun getLinkedProfilesCallback(): ApiCallback<DestinyResponsesDestinyLinkedProfilesResponse> {
-    return object : ApiCallback<DestinyResponsesDestinyLinkedProfilesResponse> {
-      override fun onFailure(
-        exception: ApiException?,
-        statusCode: Int,
-        responseHeaders: MutableMap<String, MutableList<String>>?
-      ) {
-      }
-
-      override fun onUploadProgress(p0: Long, p1: Long, p2: Boolean) = Unit
-
-      override fun onDownloadProgress(p0: Long, p1: Long, p2: Boolean) = Unit
-
-      override fun onSuccess(
-        response: DestinyResponsesDestinyLinkedProfilesResponse?,
-        status: Int,
-        headers: MutableMap<String, MutableList<String>>?
-      ) {
-        val profiles = response?.profiles
-        if (profiles != null) {
-
-        }
-      }
-    }
   }
 }

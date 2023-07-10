@@ -6,7 +6,7 @@ import android.util.Log
 import androidx.activity.result.ActivityResult
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.lootspy.api.SyncTask
+import com.lootspy.api.GetProfilesTask
 import com.lootspy.data.UserStore
 import com.lootspy.util.WorkBuilders
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -81,7 +81,7 @@ class LootSpyViewModel @Inject constructor(
                 userStore.saveAuthInfo(accessToken, membershipId)
                 WorkBuilders.dispatchUniqueWorker(
                   context,
-                  SyncTask::class.java,
+                  GetProfilesTask::class.java,
                   "sync_loot",
                   mapOf("notify_channel" to "lootspyApi")
                 )

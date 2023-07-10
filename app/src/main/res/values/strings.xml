@@ -45,4 +45,5 @@
     <string name="loading_token_error">Error loading token</string>
     <string name="loading_membership_error">Error loading Bungie membership</string>
     <string name="getting_access_token">Getting credentials from Bungie...</string>
+    <string name="profile_choose_header">Found the following Bungie accounts for you. Choose one below, or tap Refresh to update the list.</string>
 </resources>

@@ -1,6 +1,10 @@
 package com.lootspy.data
 
 import com.lootspy.client.model.DestinyResponsesDestinyProfileUserInfoCard
+import com.lootspy.client.model.GroupsV2GroupUserInfoCard
+import com.lootspy.data.source.LocalFilter
+import com.lootspy.data.source.LocalLootEntry
+import com.lootspy.data.source.DestinyProfile
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -11,28 +15,42 @@ private val json = Json {
   allowStructuredMapKeys = true
 }
 
-fun LootEntry.toLocal() = com.lootspy.data.source.LocalLootEntry(id = id, name = name)
+fun LootEntry.toLocal() = LocalLootEntry(id = id, name = name)
 
 @JvmName("externalToLocalLootEntry")
 fun List<LootEntry>.toLocal() = map(LootEntry::toLocal)
 
-fun com.lootspy.data.source.LocalLootEntry.toExternal() = LootEntry(id = id, name = name)
+fun LocalLootEntry.toExternal() = LootEntry(id = id, name = name)
 
 @JvmName("localToExternalLootEntry")
-fun List<com.lootspy.data.source.LocalLootEntry>.toExternal() = map(com.lootspy.data.source.LocalLootEntry::toExternal)
+fun List<LocalLootEntry>.toExternal() = map(LocalLootEntry::toExternal)
 
-fun Filter.toLocal() = com.lootspy.data.source.LocalFilter(id, name, json.encodeToString(this))
+fun Filter.toLocal() = LocalFilter(id, name, json.encodeToString(this))
 
 @JvmName("externalToLocalFilter")
 fun List<Filter>.toLocal() = map(Filter::toLocal)
 
-fun com.lootspy.data.source.LocalFilter.toExternal() = Filter(id, name, json.decodeFromString(filterData))
+fun LocalFilter.toExternal() = Filter(id, name, json.decodeFromString(filterData))
 
 @JvmName("localToExternalFilter")
-fun List<com.lootspy.data.source.LocalFilter>.toExternal() = map(com.lootspy.data.source.LocalFilter::toExternal)
+fun List<LocalFilter>.toExternal() = map(LocalFilter::toExternal)
 
-fun DestinyResponsesDestinyProfileUserInfoCard.toLocal(): com.lootspy.data.source.LocalProfile {
-  return com.lootspy.data.source.LocalProfile(
+
+
+fun DestinyResponsesDestinyProfileUserInfoCard.toLocal(): DestinyProfile {
+  return DestinyProfile(
+    membershipId!!.toLong(),
+    membershipType!!,
+    displayName!!,
+    supplementalDisplayName!!,
+    iconPath!!,
+    bungieGlobalDisplayName!!,
+    bungieGlobalDisplayNameCode!!
+  )
+}
+
+fun GroupsV2GroupUserInfoCard.toLocal(): DestinyProfile {
+  return DestinyProfile(
     membershipId!!.toLong(),
     membershipType!!,
     displayName!!,
@@ -44,12 +62,12 @@ fun DestinyResponsesDestinyProfileUserInfoCard.toLocal(): com.lootspy.data.sourc
 }
 
 @JvmName("externalToLocalProfile")
-fun List<DestinyResponsesDestinyProfileUserInfoCard>.toLocal() =
-  map(DestinyResponsesDestinyProfileUserInfoCard::toLocal)
+fun List<GroupsV2GroupUserInfoCard>.toLocal() =
+  map(GroupsV2GroupUserInfoCard::toLocal)
 
-fun com.lootspy.data.source.LocalProfile.toExternal(): DestinyResponsesDestinyProfileUserInfoCard {
-  val result = DestinyResponsesDestinyProfileUserInfoCard()
-  result.membershipId = id
+fun DestinyProfile.toExternal(): GroupsV2GroupUserInfoCard {
+  val result = GroupsV2GroupUserInfoCard()
+  result.membershipId = membershipId
   result.membershipType = membershipType
   result.displayName = displayName
   result.supplementalDisplayName = platformDisplayName
@@ -60,4 +78,4 @@ fun com.lootspy.data.source.LocalProfile.toExternal(): DestinyResponsesDestinyPr
 }
 
 @JvmName("localToExternalProfile")
-fun List<com.lootspy.data.source.LocalProfile>.toExternal() = map(com.lootspy.data.source.LocalProfile::toExternal)
+fun List<DestinyProfile>.toExternal() = map(DestinyProfile::toExternal)

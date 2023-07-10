@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-  entities = [LocalLootEntry::class, LocalFilter::class, LocalProfile::class],
+  entities = [LocalLootEntry::class, LocalFilter::class, DestinyProfile::class],
   version = 3,
   exportSchema = false
 )
