@@ -20,7 +20,7 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
 
 @HiltWorker
-class GetProfilesTask @AssistedInject constructor(
+class GetMembershipsTask @AssistedInject constructor(
   @Assisted private val context: Context,
   @Assisted params: WorkerParameters,
   private val userStore: UserStore,
@@ -35,7 +35,7 @@ class GetProfilesTask @AssistedInject constructor(
     }
     val notifyChannel = inputData.getString("notify_channel") ?: return Result.failure()
 
-    Log.d("LootSpy API Sync", "Beginning sync. Membership ID is $membershipId")
+    Log.d("LootSpy API Sync", "Beginning membership sync")
     val apiClient = ApiClient()
     apiClient.setAccessToken(accessToken)
     val call = apiClient.buildCall(
@@ -54,29 +54,11 @@ class GetProfilesTask @AssistedInject constructor(
     val apiResponse = apiClient.executeTyped<UserGetMembershipDataById200Response>(call)
     Log.d("LootSpy API Sync", "Executed API call")
     if (apiResponse.statusCode != 200) {
-      Log.d(
-        "LootSpy API Sync",
-        "Sync failed due to error code from server: ${apiResponse.statusCode}"
-      )
-      val builder = NotificationCompat.Builder(context, notifyChannel)
-        .setContentTitle("LootSpy sync failed")
-        .setContentText("Couldn't get loot. You may need to log in again.")
-        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-        .setAutoCancel(true)
-        .setTimeoutAfter(5000)
-      with(NotificationManagerCompat.from(context)) {
-        if (ActivityCompat.checkSelfPermission(
-            context,
-            Manifest.permission.POST_NOTIFICATIONS
-          ) == PackageManager.PERMISSION_GRANTED
-        ) {
-          notify(0, builder.build())
-        }
-      }
+      notifySyncFailure(apiResponse, context, notifyChannel)
 //      userStore.deleteAuthInfo()
       return Result.failure()
     }
-    val membershipData = apiResponse.data?.response ?: return Result.failure()
+    val membershipData = apiResponse.data.response ?: return Result.failure()
 
     val memberships = apiResponse.data?.response?.destinyMemberships
     if (memberships != null) {

@@ -47,4 +47,6 @@
     <string name="getting_access_token">Getting credentials from Bungie...</string>
     <string name="profile_choose_header">Found the following Bungie accounts for you. Choose one below, or tap Refresh to update the list.</string>
     <string name="profile_no_profiles">Couldn\'t find any Destiny profiles for your account. Check that you logged in with the right platform account.</string>
+    <string name="settings_active_profile">Active profile</string>
+    <string name="nav_bar_settings">Settings</string>
 </resources>

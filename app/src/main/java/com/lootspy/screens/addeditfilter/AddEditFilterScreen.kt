@@ -233,7 +233,6 @@ private fun FilterMatcherItem(
 ) {
   val background =
     if (selected) MaterialTheme.colorScheme.surfaceTint else MaterialTheme.colorScheme.surfaceVariant
-  LocalContext.current
   Card(
     shape = MaterialTheme.shapes.medium,
     colors = CardDefaults.cardColors(containerColor = background),

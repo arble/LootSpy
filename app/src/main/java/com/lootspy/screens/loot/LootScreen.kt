@@ -24,7 +24,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.lootspy.R
-import com.lootspy.api.GetProfilesTask
+import com.lootspy.api.GetMembershipsTask
 import com.lootspy.data.LootEntry
 import com.lootspy.util.LootTopAppBar
 import com.lootspy.util.ScreenContentWithEmptyText
@@ -47,7 +47,7 @@ fun LootScreen(
         onRefresh = {
           WorkBuilders.dispatchUniqueWorker(
             context,
-            GetProfilesTask::class.java,
+            GetMembershipsTask::class.java,
             "sync_loot",
             mapOf("notify_channel" to "lootspyApi")
           )

@@ -6,8 +6,7 @@ import android.util.Log
 import androidx.activity.result.ActivityResult
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.lootspy.api.GetProfilesTask
-import com.lootspy.data.DefaultProfileRepository
+import com.lootspy.api.GetMembershipsTask
 import com.lootspy.data.ProfileRepository
 import com.lootspy.data.UserStore
 import com.lootspy.data.source.DestinyProfile
@@ -98,7 +97,7 @@ class LootSpyViewModel @Inject constructor(
                 userStore.saveAuthInfo(accessToken, membershipId)
                 WorkBuilders.dispatchUniqueWorker(
                   context,
-                  GetProfilesTask::class.java,
+                  GetMembershipsTask::class.java,
                   "sync_loot",
                   mapOf("notify_channel" to "lootspyApi")
                 )

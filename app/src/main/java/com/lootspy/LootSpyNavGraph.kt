@@ -19,6 +19,7 @@ import com.lootspy.LootSpyDestinationArgs.USER_MESSAGE_ARG
 import com.lootspy.screens.addeditfilter.AddEditFilterScreen
 import com.lootspy.screens.filter.FilterScreen
 import com.lootspy.screens.loot.LootScreen
+import com.lootspy.screens.settings.SettingsScreen
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
@@ -110,6 +111,13 @@ fun LootSpyNavGraph(
       }),
     ) {
 
+    }
+    composable(LootSpyDestinations.SETTINGS_ROUTE,
+      arguments = listOf(navArgument(USER_MESSAGE_ARG) {
+        type = NavType.IntType; defaultValue = 0
+      })
+    ) {
+      SettingsScreen()
     }
   }
 }

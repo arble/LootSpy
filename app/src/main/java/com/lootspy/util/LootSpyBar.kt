@@ -3,6 +3,7 @@ package com.lootspy.util
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -72,5 +73,18 @@ fun LootSpyNavBar(
         }
       },
     )
+    NavigationBarItem(
+      icon = { Icon(Icons.Default.Settings, null) },
+      label = { Text(text = stringResource(id = R.string.nav_bar_settings)) },
+      selected = selectedRoute.value == LootSpyDestinations.SETTINGS_ROUTE,
+      onClick = {
+        if (navBackStackEntry?.destination?.route == LootSpyDestinations.SETTINGS_ROUTE) {
+          return@NavigationBarItem
+        }
+        coroutineScope.launch {
+          navigationActions.navigateToSettings()
+          selectedRoute.value = LootSpyDestinations.SETTINGS_ROUTE
+        }
+      })
   }
 }
