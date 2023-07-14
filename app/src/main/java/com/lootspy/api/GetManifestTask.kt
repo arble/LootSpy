@@ -2,8 +2,8 @@ package com.lootspy.api
 
 import android.content.Context
 import android.net.Uri
-import android.provider.OpenableColumns
 import android.util.Log
+import android.webkit.URLUtil
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
@@ -17,19 +17,17 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
-import java.io.BufferedInputStream
 import java.io.File
-import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.net.URL
-import java.util.zip.ZipInputStream
 
 @HiltWorker
 class GetManifestTask @AssistedInject constructor(
   @Assisted private val context: Context,
   @Assisted params: WorkerParameters,
-  private val userStore: UserStore
+  private val userStore: UserStore,
+  private val manifestManager: ManifestManager,
 ) : CoroutineWorker(context, params) {
   override suspend fun doWork(): Result {
     val accessToken = userStore.accessToken.first()
@@ -43,38 +41,53 @@ class GetManifestTask @AssistedInject constructor(
       return Result.failure()
     }
     val data = apiResponse.data.response?.mobileWorldContentPaths
-    Log.d("LootSpy API Sync", "Retrieved manifest data. $data")
+    Log.d(LOG_TAG, "Retrieved manifest data. $data")
+    // TODO: localise
     val enManifestPath = data?.get("en") ?: return Result.failure()
+    val fullPath = BungiePathHelper.getFullUrlForPath(enManifestPath)
     val manifestUri = Uri.parse(BungiePathHelper.getFullUrlForPath(enManifestPath))
-    val fileName = context.contentResolver.query(manifestUri, null, null, null).use {
-      it?.moveToFirst()
-      val columnIndex = it?.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-      if (columnIndex != null) it.getString(columnIndex) else null
+    val fileName = URLUtil.guessFileName(fullPath, null, null)
+    if (fileName == null) {
+      Log.e(LOG_TAG, "Could not resolve filename from manifest URL")
+      return Result.failure()
     }
-    if (fileName.equals(lastManifest)) {
+    if (fileName == lastManifest) {
       // we already have this manifest
+      Log.d(LOG_TAG, "Manifest unchanged since last check")
       return Result.success()
     }
     val manifestDir = File(context.filesDir, "DestinyManifest")
     if (!manifestDir.exists()) {
       manifestDir.mkdirs()
     }
-    if (fileName != null) {
-      val maybeExistingManifest = File(manifestDir, fileName)
-      try {
-        downloadManifestFile(manifestUri, maybeExistingManifest)
-        userStore.saveLastManifest(fileName)
-      } catch (e: IOException) {
-        Log.e("LootSpy API Sync", "Failed to download manifest file: $e")
+    val manifestFile = File(manifestDir, fileName)
+    try {
+      Log.d(LOG_TAG, "Beginning download of Destiny manifest")
+      downloadManifestFile(manifestUri, manifestFile)
+      userStore.saveLastManifest(fileName)
+      Log.d(LOG_TAG, "Completed download of Destiny manifest")
+    } catch (e: IOException) {
+      Log.e(LOG_TAG, "Failed to download manifest file: $e")
+      return Result.failure()
+    }
+    try {
+      Log.d(LOG_TAG, "Beginning unzip of Destiny manifest")
+      val updated = manifestManager.unzipNewDatabase(manifestFile) { progress, bytes ->
+        setProgress(workDataOf("Unzipping" to progress))
+        Log.d(LOG_TAG, "Inflated $bytes bytes")
+      }
+      if (updated) {
+        Log.d(LOG_TAG, "Updated manifest database")
+        userStore.saveLastManifestDb(fileName)
+        manifestFile.delete()
+      } else {
+        Log.e(LOG_TAG, "Failed to update manifest database")
         return Result.failure()
       }
-      try {
-        unzipToDatabase(maybeExistingManifest, context)
-        userStore.saveLastManifestDb(fileName)
-      } catch (e: IOException) {
-        Log.e("LootSpy API Sync", "Failed to unzip manifest file: $e")
-      }
-
+      Log.d(LOG_TAG, "Completed unzip of Destiny manifest")
+    } catch (e: IOException) {
+      Log.e(LOG_TAG, "Failed to unzip manifest file: $e")
+      return Result.failure()
     }
     return Result.success()
   }
@@ -100,6 +113,7 @@ class GetManifestTask @AssistedInject constructor(
             bytesTransferred += byteCount
             if (bytesTransferred > (currentDecile + 1) * decile) {
               setProgress(workDataOf("Downloading" to currentDecile * 10))
+              Log.d(LOG_TAG, "Downloaded $bytesTransferred bytes")
               currentDecile++
             }
           }
@@ -109,39 +123,7 @@ class GetManifestTask @AssistedInject constructor(
     }
   }
 
-  @Throws(IOException::class)
-  private suspend fun unzipToDatabase(zippedFile: File, context: Context) {
-    withContext(Dispatchers.IO) {
-      ZipInputStream(BufferedInputStream(FileInputStream(zippedFile))).use { input ->
-        val zipEntry =
-          input.nextEntry ?: throw IOException("zipped file didn't contain a readable entry")
-        if (zipEntry.isDirectory) {
-          throw IOException("zip entry didn't contain a file")
-        }
-        setProgress(workDataOf("Unzipping" to 0))
-        val length = zipEntry.size
-        var bytesInflated = 0
-        var currentDecile = 0
-        val decile = length / 10
-        val buffer = ByteArray(4096)
-        val destinationFile = context.getDatabasePath("destiny_manifest.db")
-        FileOutputStream(destinationFile).use { output ->
-          while (true) {
-            val count = input.read(buffer)
-            if (count < 0) {
-              break
-            }
-            bytesInflated += count
-            output.write(buffer, 0, count)
-            if (bytesInflated > (currentDecile + 1) * decile) {
-              setProgress(workDataOf("Unzipping" to currentDecile * 10))
-              currentDecile++
-            }
-          }
-          output.flush()
-        }
-        input.closeEntry()
-      }
-    }
+  companion object {
+    private const val LOG_TAG = "LootSpy Manifest Sync"
   }
 }
