@@ -1,5 +1,6 @@
 package com.lootspy.screens.settings
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -81,12 +82,17 @@ fun SettingsScreen(
           }
 
           IconButton(onClick = {
-            WorkBuilders.dispatchUniqueWorker(
-              context,
-              GetCharactersTask::class.java,
-              "sync_chars",
-              mapOf("notify_channel" to "lootspyApi")
-            )
+            scope.launch {
+              if (viewModel.clearDb()) {
+                Toast.makeText(context, "Cleared DB", Toast.LENGTH_SHORT).show()
+              }
+            }
+//            WorkBuilders.dispatchUniqueWorker(
+//              context,
+//              GetCharactersTask::class.java,
+//              "sync_chars",
+//              mapOf("notify_channel" to "lootspyApi")
+//            )
           }) {
             Icon(Icons.Default.MoreVert, null)
           }

@@ -27,7 +27,6 @@ class GetManifestTask @AssistedInject constructor(
   @Assisted private val context: Context,
   @Assisted params: WorkerParameters,
   private val userStore: UserStore,
-  private val manifestManager: ManifestManager,
 ) : CoroutineWorker(context, params) {
   override suspend fun doWork(): Result {
     val accessToken = userStore.accessToken.first()
@@ -52,44 +51,25 @@ class GetManifestTask @AssistedInject constructor(
       return Result.failure()
     }
     if (fileName == lastManifest) {
-      // we already have this manifest
+      // we already have this manifest, but may still need to unzip it
       Log.d(LOG_TAG, "Manifest unchanged since last check")
-      return Result.success()
+      return Result.success(workDataOf(MANIFEST_FILE_KEY to fileName))
     }
     val manifestDir = File(context.filesDir, "DestinyManifest")
     if (!manifestDir.exists()) {
       manifestDir.mkdirs()
     }
     val manifestFile = File(manifestDir, fileName)
-    try {
+    return try {
       Log.d(LOG_TAG, "Beginning download of Destiny manifest")
       downloadManifestFile(manifestUri, manifestFile)
       userStore.saveLastManifest(fileName)
       Log.d(LOG_TAG, "Completed download of Destiny manifest")
+      Result.success(workDataOf(MANIFEST_FILE_KEY to fileName))
     } catch (e: IOException) {
       Log.e(LOG_TAG, "Failed to download manifest file: $e")
-      return Result.failure()
+      Result.failure()
     }
-    try {
-      Log.d(LOG_TAG, "Beginning unzip of Destiny manifest")
-      val updated = manifestManager.unzipNewDatabase(manifestFile) { progress, bytes ->
-        setProgress(workDataOf("Unzipping" to progress))
-        Log.d(LOG_TAG, "Inflated $bytes bytes")
-      }
-      if (updated) {
-        Log.d(LOG_TAG, "Updated manifest database")
-        userStore.saveLastManifestDb(fileName)
-        manifestFile.delete()
-      } else {
-        Log.e(LOG_TAG, "Failed to update manifest database")
-        return Result.failure()
-      }
-      Log.d(LOG_TAG, "Completed unzip of Destiny manifest")
-    } catch (e: IOException) {
-      Log.e(LOG_TAG, "Failed to unzip manifest file: $e")
-      return Result.failure()
-    }
-    return Result.success()
   }
 
   @Throws(IOException::class)
@@ -124,6 +104,7 @@ class GetManifestTask @AssistedInject constructor(
   }
 
   companion object {
+    private const val MANIFEST_FILE_KEY = "manifest_file"
     private const val LOG_TAG = "LootSpy Manifest Sync"
   }
 }

@@ -35,7 +35,7 @@ class ManifestManager @Inject constructor(
     return db
   }
 
-  private fun deleteManifestDb(): Boolean {
+  fun deleteManifestDb(): Boolean {
     val maybeManifestDb = manifestDb
     if (maybeManifestDb != null) {
       val deleted = SQLiteDatabase.deleteDatabase(getManifestDbFile())

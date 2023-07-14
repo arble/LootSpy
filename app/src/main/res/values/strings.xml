@@ -49,4 +49,5 @@
     <string name="profile_no_profiles">Couldn\'t find any Destiny profiles for your account. Check that you logged in with the right platform account.</string>
     <string name="settings_active_profile">Active profile</string>
     <string name="nav_bar_settings">Settings</string>
+    <string name="manifest_outdated_desc">The Destiny manifest is out of date. Without an up to date manifest, some items may not be found and features such as autocomplete will not function. Click OK to download the latest manifest from Bungie (may take a minute or two).</string>
 </resources>

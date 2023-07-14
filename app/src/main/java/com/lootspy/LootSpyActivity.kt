@@ -16,14 +16,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.lootspy.screens.login.AppAuthConfigProvider
 import com.lootspy.screens.login.AppAuthConfigProvider.Companion.OAUTH_CLIENT_ID
 import com.lootspy.ui.theme.LootSpyTheme
+import com.lootspy.util.AlertDialog
 import com.lootspy.util.LootSpyNavBar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -47,6 +50,7 @@ class LootSpyActivity : ComponentActivity() {
   ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
+    var manifestDialogVisible by remember { mutableStateOf(false) }
 
     val authService = AuthorizationService(this)
     val context = LocalContext.current
@@ -83,6 +87,8 @@ class LootSpyActivity : ComponentActivity() {
         LootSpyProfilePrompt(profiles = uiState.allMemberships) {
           scope.launch { viewModel.saveActiveMembership(it) }
         }
+      } else if (uiState.databaseName.isEmpty()) {
+        manifestDialogVisible = true
       } else {
         Scaffold(bottomBar = {
           LootSpyNavBar(
@@ -93,6 +99,14 @@ class LootSpyActivity : ComponentActivity() {
             }
           )
         }) { paddingValues ->
+          AlertDialog(
+            titleText = "Manifest out of date",
+            messageText = stringResource(id = R.string.manifest_outdated_desc),
+            ackText = "Cancel",
+            confirmText = "OK",
+            onDismiss = { /*TODO*/ },
+            onConfirm = { /*TODO*/ },
+          )
           LootSpyNavGraph(
             navController = navController,
             modifier = Modifier.padding(paddingValues),
