@@ -9,12 +9,12 @@ plugins {
 
 android {
     namespace 'com.lootspy'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId 'com.lootspy'
-        minSdk 26
-        targetSdk 33
+        minSdk 27
+        targetSdk 34
         versionCode 1
         versionName "1.0"
 

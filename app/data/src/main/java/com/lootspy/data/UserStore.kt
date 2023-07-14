@@ -12,10 +12,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Singleton
 
-enum class ManifestProgress {
-  NONE, DOWNLOADING, UNZIPPING, PRUNING
-}
-
 @Singleton
 class UserStore(private val context: Context) {
   companion object {
@@ -25,7 +21,8 @@ class UserStore(private val context: Context) {
     private val LAST_SYNC_TIME = longPreferencesKey("last_sync_time")
     private val PRIMARY_MEMBERSHIP_ID = longPreferencesKey("primary_membership_id")
     private val ACTIVE_MEMBERSHIP_ID = longPreferencesKey("selected_membership_id")
-    private val MANIFEST_PROGRESS = stringPreferencesKey("manifest_progress")
+    private val LAST_MANIFEST = stringPreferencesKey("last_manifest")
+    private val LAST_MANIFEST_DB = stringPreferencesKey("last_manifest_db")
   }
 
   val accessToken: Flow<String> = context.dataStore.data.map { it[TOKEN_KEY] ?: "" }
@@ -33,6 +30,8 @@ class UserStore(private val context: Context) {
   val lastSyncTime: Flow<Long> = context.dataStore.data.map { it[LAST_SYNC_TIME] ?: 0 }
   val primaryMembership: Flow<Long> = context.dataStore.data.map { it[PRIMARY_MEMBERSHIP_ID] ?: 0 }
   val activeMembership: Flow<Long> = context.dataStore.data.map { it[ACTIVE_MEMBERSHIP_ID] ?: 0 }
+  val lastManifest: Flow<String> = context.dataStore.data.map { it[LAST_MANIFEST] ?: "" }
+  val lastManifestDb: Flow<String> = context.dataStore.data.map { it[LAST_MANIFEST_DB] ?: "" }
 
   suspend fun saveAuthInfo(token: String, membershipId: String) {
     context.dataStore.edit {
@@ -60,7 +59,11 @@ class UserStore(private val context: Context) {
     context.dataStore.edit { it[ACTIVE_MEMBERSHIP_ID] = membershipId }
   }
 
-  suspend fun saveManifestProgress(progress: ManifestProgress) {
-    context.dataStore.edit { it[MANIFEST_PROGRESS] = progress.name }
+  suspend fun saveLastManifest(manifest: String) {
+    context.dataStore.edit { it[LAST_MANIFEST] = manifest }
+  }
+
+  suspend fun saveLastManifestDb(manifestDb: String) {
+    context.dataStore.edit { it[LAST_MANIFEST_DB] = manifestDb }
   }
 }

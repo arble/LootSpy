@@ -10,7 +10,6 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.lootspy.client.ApiClient
 import com.lootspy.client.model.Destiny2GetDestinyManifest200Response
-import com.lootspy.data.ManifestProgress
 import com.lootspy.data.UserStore
 import com.lootspy.util.BungiePathHelper
 import dagger.assisted.Assisted
@@ -34,6 +33,7 @@ class GetManifestTask @AssistedInject constructor(
 ) : CoroutineWorker(context, params) {
   override suspend fun doWork(): Result {
     val accessToken = userStore.accessToken.first()
+    val lastManifest = userStore.lastManifest.first()
     val apiClient = ApiClient()
     apiClient.setAccessToken(accessToken)
     val apiPath = "/Destiny2/Manifest/"
@@ -51,29 +51,30 @@ class GetManifestTask @AssistedInject constructor(
       val columnIndex = it?.getColumnIndex(OpenableColumns.DISPLAY_NAME)
       if (columnIndex != null) it.getString(columnIndex) else null
     }
+    if (fileName.equals(lastManifest)) {
+      // we already have this manifest
+      return Result.success()
+    }
     val manifestDir = File(context.filesDir, "DestinyManifest")
     if (!manifestDir.exists()) {
       manifestDir.mkdirs()
     }
     if (fileName != null) {
       val maybeExistingManifest = File(manifestDir, fileName)
-      if (maybeExistingManifest.exists()) {
-        return Result.success()
-      } else {
-        try {
-          userStore.saveManifestProgress(ManifestProgress.DOWNLOADING)
-          downloadManifestFile(manifestUri, maybeExistingManifest)
-        } catch (e: IOException) {
-          Log.e("LootSpy API Sync", "Failed to download manifest file: $e")
-          return Result.failure()
-        }
-        try {
-          userStore.saveManifestProgress(ManifestProgress.UNZIPPING)
-          unzipToDatabase(maybeExistingManifest, context)
-        } catch (e: IOException) {
-          Log.e("LootSpy API Sync", "Failed to unzip manifest file: $e")
-        }
+      try {
+        downloadManifestFile(manifestUri, maybeExistingManifest)
+        userStore.saveLastManifest(fileName)
+      } catch (e: IOException) {
+        Log.e("LootSpy API Sync", "Failed to download manifest file: $e")
+        return Result.failure()
       }
+      try {
+        unzipToDatabase(maybeExistingManifest, context)
+        userStore.saveLastManifestDb(fileName)
+      } catch (e: IOException) {
+        Log.e("LootSpy API Sync", "Failed to unzip manifest file: $e")
+      }
+
     }
     return Result.success()
   }
