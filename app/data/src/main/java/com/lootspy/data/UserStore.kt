@@ -4,12 +4,17 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Singleton
+
+enum class ManifestProgress {
+  NONE, DOWNLOADING, UNZIPPING, PRUNING
+}
 
 @Singleton
 class UserStore(private val context: Context) {
@@ -20,6 +25,7 @@ class UserStore(private val context: Context) {
     private val LAST_SYNC_TIME = longPreferencesKey("last_sync_time")
     private val PRIMARY_MEMBERSHIP_ID = longPreferencesKey("primary_membership_id")
     private val ACTIVE_MEMBERSHIP_ID = longPreferencesKey("selected_membership_id")
+    private val MANIFEST_PROGRESS = stringPreferencesKey("manifest_progress")
   }
 
   val accessToken: Flow<String> = context.dataStore.data.map { it[TOKEN_KEY] ?: "" }
@@ -52,5 +58,9 @@ class UserStore(private val context: Context) {
 
   suspend fun saveActiveMembership(membershipId: Long) {
     context.dataStore.edit { it[ACTIVE_MEMBERSHIP_ID] = membershipId }
+  }
+
+  suspend fun saveManifestProgress(progress: ManifestProgress) {
+    context.dataStore.edit { it[MANIFEST_PROGRESS] = progress.name }
   }
 }
