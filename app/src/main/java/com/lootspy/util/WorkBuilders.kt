@@ -47,16 +47,20 @@ class WorkBuilders {
       workName: String,
       workData: Map<String, String>? = null,
       followingJobs: List<Class<out ListenableWorker>>,
-      policy: ExistingWorkPolicy = ExistingWorkPolicy.KEEP
+      policy: ExistingWorkPolicy = ExistingWorkPolicy.KEEP,
+      tags: List<String>? = null,
     ) {
       val (workManager, initialRequest) = getManagerAndInitialRequest(
         context,
         initialWorkerClass,
-        workData
+        workData,
+        tags
       )
       var chain = workManager.beginUniqueWork(workName, policy, initialRequest)
       for (subsequentClass in followingJobs) {
-        chain = chain.then(OneTimeWorkRequest.Builder(subsequentClass).build())
+        val nextRequest = OneTimeWorkRequest.Builder(subsequentClass)
+        tags?.forEach { nextRequest.addTag(it) }
+        chain = chain.then(nextRequest.build())
       }
       chain.enqueue()
     }
@@ -65,16 +69,16 @@ class WorkBuilders {
       context: Context,
       workerClass: Class<out ListenableWorker>,
       workData: Map<String, String>?,
+      tags: List<String>? = null,
     ): Pair<WorkManager, OneTimeWorkRequest> {
       val workManager = WorkManager.getInstance(context)
       val data = Data.Builder()
       if (workData != null) {
         data.putAll(workData)
       }
-      val workRequest = OneTimeWorkRequest.Builder(workerClass)
-        .setInputData(data.build())
-        .build()
-      return Pair(workManager, workRequest)
+      val workRequest = OneTimeWorkRequest.Builder(workerClass).setInputData(data.build())
+      tags?.forEach { workRequest.addTag(it) }
+      return Pair(workManager, workRequest.build())
     }
   }
 }

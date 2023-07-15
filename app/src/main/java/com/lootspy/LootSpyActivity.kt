@@ -15,11 +15,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -33,7 +31,6 @@ import com.lootspy.api.UnzipManifestTask
 import com.lootspy.screens.login.AppAuthConfigProvider
 import com.lootspy.screens.login.AppAuthConfigProvider.Companion.OAUTH_CLIENT_ID
 import com.lootspy.ui.theme.LootSpyTheme
-import com.lootspy.util.AlertDialog
 import com.lootspy.util.LootSpyNavBar
 import com.lootspy.util.ProgressAlertDialog
 import com.lootspy.util.TextAlertDialog
@@ -46,11 +43,18 @@ import net.openid.appauth.ResponseTypeValues
 
 @AndroidEntryPoint
 class LootSpyActivity : ComponentActivity() {
+  private lateinit var authService: AuthorizationService
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContent {
       MainActivityContent()
     }
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+    authService.dispose()
   }
 
   @OptIn(ExperimentalAnimationApi::class, ExperimentalMaterial3Api::class)
@@ -61,11 +65,12 @@ class LootSpyActivity : ComponentActivity() {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
 
-    val authService = AuthorizationService(this)
+    authService = AuthorizationService(this)
     val context = LocalContext.current
-    val syncManifestState =
-      WorkManager.getInstance(context).getWorkInfosForUniqueWorkLiveData("sync_manifest")
-        .observeAsState()
+    val workFlow = WorkManager.getInstance(context).getWorkInfosByTagFlow("sync_manifest")
+      .collectAsStateWithLifecycle(
+        initialValue = null
+      )
     val launcherForResult = rememberLauncherForActivityResult(
       contract = ActivityResultContracts.StartActivityForResult(),
     ) { result ->
@@ -111,7 +116,7 @@ class LootSpyActivity : ComponentActivity() {
           )
         }) { paddingValues ->
           if (uiState.databaseName.isEmpty()) {
-            ManifestDialogs(context, uiState, syncManifestState)
+            ManifestDialogs(context, uiState, workFlow, viewModel)
           }
           LootSpyNavGraph(
             navController = navController,
@@ -128,17 +133,20 @@ class LootSpyActivity : ComponentActivity() {
   private fun ManifestDialogs(
     context: Context,
     uiState: MainUiState,
-    syncManifestState: State<List<WorkInfo>?>
+    syncManifestState: State<List<WorkInfo>?>,
+    viewModel: LootSpyViewModel,
   ) {
     if (uiState.databaseName.isEmpty()) {
       if (uiState.fetchingManifest) {
-        val workInfo = syncManifestState.value?.getOrNull(0)
+        val workInfo = syncManifestState.value?.find { it.state == WorkInfo.State.RUNNING }
         val (stage, progress) = if (workInfo != null) {
           val dataMap = workInfo.progress.keyValueMap
           if (dataMap.isEmpty()) {
             Pair("Setting up", 0f)
           } else {
-            Pair(dataMap.keys.toList().first() as String, dataMap.values.toList().first() as Float)
+            val stage = dataMap.keys.toList().first() as String
+            val progress = dataMap.values.toList().first() as Int
+            Pair(stage, progress.toFloat() / 10f)
           }
         } else {
           Pair("Setting up", 0f)
@@ -158,12 +166,14 @@ class LootSpyActivity : ComponentActivity() {
           onDismiss = { finish() },
           onConfirm = {
             WorkBuilders.dispatchUniqueWorkerLinearFollowers(
-              context,
-              GetManifestTask::class.java,
-              "sync_manifest",
-              null,
-              listOf(UnzipManifestTask::class.java)
+              context = context,
+              initialWorkerClass = GetManifestTask::class.java,
+              workName = "sync_manifest",
+              workData = null,
+              followingJobs = listOf(UnzipManifestTask::class.java),
+              tags = listOf("sync_manifest")
             )
+            viewModel.setFetchingManifest(true)
           },
         )
       }

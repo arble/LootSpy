@@ -66,7 +66,8 @@ class LootSpyViewModel @Inject constructor(
           allMemberships = allMemberships,
           activeMembership = activeMembership,
           databaseName = databaseName,
-          fetchingManifest = isFetchingManifest
+          // use population of the database name to signal the end of the fetch process to the UI
+          fetchingManifest = if (databaseName.isNotEmpty()) false else isFetchingManifest
         )
       }
     }.stateIn(

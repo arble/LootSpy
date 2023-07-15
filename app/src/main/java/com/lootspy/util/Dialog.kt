@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -184,13 +185,15 @@ fun ProgressAlertDialog(
         modifier = Modifier
           .padding(top = 10.dp, start = 25.dp, end = 25.dp)
           .fillMaxWidth(),
-        style = MaterialTheme.typography.bodyMedium
+        style = MaterialTheme.typography.bodyMedium,
+        color = Color.Black,
       )
       Spacer(modifier = Modifier.height(12.dp))
+      val progressModifier = Modifier.align(Alignment.CenterHorizontally)
       if (progress > 0f) {
-        CircularProgressIndicator(progress = progress)
+        CircularProgressIndicator(progress = progress, modifier = progressModifier)
       } else {
-        CircularProgressIndicator()
+        CircularProgressIndicator(modifier = progressModifier)
       }
       if (cancelText != null) {
         TextButton(
@@ -201,6 +204,7 @@ fun ProgressAlertDialog(
             text = cancelText,
             textAlign = TextAlign.Center,
             fontWeight = FontWeight.ExtraBold,
+            color = Color.Black,
           )
         }
       }
@@ -232,6 +236,7 @@ fun AlertDialog(
           style = MaterialTheme.typography.labelLarge,
           maxLines = 2,
           overflow = TextOverflow.Ellipsis,
+          color = Color.Black,
         )
         dialogContents()
       }
@@ -270,6 +275,7 @@ fun TextInputDialog(
           style = MaterialTheme.typography.labelLarge,
           maxLines = 2,
           overflow = TextOverflow.Ellipsis,
+          color = Color.Black,
         )
         Text(
           text = messageText,
@@ -277,7 +283,8 @@ fun TextInputDialog(
           modifier = Modifier
             .padding(top = 10.dp, start = 25.dp, end = 25.dp)
             .fillMaxWidth(),
-          style = MaterialTheme.typography.bodyMedium
+          style = MaterialTheme.typography.bodyMedium,
+          color = Color.Black,
         )
         Spacer(modifier = Modifier.height(12.dp))
         TextField(

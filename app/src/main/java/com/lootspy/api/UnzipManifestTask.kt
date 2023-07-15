@@ -34,6 +34,7 @@ class UnzipManifestTask @AssistedInject constructor(
     try {
       val manifestFile = File(manifestDir, fileName)
       Log.d(LOG_TAG, "Beginning unzip of Destiny manifest")
+      setProgress(workDataOf("Unzipping" to 4))
       val updated = manifestManager.unzipNewDatabase(manifestFile) { progress, bytes ->
         setProgress(workDataOf("Unzipping" to progress))
         Log.d(LOG_TAG, "Inflated $bytes bytes")

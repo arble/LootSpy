@@ -1,7 +1,6 @@
 package com.lootspy.screens.settings
 
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,9 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.lootspy.R
-import com.lootspy.api.GetCharactersTask
-import com.lootspy.api.GetManifestTask
-import com.lootspy.data.source.DestinyProfile
+import com.lootspy.api.GetItemNamesTask
 import com.lootspy.util.BungiePathHelper
 import com.lootspy.util.WorkBuilders
 import com.lootspy.util.popup.LootSpyPopup
@@ -73,8 +70,8 @@ fun SettingsScreen(
           IconButton(onClick = {
             WorkBuilders.dispatchUniqueWorker(
               context,
-              GetManifestTask::class.java,
-              "sync_manifest",
+              GetItemNamesTask::class.java,
+              "table_optimise",
               mapOf("notify_channel" to "lootspyApi")
             )
           }) {

@@ -3,12 +3,16 @@ package com.lootspy.api
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.database.Cursor
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.lootspy.client.ApiClient
 import com.lootspy.client.ApiResponse
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import okhttp3.Call
 
 inline fun <reified T> ApiClient.executeTyped(call: Call): ApiResponse<T> {
@@ -17,6 +21,15 @@ inline fun <reified T> ApiClient.executeTyped(call: Call): ApiResponse<T> {
 
 private fun pairsToApiClientPairs(pairs: List<Pair<String, String>>) =
   pairs.map { com.lootspy.client.Pair(it.first, it.second) }
+
+fun Cursor.manifestColumns(): Pair<Int, Int> {
+  return Pair(getColumnIndex("id"), getColumnIndex("json"))
+}
+
+fun ByteArray.manifestJsonObject(): JsonObject {
+  val jsonString = toString(Charsets.US_ASCII).let { it.substring(0, it.length - 1) }
+  return Json.decodeFromString(jsonString)
+}
 
 fun ApiClient.buildBungieCall(
   apiPath: String,

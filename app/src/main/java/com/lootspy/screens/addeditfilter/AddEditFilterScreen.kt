@@ -49,6 +49,7 @@ import com.lootspy.screens.addeditfilter.matcher.NameMatcherDetails
 import com.lootspy.util.AlertDialog
 import com.lootspy.util.NewMatcherDialog
 import com.lootspy.util.ScreenContentWithEmptyText
+import com.lootspy.util.TextAlertDialog
 import com.lootspy.util.TextInputDialog
 import com.lootspy.util.Validation
 
@@ -141,7 +142,7 @@ fun AddEditFilterScreen(
       )
     }
     if (showUnsavedChangesAlert) {
-      AlertDialog(
+      TextAlertDialog(
         titleText = stringResource(id = R.string.add_edit_filter_unsaved_changes),
         messageText = stringResource(id = R.string.add_edit_filter_unsaved_changes_message),
         ackText = stringResource(id = R.string.dialog_keep_editing),
@@ -151,7 +152,7 @@ fun AddEditFilterScreen(
       )
     }
     if (showAlreadyMatchedDialog) {
-      AlertDialog(
+      TextAlertDialog(
         titleText = stringResource(id = R.string.add_edit_filter_already_matched_title),
         messageText = stringResource(id = R.string.add_edit_filter_already_matched_message),
         ackText = stringResource(id = R.string.dialog_ok),

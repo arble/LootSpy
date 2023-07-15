@@ -5,6 +5,8 @@ import android.database.sqlite.SQLiteDatabase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
@@ -19,6 +21,7 @@ class ManifestManager @Inject constructor(
   @ApplicationContext private val context: Context,
 ) {
   private var manifestDb: SQLiteDatabase? = null
+  private var weaponCategories: HashSet<Int>? = null
 
   private fun getManifestDbFile(): File {
     return context.getDatabasePath(MANIFEST_DATABASE)
@@ -92,7 +95,32 @@ class ManifestManager @Inject constructor(
     }
   }
 
+  fun getWeaponCategories(): Set<Int> {
+    val maybeResult = weaponCategories
+    if (maybeResult != null) {
+      return maybeResult
+    }
+    val result = HashSet<Int>()
+    getManifestDb().query("DestinyItemCategoryDefinition", null, null, null, null, null, null).use { cursor ->
+      val (idIndex, jsonIndex) = cursor.manifestColumns()
+      while (cursor.moveToNext()) {
+        val hash = cursor.getInt(idIndex)
+        val blob = cursor.getBlob(jsonIndex)
+        val obj = blob.manifestJsonObject()
+        val displayObj = obj["displayProperties"]?.jsonObject
+        if (displayObj != null) {
+          val name = displayObj["name"]?.jsonPrimitive.toString()
+          if (weaponCategoryNames.contains(name)) {
+            result.add(hash)
+          }
+        }
+      }
+    }
+    return result
+  }
+
   companion object {
     private const val MANIFEST_DATABASE = "destiny_manifest.db"
+    private val weaponCategoryNames = setOf("Auto Rifle", "Sidearm", "Hand Cannon", "Sniper Rifle")
   }
 }
