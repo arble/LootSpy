@@ -13,6 +13,8 @@ import com.lootspy.client.ApiResponse
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Call
 
 inline fun <reified T> ApiClient.executeTyped(call: Call): ApiResponse<T> {
@@ -26,9 +28,26 @@ fun Cursor.manifestColumns(): Pair<Int, Int> {
   return Pair(getColumnIndex("id"), getColumnIndex("json"))
 }
 
-fun ByteArray.manifestJsonObject(): JsonObject {
-  val jsonString = toString(Charsets.US_ASCII).let { it.substring(0, it.length - 1) }
+fun Cursor.blobToJson(index: Int): JsonObject {
+  val blob =  getBlob(index)
+  val jsonString = blob.toString(Charsets.US_ASCII).let { it.substring(0, it.length - 1) }
   return Json.decodeFromString(jsonString)
+}
+
+fun Cursor.blobToJson(): JsonObject {
+  return blobToJson(getColumnIndex("json"))
+}
+
+fun JsonObject.displayPair(first: String, second: String): Pair<String, String>? {
+  val displayObj = get("displayProperties")?.jsonObject
+  if (displayObj != null) {
+    val firstProperty = displayObj[first]
+    val secondProperty = displayObj[second]
+    if (firstProperty != null && secondProperty != null) {
+      return Pair(firstProperty.jsonPrimitive.toString(), secondProperty.jsonPrimitive.toString())
+    }
+  }
+  return null
 }
 
 fun ApiClient.buildBungieCall(

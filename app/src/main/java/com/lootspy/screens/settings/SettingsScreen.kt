@@ -44,7 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.lootspy.R
-import com.lootspy.api.GetItemNamesTask
+import com.lootspy.api.GetWeaponNamesTask
 import com.lootspy.util.BungiePathHelper
 import com.lootspy.util.WorkBuilders
 import com.lootspy.util.popup.LootSpyPopup
@@ -70,7 +70,7 @@ fun SettingsScreen(
           IconButton(onClick = {
             WorkBuilders.dispatchUniqueWorker(
               context,
-              GetItemNamesTask::class.java,
+              GetWeaponNamesTask::class.java,
               "table_optimise",
               mapOf("notify_channel" to "lootspyApi")
             )

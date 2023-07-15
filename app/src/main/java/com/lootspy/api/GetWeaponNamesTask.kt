@@ -7,15 +7,16 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.internal.decodeStringToJsonTree
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 @HiltWorker
-class GetItemNamesTask @AssistedInject constructor(
+class GetWeaponNamesTask @AssistedInject constructor(
   @Assisted private val context: Context,
   @Assisted params: WorkerParameters,
   private val manifestManager: ManifestManager
@@ -24,11 +25,10 @@ class GetItemNamesTask @AssistedInject constructor(
     val db = manifestManager.getManifestDb()
     var limit = 0
     var exit = false
+    val weaponCategoryHashes = manifestManager.getWeaponCategories()
     while (true) {
       val limitString = "$limit,${limit + 500}"
       db.query("DestinyInventoryItemDefinition", null, null, null, null, null, null, "20").use {
-//        val idIndex = it.getColumnIndex("id")
-//        val jsonIndex = it.getColumnIndex("json")
         val (idIndex, jsonIndex) = it.manifestColumns()
         if (it.count == 0) {
           exit = true
@@ -46,6 +46,14 @@ class GetItemNamesTask @AssistedInject constructor(
             val name = displayObj["name"]
             val icon = displayObj["icon"]
             Log.d(LOG_TAG, "$name: $hash $icon")
+          }
+          val categoryHashesArray = obj["itemCategoryHashes"]?.jsonArray
+          if (categoryHashesArray != null) {
+            for (element in categoryHashesArray) {
+              if (weaponCategoryHashes.contains(element.jsonPrimitive.int)) {
+
+              }
+            }
           }
         }
       }
