@@ -3,6 +3,7 @@ package com.lootspy.util
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -112,16 +114,110 @@ fun NewMatcherDialog(
 }
 
 @Composable
-fun AlertDialog(
+fun TextAlertDialog(
   titleText: String,
   messageText: String,
   ackText: String,
-  modifier: Modifier = Modifier,
   confirmText: String? = null,
-  onDismiss: () -> Unit,
+  modal: Boolean = false,
   onConfirm: () -> Unit = {},
+  onDismiss: () -> Unit,
 ) {
-  Dialog(onDismissRequest = onDismiss) {
+  AlertDialog(
+    titleText = titleText,
+    modal = modal,
+    dialogContents = {
+      Text(
+        text = messageText,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+          .padding(top = 10.dp, start = 25.dp, end = 25.dp)
+          .fillMaxWidth(),
+        style = MaterialTheme.typography.bodyMedium
+      )
+      Spacer(modifier = Modifier.height(12.dp))
+      Row(modifier = Modifier.fillMaxWidth()) {
+        TextButton(
+          onClick = onDismiss,
+          modifier = Modifier.weight(if (confirmText != null) 0.5f else 1f)
+        ) {
+          Text(
+            text = ackText,
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.ExtraBold,
+          )
+        }
+        if (confirmText != null) {
+          TextButton(
+            onClick = onConfirm,
+            modifier = Modifier.weight(0.5f)
+          ) {
+            Text(
+              text = confirmText,
+              textAlign = TextAlign.Center,
+              fontWeight = FontWeight.ExtraBold,
+            )
+          }
+        }
+      }
+    }) {
+
+  }
+}
+
+@Composable
+fun ProgressAlertDialog(
+  titleText: String,
+  infoText: String,
+  progress: Float,
+  cancelText: String? = null,
+  onCancel: () -> Unit = {},
+) {
+  AlertDialog(
+    titleText = titleText,
+    onDismiss = onCancel,
+    modal = cancelText == null,
+    dialogContents = {
+      Text(
+        text = infoText,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+          .padding(top = 10.dp, start = 25.dp, end = 25.dp)
+          .fillMaxWidth(),
+        style = MaterialTheme.typography.bodyMedium
+      )
+      Spacer(modifier = Modifier.height(12.dp))
+      if (progress > 0f) {
+        CircularProgressIndicator(progress = progress)
+      } else {
+        CircularProgressIndicator()
+      }
+      if (cancelText != null) {
+        TextButton(
+          onClick = onCancel,
+          modifier = Modifier.fillMaxWidth()
+        ) {
+          Text(
+            text = cancelText,
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.ExtraBold,
+          )
+        }
+      }
+    })
+}
+
+@Composable
+fun AlertDialog(
+  titleText: String,
+  dialogContents: @Composable ColumnScope.() -> Unit,
+  modifier: Modifier = Modifier,
+  modal: Boolean = false,
+  onDismiss: () -> Unit,
+) {
+  Dialog(onDismissRequest = if (modal) {
+    {}
+  } else onDismiss) {
     Card(
       shape = RoundedCornerShape(10.dp),
       modifier = Modifier.padding(10.dp, 5.dp, 10.dp, 10.dp)
@@ -137,39 +233,7 @@ fun AlertDialog(
           maxLines = 2,
           overflow = TextOverflow.Ellipsis,
         )
-        Text(
-          text = messageText,
-          textAlign = TextAlign.Center,
-          modifier = Modifier
-            .padding(top = 10.dp, start = 25.dp, end = 25.dp)
-            .fillMaxWidth(),
-          style = MaterialTheme.typography.bodyMedium
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Row(modifier = Modifier.fillMaxWidth()) {
-          TextButton(
-            onClick = onDismiss,
-            modifier = Modifier.weight(if (confirmText != null) 0.5f else 1f)
-          ) {
-            Text(
-              text = ackText,
-              textAlign = TextAlign.Center,
-              fontWeight = FontWeight.ExtraBold,
-            )
-          }
-          if (confirmText != null) {
-            TextButton(
-              onClick = onConfirm,
-              modifier = Modifier.weight(0.5f)
-            ) {
-              Text(
-                text = confirmText,
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.ExtraBold,
-              )
-            }
-          }
-        }
+        dialogContents()
       }
     }
   }

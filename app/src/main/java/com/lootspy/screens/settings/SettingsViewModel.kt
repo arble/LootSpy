@@ -49,8 +49,12 @@ class SettingsViewModel @Inject constructor(
 
   suspend fun clearDb(): Boolean {
     return withContext(Dispatchers.IO) {
-      userStore.saveLastManifest("")
-      manifestManager.deleteManifestDb()
+      val result = manifestManager.deleteManifestDb()
+      if (result) {
+        userStore.saveLastManifest("")
+        userStore.saveLastManifestDb("")
+      }
+      return@withContext result
     }
   }
 

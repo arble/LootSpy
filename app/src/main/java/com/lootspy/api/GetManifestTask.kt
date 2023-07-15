@@ -92,7 +92,7 @@ class GetManifestTask @AssistedInject constructor(
             output.write(buf, 0, byteCount)
             bytesTransferred += byteCount
             if (bytesTransferred > (currentDecile + 1) * decile) {
-              setProgress(workDataOf("Downloading" to currentDecile * 10))
+              setProgress(workDataOf("Downloading" to currentDecile))
               Log.d(LOG_TAG, "Downloaded $bytesTransferred bytes")
               currentDecile++
             }

@@ -2,16 +2,19 @@ package com.lootspy.api
 
 import android.content.Context
 import android.util.Log
+import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.lootspy.data.UserStore
 import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
 import java.io.File
 import java.io.IOException
 
-class UnzipManifestTask constructor(
+@HiltWorker
+class UnzipManifestTask @AssistedInject constructor(
   @Assisted private val context: Context,
   @Assisted params: WorkerParameters,
   private val userStore: UserStore,

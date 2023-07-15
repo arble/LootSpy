@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.openid.appauth.AuthorizationException
 import net.openid.appauth.AuthorizationResponse
@@ -32,6 +33,7 @@ data class MainUiState(
   val allMemberships: List<DestinyProfile> = listOf(),
   val activeMembership: Long = 0,
   val databaseName: String = "",
+  val fetchingManifest: Boolean = false,
   val userMessage: Int? = null,
 ) {
   fun isLoggedOut() = accessToken.isEmpty() && membershipId.isEmpty()
@@ -43,16 +45,18 @@ class LootSpyViewModel @Inject constructor(
   profileRepository: ProfileRepository
 ) : ViewModel() {
   private val _isDoingToken = MutableStateFlow(false)
+  private val _isFetchingManifest = MutableStateFlow(false)
 
   val uiState: StateFlow<MainUiState> =
     combine(
       _isDoingToken,
+      _isFetchingManifest,
       userStore.accessToken,
       userStore.membershipId,
       profileRepository.getProfilesStream(),
       userStore.activeMembership,
       userStore.lastManifestDb,
-    ) { isDoingToken, token, membershipId, allMemberships, activeMembership, databaseName ->
+    ) { isDoingToken, isFetchingManifest, token, membershipId, allMemberships, activeMembership, databaseName ->
       if (isDoingToken) {
         MainUiState(pendingToken = true)
       } else {
@@ -62,6 +66,7 @@ class LootSpyViewModel @Inject constructor(
           allMemberships = allMemberships,
           activeMembership = activeMembership,
           databaseName = databaseName,
+          fetchingManifest = isFetchingManifest
         )
       }
     }.stateIn(
@@ -72,6 +77,10 @@ class LootSpyViewModel @Inject constructor(
 
   fun beginGetToken() {
     _isDoingToken.value = true
+  }
+
+  fun setFetchingManifest(fetching: Boolean) {
+    _isFetchingManifest.update { fetching }
   }
 
   suspend fun saveActiveMembership(profile: DestinyProfile) {
@@ -113,25 +122,28 @@ class LootSpyViewModel @Inject constructor(
     }
   }
 
-  private fun <T1, T2, T3, T4, T5, T6, R> combine(
+  private fun <T1, T2, T3, T4, T5, T6, T7, R> combine(
     flow: Flow<T1>,
     flow2: Flow<T2>,
     flow3: Flow<T3>,
     flow4: Flow<T4>,
     flow5: Flow<T5>,
     flow6: Flow<T6>,
-    transform: suspend (T1, T2, T3, T4, T5, T6) -> R
+    flow7: Flow<T7>,
+    transform: suspend (T1, T2, T3, T4, T5, T6, T7) -> R
   ): Flow<R> = combine(
     combine(flow, flow2, flow3, ::Triple),
-    combine(flow4, flow5, flow6, ::Triple)
-  ) { t1, t2 ->
+    combine(flow4, flow5, flow6, ::Triple),
+    flow7,
+  ) { t1, t2, t3 ->
     transform(
       t1.first,
       t1.second,
       t1.third,
       t2.first,
       t2.second,
-      t2.third
+      t2.third,
+      t3
     )
   }
 }

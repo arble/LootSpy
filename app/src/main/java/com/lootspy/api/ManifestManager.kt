@@ -80,7 +80,7 @@ class ManifestManager @Inject constructor(
             bytesInflated += count
             output.write(buffer, 0, count)
             if (bytesInflated > (currentDecile + 1) * decile) {
-              progressCallback(currentDecile * 10, bytesInflated)
+              progressCallback(currentDecile, bytesInflated)
               currentDecile++
             }
           }
