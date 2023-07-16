@@ -29,7 +29,7 @@ fun Cursor.manifestColumns(): Pair<Int, Int> {
 }
 
 fun Cursor.blobToJson(index: Int): JsonObject {
-  val blob =  getBlob(index)
+  val blob = getBlob(index)
   val jsonString = blob.toString(Charsets.US_ASCII).let { it.substring(0, it.length - 1) }
   return Json.decodeFromString(jsonString)
 }
@@ -45,6 +45,27 @@ fun JsonObject.displayPair(first: String, second: String): Pair<String, String>?
     val secondProperty = displayObj[second]
     if (firstProperty != null && secondProperty != null) {
       return Pair(firstProperty.jsonPrimitive.toString(), secondProperty.jsonPrimitive.toString())
+    }
+  }
+  return null
+}
+
+fun JsonObject.displayTriple(
+  first: String,
+  second: String,
+  third: String
+): Triple<String, String, String>? {
+  val displayObj = get("displayProperties")?.jsonObject
+  if (displayObj != null) {
+    val firstProperty = displayObj[first]
+    val secondProperty = displayObj[second]
+    val thirdProperty = displayObj[third]
+    if (firstProperty != null && secondProperty != null && thirdProperty != null) {
+      return Triple(
+        firstProperty.jsonPrimitive.toString(),
+        secondProperty.jsonPrimitive.toString(),
+        thirdProperty.jsonPrimitive.toString()
+      )
     }
   }
   return null

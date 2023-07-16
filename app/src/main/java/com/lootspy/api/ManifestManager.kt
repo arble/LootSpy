@@ -5,9 +5,6 @@ import android.database.sqlite.SQLiteDatabase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -25,18 +22,14 @@ import javax.inject.Singleton
 @Singleton
 class ManifestManager @Inject constructor(
   @ApplicationContext private val context: Context,
+  private val autocompleteHelper: AutocompleteHelper,
 ) {
   private var manifestDb: SQLiteDatabase? = null
-  private var manifestShortcutsDb: SQLiteDatabase? = null
-  private var weaponCategories: HashSet<Int>? = null
-  private var damageTypes: Map<Int, Pair<String, String>>? = null
+  private val weaponCategories = HashMap<Int, String>()
+  private val damageTypes = HashMap<Int, Pair<String, String>>()
 
   private fun getManifestDbFile(): File {
     return context.getDatabasePath(MANIFEST_DATABASE)
-  }
-
-  private fun getManifestShortcutDbFile(): File {
-    return context.getDatabasePath(MANIFEST_SHORTCUTS)
   }
 
   fun getManifestDb(): SQLiteDatabase {
@@ -113,64 +106,72 @@ class ManifestManager @Inject constructor(
     return true
   }
 
-  private fun loadDamageTypes(): Map<Int, Pair<String, String>> {
-    val maybeDamageTypes = damageTypes
-    if (maybeDamageTypes != null) {
-      return maybeDamageTypes
+  private fun loadDamageTypes() {
+    if (damageTypes.isNotEmpty()) {
+      return
     }
-    val result = HashMap<Int, Pair<String, String>>()
-    getManifestDb().query("DestinyDamageTypeDefinition", null, null, null, null, null, null, "20").use {
-      while (it.moveToNext()) {
-        val obj = it.blobToJson()
-        val displayPair = obj.displayPair("name", "icon")
-        val hash = obj["hash"]?.jsonPrimitive?.int
-        if (displayPair != null && hash != null) {
-          result[hash] = displayPair
+    getManifestDb().query("DestinyDamageTypeDefinition", null, null, null, null, null, null, "20")
+      .use {
+        while (it.moveToNext()) {
+          val obj = it.blobToJson()
+          val displayPair = obj.displayPair("name", "icon")
+          val hash = obj["hash"]?.jsonPrimitive?.int
+          if (displayPair != null && hash != null) {
+            damageTypes[hash] = displayPair
+          }
         }
       }
-    }
-    damageTypes = result
-    return result
   }
 
   private fun populateItemAutocomplete(): Boolean {
     val db = getManifestDb()
     var limit = 0
     var exit = false
-    db.query("DestinyInventoryItemDefinition", null, null, null, null, null, null, "20").use {
-      val (idIndex, jsonIndex) = it.manifestColumns()
-      if (it.count == 0) {
-        exit = true
-        return@use
-      }
-      while (it.moveToNext()) {
-        val hash = it.getInt(idIndex)
-        val blob = it.getBlob(jsonIndex)
-        val jsonString = blob.toString(Charsets.US_ASCII).trim()
-        val cutstring = jsonString.substring(0, jsonString.length - 1)
-        val obj = Json.decodeFromString<JsonObject>(cutstring)
-        val displayObj = obj["displayProperties"]?.jsonObject
-        if (displayObj != null) {
-          val name = displayObj["name"]
-          val icon = displayObj["icon"]
-        }
-        val categoryHashesArray = obj["itemCategoryHashes"]?.jsonArray
-        if (categoryHashesArray != null) {
-          for (element in categoryHashesArray) {
-            if (getWeaponCategories().contains(element.jsonPrimitive.int)) {
-
+    loadDamageTypes()
+    loadWeaponCategories()
+    while (true) {
+      val limitString = "$limit,${limit + 500}"
+      db.query("DestinyInventoryItemDefinition", null, null, null, null, null, null, limitString)
+        .use { cursor ->
+          if (cursor.count == 0) {
+            exit = true
+            return@use
+          }
+          while (cursor.moveToNext()) {
+            val obj = cursor.blobToJson()
+            val props = obj.displayTriple("name", "icon", "iconWatermark") ?: continue
+            val categoryHashesArray = obj["itemCategoryHashes"]?.jsonArray
+            val defaultDamageTypeHash = obj["defaultDamageTypeHash"]?.jsonPrimitive ?: continue
+            val damageTypeInfo = damageTypes[defaultDamageTypeHash.int] ?: continue
+            if (categoryHashesArray != null) {
+              for (element in categoryHashesArray) {
+                val hash = element.jsonPrimitive.int
+                val category = weaponCategories[hash] ?: continue
+                autocompleteHelper.insert(
+                  AutocompleteItem(
+                    name = props.first,
+                    type = category,
+                    iconPath = props.second,
+                    watermarkPath = props.third,
+                    damageType = damageTypeInfo.first,
+                    damageIconPath = damageTypeInfo.second
+                  )
+                )
+              }
             }
           }
         }
+      if (exit) {
+        break
       }
+      limit += 500
     }
     return true
   }
 
-  fun getWeaponCategories(): Set<Int> {
-    val maybeResult = weaponCategories
-    if (maybeResult != null) {
-      return maybeResult
+  fun loadWeaponCategories() {
+    if (weaponCategories.isNotEmpty()) {
+      return
     }
     val result = HashSet<Int>()
     getManifestDb().query("DestinyItemCategoryDefinition", null, null, null, null, null, null)
@@ -188,14 +189,13 @@ class ManifestManager @Inject constructor(
           }
         }
       }
-    weaponCategories = result
-    return result
   }
 
   class ManifestTransaction(private val db: SQLiteDatabase) : Closeable {
     init {
       db.beginTransaction()
     }
+
     override fun close() {
       db.endTransaction()
     }

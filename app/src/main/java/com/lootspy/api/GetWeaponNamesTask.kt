@@ -25,7 +25,7 @@ class GetWeaponNamesTask @AssistedInject constructor(
     val db = manifestManager.getManifestDb()
     var limit = 0
     var exit = false
-    val weaponCategoryHashes = manifestManager.getWeaponCategories()
+    val weaponCategoryHashes = manifestManager.loadWeaponCategories()
     while (true) {
       val limitString = "$limit,${limit + 500}"
       db.query("DestinyInventoryItemDefinition", null, null, null, null, null, null, "20").use {
@@ -48,13 +48,6 @@ class GetWeaponNamesTask @AssistedInject constructor(
             Log.d(LOG_TAG, "$name: $hash $icon")
           }
           val categoryHashesArray = obj["itemCategoryHashes"]?.jsonArray
-          if (categoryHashesArray != null) {
-            for (element in categoryHashesArray) {
-              if (weaponCategoryHashes.contains(element.jsonPrimitive.int)) {
-
-              }
-            }
-          }
         }
       }
       if (exit) {

@@ -13,6 +13,7 @@ import coil.compose.AsyncImage
 
 data class AutocompleteItem(
   val name: String,
+  val type: String,
   val iconPath: String,
   val watermarkPath: String,
   val damageType: String,
