@@ -44,7 +44,7 @@ fun JsonObject.displayPair(first: String, second: String): Pair<String, String>?
     val firstProperty = displayObj[first]
     val secondProperty = displayObj[second]
     if (firstProperty != null && secondProperty != null) {
-      return Pair(firstProperty.jsonPrimitive.toString(), secondProperty.jsonPrimitive.toString())
+      return Pair(firstProperty.jsonPrimitive.content, secondProperty.jsonPrimitive.content)
     }
   }
   return null
@@ -62,9 +62,9 @@ fun JsonObject.displayTriple(
     val thirdProperty = displayObj[third]
     if (firstProperty != null && secondProperty != null && thirdProperty != null) {
       return Triple(
-        firstProperty.jsonPrimitive.toString(),
-        secondProperty.jsonPrimitive.toString(),
-        thirdProperty.jsonPrimitive.toString()
+        firstProperty.jsonPrimitive.content,
+        secondProperty.jsonPrimitive.content,
+        thirdProperty.jsonPrimitive.content
       )
     }
   }

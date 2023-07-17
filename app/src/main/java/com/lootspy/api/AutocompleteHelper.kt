@@ -1,21 +1,25 @@
 package com.lootspy.api
 
 import java.util.TreeSet
+import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class AutocompleteHelper {
+class AutocompleteHelper @Inject constructor() {
   data class Node(
     var word: Boolean = false,
     val childNodes: MutableMap<Char, Node> = mutableMapOf()
   )
 
   private val root = Node()
-  private val items = HashMap<String, AutocompleteItem>()
+  val items: MutableMap<String, AutocompleteItem> = HashMap()
 
-  fun insert(item: AutocompleteItem) {
+  fun insert(item: AutocompleteItem): Boolean {
+    if (items.putIfAbsent(item.name, item) != null) {
+      return false
+    }
     insertTrie(item.name)
-    items[item.name] = item
+    return true
   }
 
   private fun insertTrie(word: String) {

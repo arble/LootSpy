@@ -8,6 +8,10 @@ import com.lootspy.data.FilterRepository
 import com.lootspy.data.LootRepository
 import com.lootspy.data.ProfileRepository
 import com.lootspy.data.UserStore
+import com.lootspy.data.source.FilterDao
+import com.lootspy.data.source.LootEntryDao
+import com.lootspy.data.source.LootSpyDatabase
+import com.lootspy.data.source.ProfileDao
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -38,18 +42,21 @@ object DatabaseModule {
   @Singleton
   @Provides
   fun provideLootSpyDatabase(@ApplicationContext context: Context) =
-    com.lootspy.data.source.LootSpyDatabase.getInstance(context)
+    LootSpyDatabase.getInstance(context)
 
   @Singleton
   @Provides
   fun provideUserStore(@ApplicationContext context: Context) = UserStore(context)
 
   @Provides
-  fun provideLootDao(database: com.lootspy.data.source.LootSpyDatabase): com.lootspy.data.source.LootEntryDao = database.lootEntryDao()
+  fun provideLootDao(database: com.lootspy.data.source.LootSpyDatabase): LootEntryDao =
+    database.lootEntryDao()
 
   @Provides
-  fun provideFilterDao(database: com.lootspy.data.source.LootSpyDatabase): com.lootspy.data.source.FilterDao = database.filterDao()
+  fun provideFilterDao(database: com.lootspy.data.source.LootSpyDatabase): FilterDao =
+    database.filterDao()
 
   @Provides
-  fun provideProfileDao(database: com.lootspy.data.source.LootSpyDatabase): com.lootspy.data.source.ProfileDao = database.profileDao()
+  fun provideProfileDao(database: com.lootspy.data.source.LootSpyDatabase): ProfileDao =
+    database.profileDao()
 }

@@ -44,7 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.lootspy.R
-import com.lootspy.api.GetWeaponNamesTask
+import com.lootspy.api.PrepareAutocompleteTask
 import com.lootspy.util.BungiePathHelper
 import com.lootspy.util.WorkBuilders
 import com.lootspy.util.popup.LootSpyPopup
@@ -70,8 +70,8 @@ fun SettingsScreen(
           IconButton(onClick = {
             WorkBuilders.dispatchUniqueWorker(
               context,
-              GetWeaponNamesTask::class.java,
-              "table_optimise",
+              PrepareAutocompleteTask::class.java,
+              "prepare_autocomplete",
               mapOf("notify_channel" to "lootspyApi")
             )
           }) {
