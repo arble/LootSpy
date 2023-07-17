@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -59,7 +61,7 @@ data class AutocompleteItem(
       val damageIconPathIndex = cursor.getColumnIndex(AutocompleteTable.DAMAGE_ICON_PATH)
       return AutocompleteItem(
         cursor.getLong(hashIndex),
-        cursor.getString(nameIndex),
+        cursor.getString(nameIndex).toUpperCase(Locale.current),
         cursor.getString(typeIndex),
         cursor.getString(iconPathIndex),
         cursor.getString(watermarkPathIndex),

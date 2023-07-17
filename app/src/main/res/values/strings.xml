@@ -50,4 +50,9 @@
     <string name="settings_active_profile">Active profile</string>
     <string name="nav_bar_settings">Settings</string>
     <string name="manifest_outdated_desc">The Destiny manifest is out of date. Without an up to date manifest, some items may not be found and features such as autocomplete will not function. Click OK to download the latest manifest from Bungie (may take a minute or two).</string>
+    <string name="tasks_autocomplete_progress">Optimising database</string>
+    <string name="tasks_unzip_progress">Inflating</string>
+    <string name="tasks_download_progress">Downloading</string>
+    <string name="manifest_updating_title">Updating Manifest</string>
+    <string name="manifest_outdated_title">Outdated Manifest</string>
 </resources>

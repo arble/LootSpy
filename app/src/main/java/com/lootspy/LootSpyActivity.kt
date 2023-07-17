@@ -27,6 +27,7 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.lootspy.api.GetManifestTask
+import com.lootspy.api.PrepareAutocompleteTask
 import com.lootspy.api.UnzipManifestTask
 import com.lootspy.screens.login.AppAuthConfigProvider
 import com.lootspy.screens.login.AppAuthConfigProvider.Companion.OAUTH_CLIENT_ID
@@ -115,9 +116,7 @@ class LootSpyActivity : ComponentActivity() {
             }
           )
         }) { paddingValues ->
-          if (uiState.databaseName.isEmpty()) {
-            ManifestDialogs(context, uiState, workFlow, viewModel)
-          }
+          ManifestDialogs(context, uiState, workFlow, viewModel)
           LootSpyNavGraph(
             navController = navController,
             modifier = Modifier.padding(paddingValues),
@@ -136,47 +135,46 @@ class LootSpyActivity : ComponentActivity() {
     syncManifestState: State<List<WorkInfo>?>,
     viewModel: LootSpyViewModel,
   ) {
-    if (uiState.databaseName.isEmpty()) {
-      if (uiState.fetchingManifest) {
-        val workInfo = syncManifestState.value?.find { it.state == WorkInfo.State.RUNNING }
-        val (stage, progress) = if (workInfo != null) {
-          val dataMap = workInfo.progress.keyValueMap
-          if (dataMap.isEmpty()) {
-            Pair("Setting up", 0f)
-          } else {
-            val stage = dataMap.keys.toList().first() as String
-            val progress = dataMap.values.toList().first() as Int
-            Pair(stage, progress.toFloat() / 10f)
-          }
-        } else {
-          Pair("Setting up", 0f)
-        }
-        ProgressAlertDialog(
-          titleText = "Getting Manifest",
-          infoText = stage,
-          progress = progress,
-        )
+    val activeManifestJob = syncManifestState.value?.find { it.state == WorkInfo.State.RUNNING }
+    // use the enqueued job to keep the progress popup from flickering
+    val pendingManifestJob = syncManifestState.value?.find { it.state == WorkInfo.State.ENQUEUED }
+    if (uiState.databaseName.isEmpty() && activeManifestJob == null && pendingManifestJob == null) {
+      TextAlertDialog(
+        titleText = stringResource(id = R.string.manifest_outdated_title),
+        messageText = stringResource(id = R.string.manifest_outdated_desc),
+        ackText = "Not now",
+        confirmText = "OK",
+        modal = true,
+        onDismiss = { finish() },
+        onConfirm = {
+          WorkBuilders.dispatchUniqueWorkerLinearFollowers(
+            context = context,
+            initialWorkerClass = GetManifestTask::class.java,
+            workName = "sync_manifest",
+            workData = null,
+            followingJobs = listOf(
+              UnzipManifestTask::class.java,
+              PrepareAutocompleteTask::class.java
+            ),
+            tags = listOf("sync_manifest")
+          )
+          viewModel.setFetchingManifest(true)
+        },
+      )
+    } else if (activeManifestJob != null || pendingManifestJob != null) {
+      val dataMap = activeManifestJob?.progress?.keyValueMap
+      val progressInfo = if (dataMap.isNullOrEmpty()) {
+        Pair("Working", 0f)
       } else {
-        TextAlertDialog(
-          titleText = "Manifest out of date",
-          messageText = stringResource(id = R.string.manifest_outdated_desc),
-          ackText = "Not now",
-          confirmText = "OK",
-          modal = true,
-          onDismiss = { finish() },
-          onConfirm = {
-            WorkBuilders.dispatchUniqueWorkerLinearFollowers(
-              context = context,
-              initialWorkerClass = GetManifestTask::class.java,
-              workName = "sync_manifest",
-              workData = null,
-              followingJobs = listOf(UnzipManifestTask::class.java),
-              tags = listOf("sync_manifest")
-            )
-            viewModel.setFetchingManifest(true)
-          },
-        )
+        val stage = dataMap.keys.toList().first() as String
+        val progress = dataMap.values.toList().first() as Int
+        Pair(stage, progress.toFloat() / 10f)
       }
+      ProgressAlertDialog(
+        titleText = stringResource(id = R.string.manifest_updating_title),
+        infoText = progressInfo.first,
+        progress = progressInfo.second,
+      )
     }
   }
 }

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
@@ -25,6 +26,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -44,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.lootspy.R
+import com.lootspy.api.AutocompleteItem
 import com.lootspy.api.PrepareAutocompleteTask
 import com.lootspy.util.BungiePathHelper
 import com.lootspy.util.WorkBuilders
@@ -77,7 +80,6 @@ fun SettingsScreen(
           }) {
             Icon(Icons.Default.Search, null)
           }
-
           IconButton(onClick = {
             scope.launch {
               if (viewModel.clearDb()) {
@@ -93,12 +95,22 @@ fun SettingsScreen(
           }) {
             Icon(Icons.Default.MoreVert, null)
           }
-
+          IconButton(onClick = {
+            scope.launch {
+              viewModel.dropAutocompleteTable()
+              Toast.makeText(context, "Dropped autocomplete table", Toast.LENGTH_SHORT).show()
+            }
+          }) {
+            Icon(Icons.Default.Delete, null)
+          }
         }
       )
     },
     modifier = Modifier.fillMaxSize()
   ) {
+    val errorPainter =
+      painterResource(id = com.google.android.material.R.drawable.mtrl_ic_cancel)
+    val placeholderPainter = painterResource(id = R.drawable.ic_launcher_foreground)
     Column(modifier = modifier.padding(it), verticalArrangement = Arrangement.spacedBy(4.dp)) {
       val selectedMembership = uiState.value.selectedMembership
       if (selectedMembership != null) {
@@ -114,10 +126,6 @@ fun SettingsScreen(
               style = MaterialTheme.typography.headlineSmall,
               modifier = modifier.fillMaxWidth(0.5f)
             )
-            val errorPainter =
-              painterResource(id = com.google.android.material.R.drawable.mtrl_ic_cancel)
-            val placeholderPainter = painterResource(id = R.drawable.ic_launcher_foreground)
-            var expanded by remember { mutableStateOf(false) }
             val popupState = remember { PopupState(false) }
             AsyncImage(
               model = BungiePathHelper.getFullUrlForPath(uiState.value.selectedMembership?.iconPath),
@@ -160,6 +168,21 @@ fun SettingsScreen(
           }
         }
       }
+      val suggestionItems = viewModel.suggestions.collectAsState()
+      var text: String by remember { mutableStateOf("") }
+      TextField(value = text, modifier = modifier.fillMaxWidth(), onValueChange = { value ->
+        text = value
+        viewModel.getSuggestions(value, 5)
+      })
+      if (suggestionItems.value.isNotEmpty()) {
+        suggestionItems.value.forEach { item ->
+          ItemSuggestion(
+            errorPainter = errorPainter,
+            placeholderPainter = placeholderPainter,
+            item = item
+          )
+        }
+      }
     }
   }
 }
@@ -195,6 +218,51 @@ private fun ProfileSelectorEntry(
       text = displayName,
       modifier = modifier.weight(1f)
     )
+  }
+}
+
+@Composable
+private fun ItemSuggestion(
+  modifier: Modifier = Modifier,
+  errorPainter: Painter,
+  placeholderPainter: Painter,
+  item: AutocompleteItem,
+) {
+  SettingsCard(modifier.height(64.dp)) {
+    Row(
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.spacedBy(8.dp),
+      modifier = modifier
+        .fillMaxWidth()
+        .fillMaxHeight()
+    ) {
+      Box(
+        modifier = modifier
+          .height(64.dp)
+          .width(64.dp)
+      ) {
+        AsyncImage(
+          model = BungiePathHelper.getFullUrlForPath(item.iconPath),
+          placeholder = placeholderPainter,
+          error = errorPainter,
+          modifier = modifier
+            .width(64.dp)
+            .fillMaxHeight(),
+          contentDescription = null
+        )
+        AsyncImage(
+          model = BungiePathHelper.getFullUrlForPath(item.watermarkPath),
+          placeholder = placeholderPainter,
+          error = errorPainter,
+          modifier = modifier
+            .width(64.dp)
+            .fillMaxHeight(),
+          contentDescription = null
+        )
+      }
+      Text(text = item.name, modifier = modifier.weight(0.5f))
+      Text(text = item.type, modifier = modifier.weight(0.5f))
+    }
   }
 }
 

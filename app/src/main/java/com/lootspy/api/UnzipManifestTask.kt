@@ -6,6 +6,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.lootspy.R
 import com.lootspy.data.UserStore
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -36,7 +37,7 @@ class UnzipManifestTask @AssistedInject constructor(
       Log.d(LOG_TAG, "Beginning unzip of Destiny manifest")
       setProgress(workDataOf("Unzipping" to 4))
       val updated = manifestManager.unzipNewDatabase(manifestFile) { progress, bytes ->
-        setProgress(workDataOf("Unzipping" to progress))
+        setProgress(workDataOf(context.getString(R.string.tasks_unzip_progress) to progress))
         Log.d(LOG_TAG, "Inflated $bytes bytes")
       }
       return if (updated) {

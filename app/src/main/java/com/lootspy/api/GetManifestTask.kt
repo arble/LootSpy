@@ -8,6 +8,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.lootspy.R
 import com.lootspy.client.ApiClient
 import com.lootspy.client.model.Destiny2GetDestinyManifest200Response
 import com.lootspy.data.UserStore
@@ -92,7 +93,7 @@ class GetManifestTask @AssistedInject constructor(
             output.write(buf, 0, byteCount)
             bytesTransferred += byteCount
             if (bytesTransferred > (currentDecile + 1) * decile) {
-              setProgress(workDataOf("Downloading" to currentDecile))
+              setProgress(workDataOf(context.getString(R.string.tasks_download_progress) to currentDecile))
               Log.d(LOG_TAG, "Downloaded $bytesTransferred bytes")
               currentDecile++
             }

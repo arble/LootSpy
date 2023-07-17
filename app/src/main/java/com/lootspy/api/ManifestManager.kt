@@ -3,6 +3,8 @@ package com.lootspy.api
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.toUpperCase
 import com.lootspy.api.manifest.AutocompleteTable
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -109,19 +111,15 @@ class ManifestManager @Inject constructor(
   }
 
   private fun loadItemAutocomplete(db: SQLiteDatabase): Boolean {
-    var canLoad = false
     db.rawQuery(
-      "SELECT DISTINCT tbl_name FROM sqlite_master WHERE tbl_name = 'ShortcutAutocomplete'",
+      "SELECT DISTINCT tbl_name FROM sqlite_master WHERE tbl_name = '${AutocompleteTable.TABLE_NAME}'",
       null
     ).use {
-      if (it.count > 0) {
-        canLoad = true
+      if (it.count == 0) {
+        return false
       }
     }
-    if (!canLoad) {
-      return false
-    }
-    db.rawQuery("SELECT * FROM ShortcutAutocomplete", null).use {
+    db.rawQuery("SELECT * FROM ${AutocompleteTable.TABLE_NAME}", null).use {
       while (it.moveToNext()) {
         autocompleteHelper.insert(AutocompleteItem.fromCursor(it))
       }
@@ -129,75 +127,80 @@ class ManifestManager @Inject constructor(
     return true
   }
 
-  fun populateItemAutocomplete() {
+  suspend fun populateItemAutocomplete(progressCallback: suspend (Int) -> Unit = {}) {
     val db = getManifestDb()
     if (loadItemAutocomplete(db)) {
       // we did this already
       Log.d(LOG_TAG, "Loaded autocomplete table")
       return
     }
-    var limit = 0
+    var offset = 0
     var numInserted = 0
     var numProcessed = 0
     var exit = false
     loadDamageTypes()
     loadWeaponCategories()
     Log.d(LOG_TAG, "Generating new autocomplete table from manifest")
+    val rowCount =
+      db.rawQuery("SELECT COUNT(*) AS total FROM DestinyInventoryItemDefinition", null).use {
+        if (it.moveToFirst()) {
+          return@use it.getInt(it.getColumnIndexOrThrow("total"))
+        } else {
+          return@use 0
+        }
+      }
+    if (rowCount == 0) {
+      Log.e(LOG_TAG, "No rows in DestinyInventoryItemDefinition table. Definitely a bug!")
+      return
+    }
+    val decile = rowCount / 10
+    var currentDecile = 0
     while (true) {
-//      val limitString = "$limit,${limit + 500}"
-      val limitString = "$limit,${limit + 100}"
-      db.query("DestinyInventoryItemDefinition", null, null, null, null, null, null, limitString)
+      db.rawQuery("SELECT * FROM DestinyInventoryItemDefinition LIMIT 250 OFFSET $offset", null)
         .use { cursor ->
-          Log.d(LOG_TAG, "Cursor had ${cursor.count} rows")
           if (cursor.count == 0) {
             exit = true
             return@use
           }
           while (cursor.moveToNext()) {
-            if (++numProcessed % 500 == 0) {
-              Log.d(LOG_TAG, "Processing row $numProcessed")
+            if (++numProcessed > (currentDecile + 1) * decile) {
+              progressCallback(currentDecile)
+              currentDecile++
             }
             val obj = cursor.blobToJson()
             val props = obj.displayPair("name", "icon") ?: continue
-            val watermark = obj["iconWatermark"]?.jsonPrimitive ?: continue
-//            Log.d(LOG_TAG, props.toString())
+            val watermark = obj["iconWatermark"]?.jsonPrimitive?.content ?: continue
             val hash = obj["hash"]?.jsonPrimitive?.long ?: continue
-//            Log.d(LOG_TAG, hash.toString())
-            val categoryHashesArray = obj["itemCategoryHashes"]?.jsonArray
-//            Log.d(LOG_TAG, categoryHashesArray.toString())
+            val categoryHashesArray = obj["itemCategoryHashes"]?.jsonArray ?: continue
             val defaultDamageTypeHash = obj["defaultDamageTypeHash"]?.jsonPrimitive ?: continue
-//            Log.d(LOG_TAG, defaultDamageTypeHash.toString())
             val damageTypeInfo = damageTypes[defaultDamageTypeHash.long] ?: continue
-            if (categoryHashesArray != null) {
-              for (element in categoryHashesArray) {
-                val categoryHash = element.jsonPrimitive.long
-                val category = weaponCategories[categoryHash] ?: continue
-                val didInsert = autocompleteHelper.insert(
-                  AutocompleteItem(
-                    hash = hash,
-                    name = props.first,
-                    type = category,
-                    iconPath = props.second,
-                    watermarkPath = watermark.content,
-                    damageType = damageTypeInfo.first,
-                    damageIconPath = damageTypeInfo.second
-                  )
+            for (element in categoryHashesArray) {
+              val categoryHash = element.jsonPrimitive.long
+              val category = weaponCategories[categoryHash] ?: continue
+              val didInsert = autocompleteHelper.insert(
+                AutocompleteItem(
+                  hash = hash,
+                  name = props.first.toUpperCase(Locale.current),
+                  type = category,
+                  iconPath = props.second,
+                  watermarkPath = watermark,
+                  damageType = damageTypeInfo.first,
+                  damageIconPath = damageTypeInfo.second
                 )
-                if (didInsert) {
-                  numInserted++
-                }
+              )
+              if (didInsert) {
+                numInserted++
               }
             }
           }
         }
-      if (exit || limit > 0) {
+      if (exit) {
         break
       }
-//      limit += 500
-      limit += 100
+      offset += 250
     }
     if (numInserted == 0) {
-      Log.d(LOG_TAG, "Exiting early due to no valid items read")
+      Log.w(LOG_TAG, "Exiting early due to no valid items read")
       return
     }
     Log.d(LOG_TAG, "Read $numProcessed rows and parsed $numInserted items")
@@ -252,6 +255,10 @@ class ManifestManager @Inject constructor(
       }
   }
 
+  fun dropAutocompleteTable() {
+    getManifestDb().execSQL("DROP TABLE IF EXISTS ${AutocompleteTable.TABLE_NAME}")
+  }
+
   private class ManifestTransaction(private val db: SQLiteDatabase) : Closeable {
     init {
       db.beginTransaction()
@@ -264,7 +271,6 @@ class ManifestManager @Inject constructor(
     fun setTransactionSuccessful() {
       db.setTransactionSuccessful()
     }
-
   }
 
   companion object {

@@ -1,5 +1,7 @@
 package com.lootspy.api
 
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.toUpperCase
 import java.util.TreeSet
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -33,28 +35,39 @@ class AutocompleteHelper @Inject constructor() {
     currentNode.word = true
   }
 
-  private fun suggestHelper(node: Node, resultSet: TreeSet<String>, current: StringBuilder) {
+  private fun suggestHelper(
+    node: Node,
+    resultSet: TreeSet<String>,
+    current: StringBuilder,
+    limit: Int,
+  ): Boolean {
     if (node.word) {
       resultSet.add(current.toString())
+      if (limit > 0 && resultSet.size >= limit) {
+        return false
+      }
     }
     if (node.childNodes.isEmpty()) {
-      return
+      return true
     }
     for (childEntry in node.childNodes) {
-      suggestHelper(childEntry.value, resultSet, current.append(childEntry.key))
+      if (!suggestHelper(childEntry.value, resultSet, current.append(childEntry.key), limit)) {
+        return false
+      }
       current.setLength(current.length - 1)
     }
+    return true
   }
 
-  fun suggest(prefix: String): List<AutocompleteItem> {
+  fun suggest(prefix: String, limit: Int = 0): List<AutocompleteItem> {
     val resultNames = TreeSet<String>()
     var leaf = root
     val current = StringBuilder()
-    for (ch in prefix) {
+    for (ch in prefix.toUpperCase(Locale.current)) {
       leaf = leaf.childNodes[ch] ?: return emptyList()
       current.append(ch)
     }
-    suggestHelper(leaf, resultNames, current)
+    suggestHelper(leaf, resultNames, current, limit)
     val result = ArrayList<AutocompleteItem>(resultNames.size)
     resultNames.forEach { name -> items[name]?.let { result.add(it) } }
     return result
