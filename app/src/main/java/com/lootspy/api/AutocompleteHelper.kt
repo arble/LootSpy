@@ -14,19 +14,36 @@ class AutocompleteHelper @Inject constructor() {
   )
 
   private val root = Node()
-  val items: MutableMap<String, AutocompleteItem> = HashMap()
+//  val items: MutableMap<String, AutocompleteItem> = HashMap()
+  val items = object : HashMap<String, AutocompleteItem>() {
+    override fun get(key: String): AutocompleteItem? {
+      return super.get(key.toUpperCase(Locale.current))
+    }
+
+    override fun putIfAbsent(key: String, value: AutocompleteItem): AutocompleteItem? {
+      return super.putIfAbsent(key.toUpperCase(Locale.current), value)
+    }
+
+    override fun put(key: String, value: AutocompleteItem): AutocompleteItem? {
+      return super.put(key.toUpperCase(Locale.current), value)
+    }
+  }
 
   fun insert(item: AutocompleteItem): Boolean {
-    if (items.putIfAbsent(item.name, item) != null) {
+    if (items.putIfAbsent(item.name.toUpperCase(Locale.current), item) != null) {
       return false
     }
     insertTrie(item.name)
     return true
   }
 
+  fun insertSuccessor(item: AutocompleteItem) {
+    items[item.name] = item
+  }
+
   private fun insertTrie(word: String) {
     var currentNode = root
-    for (char in word) {
+    for (char in word.toUpperCase(Locale.current)) {
       if (currentNode.childNodes[char] == null) {
         currentNode.childNodes[char] = Node()
       }

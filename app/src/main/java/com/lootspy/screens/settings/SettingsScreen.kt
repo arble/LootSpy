@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
@@ -260,8 +261,32 @@ private fun ItemSuggestion(
           contentDescription = null
         )
       }
-      Text(text = item.name, modifier = modifier.weight(0.5f))
-      Text(text = item.type, modifier = modifier.weight(0.5f))
+      Text(
+        text = item.name,
+        modifier = modifier.weight(0.5f),
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis
+      )
+      Column(
+        modifier
+          .fillMaxHeight()
+          .weight(0.5f),
+        horizontalAlignment = Alignment.Start
+      ) {
+        Text(text = item.type, modifier = modifier.weight(0.5f))
+        Row(modifier.fillMaxWidth()) {
+          AsyncImage(
+            model = BungiePathHelper.getFullUrlForPath(item.damageIconPath),
+            placeholder = placeholderPainter,
+            error = errorPainter,
+            modifier = modifier
+              .width(24.dp)
+              .height(24.dp),
+            contentDescription = null
+          )
+          Text(text = item.damageType, modifier = modifier.weight(0.5f))
+        }
+      }
     }
   }
 }

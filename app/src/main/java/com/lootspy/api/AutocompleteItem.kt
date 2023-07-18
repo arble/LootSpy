@@ -61,7 +61,7 @@ data class AutocompleteItem(
       val damageIconPathIndex = cursor.getColumnIndex(AutocompleteTable.DAMAGE_ICON_PATH)
       return AutocompleteItem(
         cursor.getLong(hashIndex),
-        cursor.getString(nameIndex).toUpperCase(Locale.current),
+        cursor.getString(nameIndex),
         cursor.getString(typeIndex),
         cursor.getString(iconPathIndex),
         cursor.getString(watermarkPathIndex),

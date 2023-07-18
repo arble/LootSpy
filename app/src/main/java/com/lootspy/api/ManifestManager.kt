@@ -3,8 +3,6 @@ package com.lootspy.api
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
-import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.text.toUpperCase
 import com.lootspy.api.manifest.AutocompleteTable
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -155,6 +153,7 @@ class ManifestManager @Inject constructor(
     }
     val decile = rowCount / 10
     var currentDecile = 0
+    val successorItems = HashMap<String, Triple<Long, String, String>>()
     while (true) {
       db.rawQuery("SELECT * FROM DestinyInventoryItemDefinition LIMIT 250 OFFSET $offset", null)
         .use { cursor ->
@@ -162,27 +161,31 @@ class ManifestManager @Inject constructor(
             exit = true
             return@use
           }
-          while (cursor.moveToNext()) {
+          outer@ while (cursor.moveToNext()) {
             if (++numProcessed > (currentDecile + 1) * decile) {
               progressCallback(currentDecile)
               currentDecile++
             }
             val obj = cursor.blobToJson()
-            val props = obj.displayPair("name", "icon") ?: continue
+            val (name, icon) = obj.displayPair("name", "icon") ?: continue
             val watermark = obj["iconWatermark"]?.jsonPrimitive?.content ?: continue
             val hash = obj["hash"]?.jsonPrimitive?.long ?: continue
             val categoryHashesArray = obj["itemCategoryHashes"]?.jsonArray ?: continue
-            val defaultDamageTypeHash = obj["defaultDamageTypeHash"]?.jsonPrimitive ?: continue
-            val damageTypeInfo = damageTypes[defaultDamageTypeHash.long] ?: continue
             for (element in categoryHashesArray) {
               val categoryHash = element.jsonPrimitive.long
               val category = weaponCategories[categoryHash] ?: continue
+              val defaultDamageTypeHash = obj["defaultDamageTypeHash"]?.jsonPrimitive
+              if (defaultDamageTypeHash == null) {
+                successorItems[name] = Triple(hash, icon, watermark)
+                continue@outer
+              }
+              val damageTypeInfo = damageTypes[defaultDamageTypeHash.long] ?: continue@outer
               val didInsert = autocompleteHelper.insert(
                 AutocompleteItem(
                   hash = hash,
-                  name = props.first.toUpperCase(Locale.current),
+                  name = name,
                   type = category,
-                  iconPath = props.second,
+                  iconPath = icon,
                   watermarkPath = watermark,
                   damageType = damageTypeInfo.first,
                   damageIconPath = damageTypeInfo.second
@@ -198,6 +201,21 @@ class ManifestManager @Inject constructor(
         break
       }
       offset += 250
+    }
+    for (entry in successorItems) {
+      val name = entry.key
+      val precursorItem = autocompleteHelper.items[name] ?: continue
+      val (hash, icon, watermark) = entry.value
+      val successorItem = AutocompleteItem(
+        hash = hash,
+        name = name,
+        type = precursorItem.type,
+        iconPath = icon,
+        watermarkPath = watermark,
+        damageType = precursorItem.damageType,
+        damageIconPath = precursorItem.damageIconPath,
+      )
+      autocompleteHelper.insertSuccessor(successorItem)
     }
     if (numInserted == 0) {
       Log.w(LOG_TAG, "Exiting early due to no valid items read")
