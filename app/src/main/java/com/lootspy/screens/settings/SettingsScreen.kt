@@ -230,64 +230,7 @@ private fun ItemSuggestion(
   item: AutocompleteItem,
 ) {
   SettingsCard(modifier.height(64.dp)) {
-    Row(
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(8.dp),
-      modifier = modifier
-        .fillMaxWidth()
-        .fillMaxHeight()
-    ) {
-      Box(
-        modifier = modifier
-          .height(64.dp)
-          .width(64.dp)
-      ) {
-        AsyncImage(
-          model = BungiePathHelper.getFullUrlForPath(item.iconPath),
-          placeholder = placeholderPainter,
-          error = errorPainter,
-          modifier = modifier
-            .width(64.dp)
-            .fillMaxHeight(),
-          contentDescription = null
-        )
-        AsyncImage(
-          model = BungiePathHelper.getFullUrlForPath(item.watermarkPath),
-          placeholder = placeholderPainter,
-          error = errorPainter,
-          modifier = modifier
-            .width(64.dp)
-            .fillMaxHeight(),
-          contentDescription = null
-        )
-      }
-      Text(
-        text = item.name,
-        modifier = modifier.weight(0.5f),
-        maxLines = 2,
-        overflow = TextOverflow.Ellipsis
-      )
-      Column(
-        modifier
-          .fillMaxHeight()
-          .weight(0.5f),
-        horizontalAlignment = Alignment.Start
-      ) {
-        Text(text = item.type, modifier = modifier.weight(0.5f))
-        Row(modifier.fillMaxWidth()) {
-          AsyncImage(
-            model = BungiePathHelper.getFullUrlForPath(item.damageIconPath),
-            placeholder = placeholderPainter,
-            error = errorPainter,
-            modifier = modifier
-              .width(24.dp)
-              .height(24.dp),
-            contentDescription = null
-          )
-          Text(text = item.damageType, modifier = modifier.weight(0.5f))
-        }
-      }
-    }
+    item.AutoCompleteItemRow(placeholderPainter = placeholderPainter, errorPainter = errorPainter)
   }
 }
 

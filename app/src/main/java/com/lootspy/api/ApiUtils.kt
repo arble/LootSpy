@@ -24,8 +24,12 @@ inline fun <reified T> ApiClient.executeTyped(call: Call): ApiResponse<T> {
 private fun pairsToApiClientPairs(pairs: List<Pair<String, String>>) =
   pairs.map { com.lootspy.client.Pair(it.first, it.second) }
 
-fun Cursor.manifestColumns(): Pair<Int, Int> {
-  return Pair(getColumnIndex("id"), getColumnIndex("json"))
+fun Cursor.manifestColumns(): Pair<UInt, JsonObject> {
+  val idIndex = getColumnIndex("id")
+  val jsonIndex = getColumnIndex("json")
+  val jsonString =
+    getBlob(jsonIndex).toString(Charsets.US_ASCII).let { it.substring(0, it.length - 1) }
+  return Pair(getInt(idIndex).toUInt(), Json.decodeFromString(jsonString))
 }
 
 fun Cursor.blobToJson(index: Int): JsonObject {
