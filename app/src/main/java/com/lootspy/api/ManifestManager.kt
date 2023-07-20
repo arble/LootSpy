@@ -157,9 +157,7 @@ class ManifestManager @Inject constructor(
     val category = findWantedCategory(obj) ?: return null
     val tierTypeHash =
       obj["inventory"]?.jsonObject?.get("tierTypeHash")?.jsonPrimitive?.long ?: return null
-    if (!tierHashes.contains(tierTypeHash.toUInt())) {
-      return null
-    }
+    val tier = tierHashes[tierTypeHash.toUInt()] ?: return null
     val (name, icon) = obj.displayPair("name", "icon") ?: return null
     val watermarkShelvedPair = getWatermarkAndShelved(obj) ?: return null
     val (watermark, isShelved) = watermarkShelvedPair
@@ -172,12 +170,13 @@ class ManifestManager @Inject constructor(
     return AutocompleteItem(
       hash = hash,
       name = name,
+      tier = tier,
       type = category,
       iconPath = icon,
       watermarkPath = watermark,
       isShelved = isShelved,
       damageType = damageTypeInfo.first,
-      damageIconPath = damageTypeInfo.second
+      damageIconPath = damageTypeInfo.second,
     )
   }
 
@@ -244,6 +243,7 @@ class ManifestManager @Inject constructor(
       val successorItem = AutocompleteItem(
         hash = hash,
         name = name,
+        tier = precursorItem.tier,
         type = precursorItem.type,
         iconPath = icon,
         watermarkPath = watermark,

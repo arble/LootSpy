@@ -42,7 +42,6 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
@@ -230,7 +229,7 @@ private fun ItemSuggestion(
   item: AutocompleteItem,
 ) {
   SettingsCard(modifier.height(64.dp)) {
-    item.AutoCompleteItemRow(placeholderPainter = placeholderPainter, errorPainter = errorPainter)
+    item.Composable(placeholderPainter = placeholderPainter, errorPainter = errorPainter)
   }
 }
 

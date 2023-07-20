@@ -5,16 +5,21 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lootspy.LootSpyDestinationArgs
 import com.lootspy.R
+import com.lootspy.api.AutocompleteHelper
+import com.lootspy.api.AutocompleteItem
+import com.lootspy.api.ManifestManager
 import com.lootspy.data.Filter
 import com.lootspy.data.FilterRepository
 import com.lootspy.data.matcher.FilterMatcher
 import com.lootspy.data.matcher.MatcherType
 import com.lootspy.data.matcher.NameMatcher
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 data class AddEditFilterUiState(
@@ -33,6 +38,8 @@ data class AddEditFilterUiState(
 @HiltViewModel
 class AddEditFilterViewModel @Inject constructor(
   private val filterRepository: FilterRepository,
+  private val manifestManager: ManifestManager,
+  private val autocompleteHelper: AutocompleteHelper,
   savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -40,6 +47,8 @@ class AddEditFilterViewModel @Inject constructor(
 
   private val _uiState = MutableStateFlow(AddEditFilterUiState())
   val uiState = _uiState.asStateFlow()
+  private val _suggestions = MutableStateFlow(Pair("", listOf<AutocompleteItem>()))
+  val suggestions = _suggestions.asStateFlow()
 
   init {
     if (filterId != null) {
@@ -190,6 +199,7 @@ class AddEditFilterViewModel @Inject constructor(
         selectedMatcher = null,
       )
     }
+    _suggestions.update { Pair("", emptyList()) }
     return true
   }
 
@@ -199,6 +209,21 @@ class AddEditFilterViewModel @Inject constructor(
         matchers = it.matchers.filterIndexed { index, _ -> index != it.selectedMatcher },
         selectedMatcher = null,
       )
+    }
+  }
+
+  fun getSuggestions(text: String, limit: Int = 5) {
+    viewModelScope.launch {
+      if (text.isEmpty()) {
+        _suggestions.update { Pair("", emptyList()) }
+      } else {
+        withContext(Dispatchers.IO) {
+          if (autocompleteHelper.items.isEmpty()) {
+            manifestManager.populateItemAutocomplete()
+          }
+          _suggestions.update { Pair(text, autocompleteHelper.suggest(text, limit)) }
+        }
+      }
     }
   }
 

@@ -39,14 +39,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lootspy.R
 import com.lootspy.data.matcher.FilterMatcher
+import com.lootspy.data.matcher.MatcherType
 import com.lootspy.data.matcher.NameMatcher
 import com.lootspy.screens.addeditfilter.matcher.NameMatcherDetails
-import com.lootspy.util.AlertDialog
 import com.lootspy.util.NewMatcherDialog
 import com.lootspy.util.ScreenContentWithEmptyText
 import com.lootspy.util.TextAlertDialog
@@ -178,10 +179,15 @@ fun AddEditFilterScreen(
       loading = uiState.isLoading,
       items = uiState.matchers,
       itemContent = { index, matcher ->
+        val suggestionItems = viewModel.suggestions.collectAsStateWithLifecycle()
+        val selected = uiState.selectedMatcher == index
+        val errorPainter =
+          painterResource(id = com.google.android.material.R.drawable.mtrl_ic_cancel)
+        val placeholderPainter = painterResource(id = R.drawable.ic_launcher_foreground)
         FilterMatcherItem(
           matcher = matcher,
           index = index,
-          selected = uiState.selectedMatcher == index,
+          selected = selected,
           details = uiState.selectedMatcherFields,
           onMatcherClick = onMatcherClick,
           onSaveMatcher = {
@@ -189,6 +195,23 @@ fun AddEditFilterScreen(
           },
           onDeleteMatcher = { viewModel.deleteSelectedMatcher() },
         )
+        if (selected) {
+          val (text, suggestions) = suggestionItems.value
+          if (suggestions.size > 1 || (suggestions.size == 1 && suggestions[0].name != text)) {
+            suggestions.forEach {
+              it.Composable(
+                placeholderPainter = placeholderPainter,
+                errorPainter = errorPainter,
+                onClick = { item ->
+                  showAlreadyMatchedDialog = !viewModel.updateMatcherFields(mapOf(
+                    "MATCHER_TYPE" to MatcherType.NAME.name,
+                    "name" to item.name,
+                  ), uiState.matchers)
+                }
+              )
+            }
+          }
+        }
       },
       emptyText = stringResource(id = R.string.add_edit_filter_screen_empty),
       modifier = Modifier.padding(paddingValues)

@@ -6,6 +6,7 @@ class AutocompleteTable {
 
     const val HASH = "hash"
     const val NAME = "name"
+    const val TIER = "TIER"
     const val TYPE = "type"
     const val ICON_PATH = "icon_path"
     const val WATERMARK_PATH = "watermark_path"
@@ -16,6 +17,7 @@ class AutocompleteTable {
     const val CREATE_TABLE = "CREATE TABLE IF NOT EXISTS $TABLE_NAME (" +
         "$HASH INTEGER PRIMARY KEY, " +
         "$NAME TEXT NOT NULL, " +
+        "$TIER TEXT NOT NULL, " +
         "$TYPE TEXT NOT NULL, " +
         "$ICON_PATH TEXT NOT NULL, " +
         "$WATERMARK_PATH TEXT NOT NULL, " +

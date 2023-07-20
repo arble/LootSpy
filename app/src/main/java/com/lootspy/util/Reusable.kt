@@ -2,6 +2,7 @@ package com.lootspy.util
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,13 +38,18 @@ fun <T> ScreenContent(
       CircularProgressIndicator(modifier = modifier)
     }
   } else if (items.isNotEmpty()) {
-    LazyColumn(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-      itemsIndexed(items = items) {index, item ->
-//        Row(Modifier.animateItemPlacement(
-//          tween(durationMillis = 500, easing = LinearEasing)
-//        )) {
-          itemContent(index, item)
-//        }
+//    LazyColumn(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+//      itemsIndexed(items = items) {index, item ->
+////        Row(Modifier.animateItemPlacement(
+////          tween(durationMillis = 500, easing = LinearEasing)
+////        )) {
+//          itemContent(index, item)
+////        }
+//      }
+//    }
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+      items.forEachIndexed { index, item ->
+        itemContent(index, item)
       }
     }
   } else {

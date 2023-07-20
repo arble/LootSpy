@@ -21,7 +21,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.lootspy.data.matcher.MatcherType
+import com.lootspy.screens.addeditfilter.AddEditFilterViewModel
 import com.lootspy.util.SupportingErrorText
 import com.lootspy.util.Validation
 
@@ -31,6 +33,7 @@ fun NameMatcherDetails(
   details: Map<String, String>?,
   onSaveMatcher: (Map<String, String>) -> Unit,
   onDeleteMatcher: () -> Unit,
+  viewModel: AddEditFilterViewModel = hiltViewModel()
 ) {
   if (details == null) {
     return
@@ -46,7 +49,7 @@ fun NameMatcherDetails(
     Row {
       TextField(
         value = nameText,
-        onValueChange = { nameText = it },
+        onValueChange = { nameText = it; viewModel.getSuggestions(it) },
         label = { Text("Name") },
         supportingText = { SupportingErrorText(inputError = inputError) },
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),

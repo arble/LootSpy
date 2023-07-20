@@ -2,6 +2,7 @@ package com.lootspy.api
 
 import android.content.ContentValues
 import android.database.Cursor
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,10 +11,14 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -25,6 +30,7 @@ import com.lootspy.util.BungiePathHelper
 data class AutocompleteItem(
   val hash: UInt,
   val name: String,
+  val tier: String,
   val type: String,
   val iconPath: String,
   val watermarkPath: String,
@@ -37,6 +43,7 @@ data class AutocompleteItem(
     ContentValues().apply {
       put(AutocompleteTable.HASH, hash.toInt())
       put(AutocompleteTable.NAME, name)
+      put(AutocompleteTable.TIER, tier)
       put(AutocompleteTable.TYPE, type)
       put(AutocompleteTable.ICON_PATH, iconPath)
       put(AutocompleteTable.WATERMARK_PATH, watermarkPath)
@@ -46,66 +53,90 @@ data class AutocompleteItem(
     }
 
   @Composable
-  fun AutoCompleteItemRow(
+  fun IconBox(
     modifier: Modifier = Modifier,
     placeholderPainter: Painter,
     errorPainter: Painter,
-    damageIconSize: Dp = 24.dp
   ) {
-    Row(
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(8.dp),
+    Box(
       modifier = modifier
-        .fillMaxWidth()
-        .fillMaxHeight()
+        .height(64.dp)
+        .width(64.dp)
     ) {
-      Box(
-        modifier = modifier
-          .height(64.dp)
-          .width(64.dp)
-      ) {
-        AsyncImage(
-          model = BungiePathHelper.getFullUrlForPath(iconPath),
-          placeholder = placeholderPainter,
-          error = errorPainter,
-          modifier = modifier
-            .width(64.dp)
-            .fillMaxHeight(),
-          contentDescription = null
-        )
-        AsyncImage(
-          model = BungiePathHelper.getFullUrlForPath(watermarkPath),
-          placeholder = placeholderPainter,
-          error = errorPainter,
-          modifier = modifier
-            .width(64.dp)
-            .fillMaxHeight(),
-          contentDescription = null
-        )
-      }
-      Text(
-        text = name,
-        modifier = modifier.weight(0.5f),
-        maxLines = 2,
-        overflow = TextOverflow.Ellipsis
-      )
       AsyncImage(
-        model = BungiePathHelper.getFullUrlForPath(damageIconPath),
+        model = BungiePathHelper.getFullUrlForPath(iconPath),
         placeholder = placeholderPainter,
         error = errorPainter,
         modifier = modifier
-          .width(damageIconSize)
-          .height(damageIconSize),
+          .width(64.dp)
+          .fillMaxHeight(),
         contentDescription = null
       )
-      Column(
-        modifier
+      AsyncImage(
+        model = BungiePathHelper.getFullUrlForPath(watermarkPath),
+        placeholder = placeholderPainter,
+        error = errorPainter,
+        modifier = modifier
+          .width(64.dp)
+          .fillMaxHeight(),
+        contentDescription = null
+      )
+    }
+  }
+
+  @Composable
+  fun Composable(
+    modifier: Modifier = Modifier,
+    placeholderPainter: Painter,
+    errorPainter: Painter,
+    onClick: (AutocompleteItem) -> Unit = {},
+    damageIconSize: Dp = 24.dp
+  ) {
+    val (cardColour, textColour) = when (tier) {
+      "Legendary" -> Pair(LEGENDARY_CARD_BG, Color.White)
+      "Exotic" -> Pair(EXOTIC_CARD_BG, Color.Black)
+      else -> Pair(MaterialTheme.colorScheme.surfaceVariant, Color.White)
+    }
+    Card(
+    shape = MaterialTheme.shapes.medium,
+    colors = CardDefaults.cardColors(containerColor = cardColour),
+    modifier = modifier
+      .height(64.dp)
+      .clickable { onClick(this) },
+  ) {
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier
+          .fillMaxWidth()
           .fillMaxHeight()
-          .weight(0.5f),
-        horizontalAlignment = Alignment.Start
       ) {
-        Text(text = type, modifier = modifier.weight(0.5f))
-        Text(text = damageType, modifier = modifier.weight(0.5f))
+        IconBox(placeholderPainter = placeholderPainter, errorPainter = errorPainter)
+        Text(
+          text = name,
+          modifier = modifier.weight(0.5f),
+          maxLines = 2,
+          overflow = TextOverflow.Ellipsis,
+          color = textColour
+        )
+        AsyncImage(
+          model = BungiePathHelper.getFullUrlForPath(damageIconPath),
+          placeholder = placeholderPainter,
+          error = errorPainter,
+          modifier = modifier
+            .width(damageIconSize)
+            .height(damageIconSize),
+          contentDescription = null
+        )
+        Column(
+          modifier
+            .fillMaxHeight()
+            .weight(0.5f),
+          horizontalAlignment = Alignment.Start
+        ) {
+          Text(text = type, modifier = modifier.weight(0.5f), color = textColour)
+          Text(text = damageType, modifier = modifier.weight(0.5f), color = textColour)
+        }
       }
     }
   }
@@ -114,6 +145,7 @@ data class AutocompleteItem(
     fun fromCursor(cursor: Cursor): AutocompleteItem {
       val hashIndex = cursor.getColumnIndex(AutocompleteTable.HASH)
       val nameIndex = cursor.getColumnIndex(AutocompleteTable.NAME)
+      val tierIndex = cursor.getColumnIndex(AutocompleteTable.TIER)
       val typeIndex = cursor.getColumnIndex(AutocompleteTable.TYPE)
       val iconPathIndex = cursor.getColumnIndex(AutocompleteTable.ICON_PATH)
       val watermarkPathIndex = cursor.getColumnIndex(AutocompleteTable.WATERMARK_PATH)
@@ -123,6 +155,7 @@ data class AutocompleteItem(
       return AutocompleteItem(
         cursor.getInt(hashIndex).toUInt(),
         cursor.getString(nameIndex),
+        cursor.getString(tierIndex),
         cursor.getString(typeIndex),
         cursor.getString(iconPathIndex),
         cursor.getString(watermarkPathIndex),
@@ -131,5 +164,8 @@ data class AutocompleteItem(
         cursor.getString(damageIconPathIndex),
       )
     }
+
+    private val LEGENDARY_CARD_BG = Color(red = 0x51, green = 0x30, blue = 0x65)
+    private val EXOTIC_CARD_BG = Color(red = 0xc3, green = 0xa0, blue = 0x19)
   }
 }
