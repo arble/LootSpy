@@ -54,4 +54,12 @@ class DefaultFilterRepository @Inject constructor(
       com.lootspy.data.source.LocalFilter(filterId, name, Json.encodeToString(matchers))
     )
 
+  override suspend fun deleteFilter(filterId: String) {
+    localDataSource.deleteById(filterId)
+  }
+
+  override suspend fun deleteAllFilters() {
+    localDataSource.deleteAll()
+  }
+
 }

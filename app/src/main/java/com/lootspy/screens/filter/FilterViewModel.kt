@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class FilterUiState(
@@ -25,7 +26,7 @@ data class FilterUiState(
 
 @HiltViewModel
 class FilterViewModel @Inject constructor(
-  filterRepository: FilterRepository,
+  private val filterRepository: FilterRepository,
 ) : ViewModel() {
   private val _isLoading = MutableStateFlow(false)
   private val _userMessage: MutableStateFlow<Int?> = MutableStateFlow(null)
@@ -56,4 +57,8 @@ class FilterViewModel @Inject constructor(
       started = SharingStarted.WhileSubscribed(5000),
       initialValue = FilterUiState(isLoading = true)
     )
+
+  fun deleteAll() {
+    viewModelScope.launch { filterRepository.deleteAllFilters() }
+  }
 }

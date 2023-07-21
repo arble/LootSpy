@@ -55,4 +55,5 @@
     <string name="tasks_download_progress">Downloading</string>
     <string name="manifest_updating_title">Updating Manifest</string>
     <string name="manifest_outdated_title">Outdated Manifest</string>
+    <string name="item_matcher_already_matched">This item is already matched!</string>
 </resources>

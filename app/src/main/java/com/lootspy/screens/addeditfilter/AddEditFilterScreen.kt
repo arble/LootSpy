@@ -47,7 +47,7 @@ import com.lootspy.R
 import com.lootspy.data.matcher.FilterMatcher
 import com.lootspy.data.matcher.MatcherType
 import com.lootspy.data.matcher.NameMatcher
-import com.lootspy.screens.addeditfilter.matcher.NameMatcherDetails
+import com.lootspy.screens.addeditfilter.matcher.ItemMatcherDetails
 import com.lootspy.util.NewMatcherDialog
 import com.lootspy.util.ScreenContentWithEmptyText
 import com.lootspy.util.TextAlertDialog
@@ -175,6 +175,7 @@ fun AddEditFilterScreen(
         viewModel.onRedundantMatcherSnackbarDismiss()
       }
     }
+
     ScreenContentWithEmptyText(
       loading = uiState.isLoading,
       items = uiState.matchers,
@@ -261,7 +262,8 @@ private fun FilterMatcherItem(
     shape = MaterialTheme.shapes.medium,
     colors = CardDefaults.cardColors(containerColor = background),
     modifier = Modifier
-      .clickable { onMatcherClick(matcher, index) }
+      .clickable { onMatcherClick(matcher, index) },
+    elevation = if (selected) CardDefaults.elevatedCardElevation() else CardDefaults.cardElevation()
   ) {
     Row(
       verticalAlignment = Alignment.CenterVertically,
@@ -305,7 +307,7 @@ fun MatcherDetails(
   onDeleteMatcher: () -> Unit,
 ) {
   when (matcher) {
-    is NameMatcher -> NameMatcherDetails(
+    is NameMatcher -> ItemMatcherDetails(
       details = details,
       onSaveMatcher = onSaveMatcher,
       onDeleteMatcher = onDeleteMatcher,

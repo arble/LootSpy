@@ -24,7 +24,7 @@ import javax.inject.Inject
 
 data class AddEditFilterUiState(
   val id: String = "",
-  val name: String = "New Filter",
+  val name: String = "",
   val filter: Filter? = null,
   val matchers: List<FilterMatcher> = mutableListOf(),
   val selectedMatcher: Int? = null,
@@ -162,6 +162,17 @@ class AddEditFilterViewModel @Inject constructor(
         )
       }
     }
+  }
+
+  fun saveItemMatcher(index: Int, itemName: String) {
+    val matcher = uiState.value.matchers[index]
+    if (matcher is NameMatcher) {
+      matcher.name = itemName
+    }
+  }
+
+  fun isItemAlreadyMatched(itemName: String): Boolean {
+    return uiState.value.matchers.find { it is NameMatcher && it.name == itemName } != null
   }
 
   fun updateMatcherFields(fields: Map<String, String>, matchers: List<FilterMatcher>): Boolean {

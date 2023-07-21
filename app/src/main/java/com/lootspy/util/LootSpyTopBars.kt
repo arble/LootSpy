@@ -44,16 +44,6 @@ fun LootTopAppBar(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FilterTopAppBar(
-  addFilter: () -> Unit,
-) {
-  TopAppBar(
-    title = { Text(text = stringResource(id = R.string.filter_title)) },
-  )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
 fun VendorTopAppBar(
 
 ) {

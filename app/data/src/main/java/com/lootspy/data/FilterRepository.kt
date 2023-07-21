@@ -17,4 +17,8 @@ interface FilterRepository {
   suspend fun saveNewFilter(name: String, matchers: List<FilterMatcher>)
 
   suspend fun updateFilter(filterId: String, name: String, matchers: List<FilterMatcher>)
+
+  suspend fun deleteFilter(filterId: String)
+
+  suspend fun deleteAllFilters()
 }
