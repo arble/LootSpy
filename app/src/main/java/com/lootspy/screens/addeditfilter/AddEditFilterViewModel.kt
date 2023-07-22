@@ -13,7 +13,7 @@ import com.lootspy.data.FilterRepository
 import com.lootspy.data.matcher.FilterMatcher
 import com.lootspy.data.matcher.InvalidMatcher
 import com.lootspy.data.matcher.MatcherType
-import com.lootspy.data.matcher.NameMatcher
+import com.lootspy.data.matcher.ItemMatcher
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -112,7 +112,7 @@ class AddEditFilterViewModel @Inject constructor(
       _activeMatcher.update { Pair(matcher, index) }
     } else {
       val newMatcher = when (type) {
-        MatcherType.NAME -> NameMatcher("", 0U)
+        MatcherType.NAME -> ItemMatcher("", 0U)
         else -> InvalidMatcher
       }
       _activeMatcher.update { Pair(newMatcher, index) }
@@ -120,10 +120,10 @@ class AddEditFilterViewModel @Inject constructor(
   }
 
   private fun checkAlreadyMatchedName(
-    newMatcher: NameMatcher,
-    matchers: List<NameMatcher>
-  ): Pair<Boolean, Set<NameMatcher>> {
-    val redundantMatchers = HashSet<NameMatcher>()
+    newMatcher: ItemMatcher,
+    matchers: List<ItemMatcher>
+  ): Pair<Boolean, Set<ItemMatcher>> {
+    val redundantMatchers = HashSet<ItemMatcher>()
     for (matcher in matchers) {
       if (matcher.name.contains(newMatcher.name)) {
         return Pair(true, redundantMatchers)
@@ -137,7 +137,7 @@ class AddEditFilterViewModel @Inject constructor(
 
   fun existingItemMatcher(index: Int, item: AutocompleteItem): Boolean {
     uiState.value.matchers.forEachIndexed { oldIndex, matcher ->
-      if (matcher is NameMatcher && matcher.hash == item.hash && oldIndex != index) {
+      if (matcher is ItemMatcher && matcher.hash == item.hash && oldIndex != index) {
         return true
       }
     }
@@ -146,11 +146,11 @@ class AddEditFilterViewModel @Inject constructor(
 
   fun saveItemMatcher(index: Int?, item: AutocompleteItem): Boolean {
     uiState.value.matchers.forEachIndexed { oldIndex, matcher ->
-      if (matcher is NameMatcher && matcher.hash == item.hash && oldIndex != index) {
+      if (matcher is ItemMatcher && matcher.hash == item.hash && oldIndex != index) {
         return false
       }
     }
-    val newMatcher = NameMatcher(item.name, item.hash)
+    val newMatcher = ItemMatcher(item.name, item.hash)
     val newMatchers = uiState.value.matchers.toMutableList()
     if (index != null) {
       newMatchers[index] = newMatcher
@@ -167,7 +167,7 @@ class AddEditFilterViewModel @Inject constructor(
   }
 
   fun isItemAlreadyMatched(item: AutocompleteItem): Boolean {
-    return uiState.value.matchers.find { it is NameMatcher && it.hash == item.hash } != null
+    return uiState.value.matchers.find { it is ItemMatcher && it.hash == item.hash } != null
   }
 
   fun deleteSelectedMatcher() {

@@ -19,6 +19,10 @@ enum class MatcherType {
   abstract fun printableName(): String
 
   abstract fun descriptionResource(): Int
+
+  companion object {
+    fun displayValues() = values().filter { it != INVALID }
+  }
 }
 
 //@Serializable(with = MatcherSerializer::class)

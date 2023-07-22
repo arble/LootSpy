@@ -1,6 +1,7 @@
 package com.lootspy.screens.addeditfilter.matcher
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -21,10 +22,12 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
 import com.lootspy.R
 import com.lootspy.data.matcher.FilterMatcher
-import com.lootspy.data.matcher.NameMatcher
+import com.lootspy.data.matcher.ItemMatcher
 import com.lootspy.screens.addeditfilter.AddEditFilterViewModel
+import com.lootspy.util.BungiePathHelper
 import com.lootspy.util.SupportingErrorText
 import com.lootspy.util.TextAlertDialog
 import com.lootspy.util.Validation
@@ -66,7 +69,7 @@ fun ItemMatcherSummary(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ItemMatcherDetails(
-  matcher: NameMatcher,
+  matcher: ItemMatcher,
   index: Int?,
   onFinish: () -> Unit,
   viewModel: AddEditFilterViewModel = hiltViewModel()
@@ -94,56 +97,60 @@ fun ItemMatcherDetails(
       confirmDelete = false
     }
   }
-  Card(
-    shape = MaterialTheme.shapes.medium,
-    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceTint),
-  ) {
-    var nameText by remember { mutableStateOf(matcher.name) }
-    var inputError by remember { mutableStateOf<Int?>(null) }
-    Row(
-      verticalAlignment = Alignment.CenterVertically,
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(
-          horizontal = dimensionResource(id = R.dimen.horizontal_margin),
-          vertical = dimensionResource(id = R.dimen.loot_item_padding),
-        )
+  Column() {
+
+
+    Card(
+      shape = MaterialTheme.shapes.medium,
+      colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceTint),
     ) {
-      Text(
-        text = matcher.summaryString(),
-        style = MaterialTheme.typography.headlineSmall,
-        modifier = Modifier.padding(
-          start = dimensionResource(
-            id = R.dimen.horizontal_margin
+      var nameText by remember { mutableStateOf(matcher.name) }
+      var inputError by remember { mutableStateOf<Int?>(null) }
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(
+            horizontal = dimensionResource(id = R.dimen.horizontal_margin),
+            vertical = dimensionResource(id = R.dimen.loot_item_padding),
           )
-        ),
-      )
-    }
-    Row {
-      TextField(
-        value = nameText,
-        onValueChange = {
-          nameText = it
-          val validationError = Validation.validate(it, Validation.VALIDATORS_NORMAL_TEXT)
-          if (validationError != null) {
-            inputError = validationError
-          } else {
-            viewModel.getSuggestions(it)
-          }
-        },
-        label = { Text("Name") },
-        supportingText = { SupportingErrorText(inputError = inputError) },
-        modifier = Modifier.weight(1f)
-      )
-    }
-  }
-  suggestions.value.forEach { item ->
-    item.Composable(onClick = {
-      if (viewModel.saveItemMatcher(index, it)) {
-        onFinish()
-      } else {
-        alreadyMatched = true
+      ) {
+        Text(
+          text = matcher.summaryString(),
+          style = MaterialTheme.typography.headlineSmall,
+          modifier = Modifier.padding(
+            start = dimensionResource(
+              id = R.dimen.horizontal_margin
+            )
+          ),
+        )
       }
-    })
+      Row {
+        TextField(
+          value = nameText,
+          onValueChange = {
+            nameText = it
+            val validationError = Validation.validate(it, Validation.VALIDATORS_NORMAL_TEXT)
+            if (validationError != null) {
+              inputError = validationError
+            } else {
+              viewModel.getSuggestions(it)
+            }
+          },
+          label = { Text("Name") },
+          supportingText = { SupportingErrorText(inputError = inputError) },
+          modifier = Modifier.weight(1f)
+        )
+      }
+    }
+    suggestions.value.forEach { item ->
+      item.Composable(onClick = {
+        if (viewModel.saveItemMatcher(index, it)) {
+          onFinish()
+        } else {
+          alreadyMatched = true
+        }
+      })
+    }
   }
 }

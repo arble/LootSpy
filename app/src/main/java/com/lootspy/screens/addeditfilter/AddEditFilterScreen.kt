@@ -1,8 +1,16 @@
 package com.lootspy.screens.addeditfilter
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,7 +39,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,6 +46,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -48,7 +56,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lootspy.R
 import com.lootspy.data.matcher.FilterMatcher
 import com.lootspy.data.matcher.MatcherType
-import com.lootspy.data.matcher.NameMatcher
+import com.lootspy.data.matcher.ItemMatcher
 import com.lootspy.screens.addeditfilter.matcher.ItemMatcherDetails
 import com.lootspy.screens.addeditfilter.matcher.ItemMatcherSummary
 import com.lootspy.util.TextAlertDialog
@@ -87,10 +95,10 @@ fun AddEditFilterScreen(
         filterName = uiState.name.ifEmpty { stringResource(id = R.string.add_edit_filter_new_filter) },
         onBack = innerOnBack,
         addFilterMatcher = {
-          scope.launch {
-            showMatcherSheet = true
-            sheetState.show()
-          }
+          showMatcherSheet = true
+//          scope.launch {
+//            sheetState.show()
+//          }
         },
         editFilterName = { showEditFilterNameDialog = true },
       )
@@ -150,7 +158,10 @@ fun AddEditFilterScreen(
       )
     }
 
-    Column(modifier = Modifier.padding(paddingValues)) {
+    Column(
+      modifier = Modifier.padding(paddingValues),
+      verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
       uiState.matchers.forEachIndexed { index, matcher ->
         MatcherSummary(
           matcher = matcher,
@@ -165,30 +176,38 @@ fun AddEditFilterScreen(
       }
     }
     if (showMatcherSheet) {
-      val onDismiss: () -> Unit = remember {
-        {
-          scope.launch { sheetState.hide() }.invokeOnCompletion {
-            if (!sheetState.isVisible) {
-              viewModel.clearActiveFilter()
-              showMatcherSheet = false
-            }
-          }
-        }
-      }
-      val (activeMatcher, activeIndex) = activeMatcherState.value
       ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState
+        onDismissRequest = { viewModel.clearActiveFilter(); showMatcherSheet = false },
+        sheetState = sheetState,
+        modifier = Modifier.fillMaxHeight(0.8f)
       ) {
-        Column(modifier = Modifier.height(640.dp)) {
-          if (activeMatcher == null) {
+        val (activeMatcher, activeIndex) = activeMatcherState.value
+        Box(modifier = Modifier.fillMaxWidth()) {
+          val density = LocalDensity.current
+          androidx.compose.animation.AnimatedVisibility(
+            visible = activeMatcher == null,
+            exit = slideOutHorizontally { with(density) { (-it / 2).dp.roundToPx() } } +
+                fadeOut(targetAlpha = 0.3f)
+          ) {
             MatcherTypeSelectorCard()
-          } else {
+          }
+          androidx.compose.animation.AnimatedVisibility(
+            visible = activeMatcher != null,
+            enter = slideInHorizontally { with(density) { (it / 2).dp.roundToPx() } } +
+                fadeIn(initialAlpha = 0.3f)
+          ) {
             when (activeMatcher) {
-              is NameMatcher -> ItemMatcherDetails(
+              is ItemMatcher -> ItemMatcherDetails(
                 matcher = activeMatcher,
                 index = activeIndex,
-                onFinish = onDismiss
+                onFinish = {
+                  scope.launch { sheetState.hide() }.invokeOnCompletion {
+                    if (!sheetState.isVisible) {
+                      viewModel.clearActiveFilter()
+                      showMatcherSheet = false
+                    }
+                  }
+                }
               )
 
               else -> Unit
@@ -219,6 +238,7 @@ private fun MatcherTypeSelectorCard(
       maxLines = 2,
       overflow = TextOverflow.Ellipsis
     )
+    Spacer(modifier = Modifier.height(6.dp))
     var selectedType by remember { mutableStateOf(MatcherType.NAME) }
     Row(modifier = Modifier.fillMaxWidth()) {
       var expanded by remember { mutableStateOf(false) }
@@ -235,7 +255,7 @@ private fun MatcherTypeSelectorCard(
           onValueChange = {}
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-          MatcherType.values().forEach {
+          MatcherType.displayValues().forEach {
             DropdownMenuItem(text = { Text(it.printableName()) }, onClick = {
               selectedType = it
               expanded = false
@@ -287,7 +307,7 @@ private fun MatcherSummary(
   onMatcherClick: (Int, FilterMatcher) -> Unit,
 ) {
   when (matcher) {
-    is NameMatcher -> ItemMatcherSummary(matcher, index, onMatcherClick)
+    is ItemMatcher -> ItemMatcherSummary(matcher, index, onMatcherClick)
     else -> Unit
   }
 }
