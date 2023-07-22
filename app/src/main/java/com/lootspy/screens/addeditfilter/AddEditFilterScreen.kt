@@ -1,16 +1,11 @@
 package com.lootspy.screens.addeditfilter
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -19,28 +14,35 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lootspy.R
@@ -48,11 +50,11 @@ import com.lootspy.data.matcher.FilterMatcher
 import com.lootspy.data.matcher.MatcherType
 import com.lootspy.data.matcher.NameMatcher
 import com.lootspy.screens.addeditfilter.matcher.ItemMatcherDetails
-import com.lootspy.util.NewMatcherDialog
-import com.lootspy.util.ScreenContentWithEmptyText
+import com.lootspy.screens.addeditfilter.matcher.ItemMatcherSummary
 import com.lootspy.util.TextAlertDialog
 import com.lootspy.util.TextInputDialog
 import com.lootspy.util.Validation
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,12 +65,10 @@ fun AddEditFilterScreen(
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val snackbarHostState = remember { SnackbarHostState() }
-  var showNewMatcherDialog by remember { mutableStateOf(false) }
   var showUnsavedChangesAlert by remember { mutableStateOf(false) }
   var showEnterNicknameDialog by remember { mutableStateOf(false) }
-  var showAlreadyMatchedDialog by remember { mutableStateOf(false) }
   var showEditFilterNameDialog by remember { mutableStateOf(false) }
-  val context = LocalContext.current
+  var showMatcherSheet by remember { mutableStateOf(false) }
   val innerOnBack = {
     if (viewModel.checkModifiedFilter()) {
       showUnsavedChangesAlert = true
@@ -76,13 +76,22 @@ fun AddEditFilterScreen(
       onBack()
     }
   }
+//  val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+  val sheetState =
+    remember { SheetState(skipPartiallyExpanded = true, initialValue = SheetValue.Hidden) }
+  val scope = rememberCoroutineScope()
   BackHandler(onBack = innerOnBack)
   Scaffold(
     topBar = {
       AddEditFilterTopAppBar(
         filterName = uiState.name.ifEmpty { stringResource(id = R.string.add_edit_filter_new_filter) },
         onBack = innerOnBack,
-        addFilterMatcher = { showNewMatcherDialog = true },
+        addFilterMatcher = {
+          scope.launch {
+            showMatcherSheet = true
+            sheetState.show()
+          }
+        },
         editFilterName = { showEditFilterNameDialog = true },
       )
     },
@@ -103,19 +112,7 @@ fun AddEditFilterScreen(
       }
     }
   ) { paddingValues ->
-
-    val onMatcherClick: (FilterMatcher, Int) -> Unit = { _, index ->
-      viewModel.updateSelectedMatcher(index)
-    }
-    if (showNewMatcherDialog) {
-      NewMatcherDialog(
-        onDismiss = { showNewMatcherDialog = false },
-        onSubmit = {
-          showNewMatcherDialog = false
-          viewModel.createBlankMatcher(it)
-        },
-      )
-    }
+    val activeMatcherState = viewModel.activeMatcher.collectAsStateWithLifecycle()
     if (showEnterNicknameDialog) {
       TextInputDialog(
         titleText = stringResource(id = R.string.add_edit_filter_new_filter_name_title),
@@ -152,70 +149,107 @@ fun AddEditFilterScreen(
         onConfirm = { showUnsavedChangesAlert = false; onBack() }
       )
     }
-    if (showAlreadyMatchedDialog) {
-      TextAlertDialog(
-        titleText = stringResource(id = R.string.add_edit_filter_already_matched_title),
-        messageText = stringResource(id = R.string.add_edit_filter_already_matched_message),
-        ackText = stringResource(id = R.string.dialog_ok),
-        onDismiss = { showAlreadyMatchedDialog = false }
-      )
-    }
-    if (uiState.removedMatchers != null && uiState.removedMatchers!! > 0) {
-      LaunchedEffect(snackbarHostState) {
-        snackbarHostState.showSnackbar(
-          withDismissAction = true,
-          message = context.resources.getString(
-            R.string.add_edit_filter_removed_matchers,
-            uiState.removedMatchers,
-            if (uiState.removedMatchers == 1) "" else "s",
-          )
-//          message = "${uiState.removedMatchers} redundant matcher" +
-//              "${if (uiState.removedMatchers == 1) "" else "s"} removed"
-        )
-        viewModel.onRedundantMatcherSnackbarDismiss()
-      }
-    }
 
-    ScreenContentWithEmptyText(
-      loading = uiState.isLoading,
-      items = uiState.matchers,
-      itemContent = { index, matcher ->
-        val suggestionItems = viewModel.suggestions.collectAsStateWithLifecycle()
-        val selected = uiState.selectedMatcher == index
-        val errorPainter =
-          painterResource(id = com.google.android.material.R.drawable.mtrl_ic_cancel)
-        val placeholderPainter = painterResource(id = R.drawable.ic_launcher_foreground)
-        FilterMatcherItem(
+    Column(modifier = Modifier.padding(paddingValues)) {
+      uiState.matchers.forEachIndexed { index, matcher ->
+        MatcherSummary(
           matcher = matcher,
           index = index,
-          selected = selected,
-          details = uiState.selectedMatcherFields,
-          onMatcherClick = onMatcherClick,
-          onSaveMatcher = {
-            showAlreadyMatchedDialog = !viewModel.updateMatcherFields(it, uiState.matchers)
-          },
-          onDeleteMatcher = { viewModel.deleteSelectedMatcher() },
-        )
-        if (selected) {
-          val (text, suggestions) = suggestionItems.value
-          if (suggestions.size > 1 || (suggestions.size == 1 && suggestions[0].name != text)) {
-            suggestions.forEach {
-              it.Composable(
-                placeholderPainter = placeholderPainter,
-                errorPainter = errorPainter,
-                onClick = { item ->
-                  showAlreadyMatchedDialog = !viewModel.updateMatcherFields(mapOf(
-                    "MATCHER_TYPE" to MatcherType.NAME.name,
-                    "name" to item.name,
-                  ), uiState.matchers)
-                }
-              )
+          onMatcherClick = { selectedIndex, selectedMatcher ->
+            viewModel.setActiveMatcher(selectedMatcher, selectedIndex)
+            scope.launch {
+              showMatcherSheet = true
+              sheetState.show()
+            }
+          })
+      }
+    }
+    if (showMatcherSheet) {
+      val onDismiss: () -> Unit = remember {
+        {
+          scope.launch { sheetState.hide() }.invokeOnCompletion {
+            if (!sheetState.isVisible) {
+              viewModel.clearActiveFilter()
+              showMatcherSheet = false
             }
           }
         }
-      },
-      emptyText = stringResource(id = R.string.add_edit_filter_screen_empty),
-      modifier = Modifier.padding(paddingValues)
+      }
+      val (activeMatcher, activeIndex) = activeMatcherState.value
+      ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState
+      ) {
+        Column(modifier = Modifier.height(640.dp)) {
+          if (activeMatcher == null) {
+            MatcherTypeSelectorCard()
+          } else {
+            when (activeMatcher) {
+              is NameMatcher -> ItemMatcherDetails(
+                matcher = activeMatcher,
+                index = activeIndex,
+                onFinish = onDismiss
+              )
+
+              else -> Unit
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MatcherTypeSelectorCard(
+  viewModel: AddEditFilterViewModel = hiltViewModel()
+) {
+  Card(
+    shape = MaterialTheme.shapes.medium,
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceTint)
+  ) {
+    Text(
+      text = stringResource(id = R.string.add_matcher_dialog_text),
+      textAlign = TextAlign.Center,
+      modifier = Modifier
+        .padding(top = 5.dp)
+        .fillMaxWidth(),
+      style = MaterialTheme.typography.labelLarge,
+      maxLines = 2,
+      overflow = TextOverflow.Ellipsis
+    )
+    var selectedType by remember { mutableStateOf(MatcherType.NAME) }
+    Row(modifier = Modifier.fillMaxWidth()) {
+      var expanded by remember { mutableStateOf(false) }
+      ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = {
+        expanded = !expanded
+      }) {
+        TextField(
+          modifier = Modifier.menuAnchor(),
+          readOnly = true,
+          label = { Text(stringResource(id = R.string.add_matcher_type_dropdown_label)) },
+          value = selectedType.printableName(),
+          trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+          colors = ExposedDropdownMenuDefaults.textFieldColors(),
+          onValueChange = {}
+        )
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+          MatcherType.values().forEach {
+            DropdownMenuItem(text = { Text(it.printableName()) }, onClick = {
+              selectedType = it
+              expanded = false
+            })
+          }
+        }
+      }
+      IconButton(onClick = { viewModel.setActiveMatcher(type = selectedType) }) {
+        Icon(imageVector = Icons.Default.Check, contentDescription = null)
+      }
+    }
+    Text(
+      text = stringResource(id = selectedType.descriptionResource()),
+      modifier = Modifier.padding(all = 8.dp)
     )
   }
 }
@@ -247,71 +281,13 @@ fun AddEditFilterTopAppBar(
 }
 
 @Composable
-private fun FilterMatcherItem(
+private fun MatcherSummary(
   matcher: FilterMatcher,
   index: Int,
-  selected: Boolean,
-  details: Map<String, String>?,
-  onMatcherClick: (FilterMatcher, Int) -> Unit,
-  onSaveMatcher: (Map<String, String>) -> Unit,
-  onDeleteMatcher: () -> Unit,
-) {
-  val background =
-    if (selected) MaterialTheme.colorScheme.surfaceTint else MaterialTheme.colorScheme.surfaceVariant
-  Card(
-    shape = MaterialTheme.shapes.medium,
-    colors = CardDefaults.cardColors(containerColor = background),
-    modifier = Modifier
-      .clickable { onMatcherClick(matcher, index) },
-    elevation = if (selected) CardDefaults.elevatedCardElevation() else CardDefaults.cardElevation()
-  ) {
-    Row(
-      verticalAlignment = Alignment.CenterVertically,
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(
-          horizontal = dimensionResource(id = R.dimen.horizontal_margin),
-          vertical = dimensionResource(id = R.dimen.loot_item_padding),
-        )
-    ) {
-      Text(
-        text = matcher.summaryString(),
-        style = MaterialTheme.typography.headlineSmall,
-        modifier = Modifier.padding(
-          start = dimensionResource(
-            id = R.dimen.horizontal_margin
-          )
-        ),
-      )
-    }
-    AnimatedVisibility(
-      visible = selected,
-      enter = fadeIn() + expandVertically(tween(500)),
-      exit = fadeOut() + shrinkVertically(tween(500)),
-    ) {
-      MatcherDetails(
-        matcher = matcher,
-        details = details,
-        onSaveMatcher = onSaveMatcher,
-        onDeleteMatcher = onDeleteMatcher,
-      )
-    }
-  }
-}
-
-@Composable
-fun MatcherDetails(
-  matcher: FilterMatcher,
-  details: Map<String, String>?,
-  onSaveMatcher: (Map<String, String>) -> Unit,
-  onDeleteMatcher: () -> Unit,
+  onMatcherClick: (Int, FilterMatcher) -> Unit,
 ) {
   when (matcher) {
-    is NameMatcher -> ItemMatcherDetails(
-      details = details,
-      onSaveMatcher = onSaveMatcher,
-      onDeleteMatcher = onDeleteMatcher,
-    )
+    is NameMatcher -> ItemMatcherSummary(matcher, index, onMatcherClick)
+    else -> Unit
   }
 }
-

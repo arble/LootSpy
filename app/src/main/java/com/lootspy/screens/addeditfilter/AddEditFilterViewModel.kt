@@ -11,6 +11,7 @@ import com.lootspy.api.ManifestManager
 import com.lootspy.data.Filter
 import com.lootspy.data.FilterRepository
 import com.lootspy.data.matcher.FilterMatcher
+import com.lootspy.data.matcher.InvalidMatcher
 import com.lootspy.data.matcher.MatcherType
 import com.lootspy.data.matcher.NameMatcher
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,7 +27,7 @@ data class AddEditFilterUiState(
   val id: String = "",
   val name: String = "",
   val filter: Filter? = null,
-  val matchers: List<FilterMatcher> = mutableListOf(),
+  val matchers: List<FilterMatcher> = listOf(),
   val selectedMatcher: Int? = null,
   val selectedMatcherFields: Map<String, String>? = null,
   val removedMatchers: Int? = null,
@@ -47,8 +48,10 @@ class AddEditFilterViewModel @Inject constructor(
 
   private val _uiState = MutableStateFlow(AddEditFilterUiState())
   val uiState = _uiState.asStateFlow()
-  private val _suggestions = MutableStateFlow(Pair("", listOf<AutocompleteItem>()))
+  private val _suggestions = MutableStateFlow(listOf<AutocompleteItem>())
   val suggestions = _suggestions.asStateFlow()
+  private val _activeMatcher = MutableStateFlow<Pair<FilterMatcher?, Int?>>(Pair(null, null))
+  val activeMatcher = _activeMatcher.asStateFlow()
 
   init {
     if (filterId != null) {
@@ -100,37 +103,19 @@ class AddEditFilterViewModel @Inject constructor(
     }
   }
 
-  private fun buildMatcherFieldMap(matcher: FilterMatcher): Map<String, String> {
-    val result = HashMap<String, String>()
-    when (matcher) {
-      is NameMatcher -> {
-        result["name"] = matcher.name
+  fun setActiveMatcher(
+    matcher: FilterMatcher? = null,
+    index: Int? = null,
+    type: MatcherType = MatcherType.INVALID
+  ) {
+    if (matcher != null && index != null) {
+      _activeMatcher.update { Pair(matcher, index) }
+    } else {
+      val newMatcher = when (type) {
+        MatcherType.NAME -> NameMatcher("", 0U)
+        else -> InvalidMatcher
       }
-    }
-    return result
-  }
-
-  fun createBlankMatcher(type: MatcherType) {
-    _uiState.update {
-      val matchers = it.matchers.toMutableList()
-      if (type == MatcherType.NAME) {
-        matchers.add(NameMatcher(""))
-      }
-      val index = matchers.size - 1
-      it.copy(
-        matchers = matchers,
-        selectedMatcher = index,
-        selectedMatcherFields = buildMatcherFieldMap(matchers[index]),
-      )
-    }
-  }
-
-  fun updateSelectedMatcher(index: Int) {
-    _uiState.update {
-      it.copy(
-        selectedMatcher = index,
-        selectedMatcherFields = buildMatcherFieldMap(it.matchers[index]),
-      )
+      _activeMatcher.update { Pair(newMatcher, index) }
     }
   }
 
@@ -150,68 +135,39 @@ class AddEditFilterViewModel @Inject constructor(
     return Pair(false, redundantMatchers)
   }
 
-  private fun checkAlreadyMatched(
-    newMatcher: FilterMatcher,
-    matchers: List<FilterMatcher>
-  ): Pair<Boolean, Set<FilterMatcher>> {
-    when (newMatcher.type()) {
-      MatcherType.NAME -> {
-        return checkAlreadyMatchedName(
-          newMatcher as NameMatcher,
-          matchers.filter { it !== newMatcher }.filterIsInstance(NameMatcher::class.java)
-        )
+  fun existingItemMatcher(index: Int, item: AutocompleteItem): Boolean {
+    uiState.value.matchers.forEachIndexed { oldIndex, matcher ->
+      if (matcher is NameMatcher && matcher.hash == item.hash && oldIndex != index) {
+        return true
       }
     }
+    return false
   }
 
-  fun saveItemMatcher(index: Int, itemName: String) {
-    val matcher = uiState.value.matchers[index]
-    if (matcher is NameMatcher) {
-      matcher.name = itemName
-    }
-  }
-
-  fun isItemAlreadyMatched(itemName: String): Boolean {
-    return uiState.value.matchers.find { it is NameMatcher && it.name == itemName } != null
-  }
-
-  fun updateMatcherFields(fields: Map<String, String>, matchers: List<FilterMatcher>): Boolean {
-    var matcher: FilterMatcher? = null
-
-    when (fields["MATCHER_TYPE"]) {
-      MatcherType.NAME.name -> {
-        matcher = NameMatcher(fields["name"]!!)
+  fun saveItemMatcher(index: Int?, item: AutocompleteItem): Boolean {
+    uiState.value.matchers.forEachIndexed { oldIndex, matcher ->
+      if (matcher is NameMatcher && matcher.hash == item.hash && oldIndex != index) {
+        return false
       }
     }
-    if (matcher == null) {
-      return true
+    val newMatcher = NameMatcher(item.name, item.hash)
+    val newMatchers = uiState.value.matchers.toMutableList()
+    if (index != null) {
+      newMatchers[index] = newMatcher
+    } else {
+      newMatchers.add(newMatcher)
     }
-    val newMatchers = List(matchers.size) { index ->
-      // replace the appropriate Matcher with our new one
-      if (index != uiState.value.selectedMatcher) {
-        return@List uiState.value.matchers[index]
-      } else {
-        return@List matcher
-      }
-    }
-    val (alreadyMatched, redundantMatchers) = checkAlreadyMatched(matcher, newMatchers)
-    if (alreadyMatched) {
-      return false
-    }
-    val (resultMatchers, removedMatchers) =
-      if (redundantMatchers.isEmpty()) Pair(newMatchers, null) else Pair(
-        newMatchers.subtract(redundantMatchers).toList(),
-        redundantMatchers.size
-      )
-    _uiState.update { state ->
-      state.copy(
-        matchers = resultMatchers,
-        removedMatchers = removedMatchers,
-        selectedMatcher = null,
-      )
-    }
-    _suggestions.update { Pair("", emptyList()) }
+    _uiState.update { it.copy(matchers = newMatchers) }
     return true
+  }
+
+  fun clearActiveFilter() {
+    _suggestions.update { emptyList() }
+    _activeMatcher.update { Pair(null, null) }
+  }
+
+  fun isItemAlreadyMatched(item: AutocompleteItem): Boolean {
+    return uiState.value.matchers.find { it is NameMatcher && it.hash == item.hash } != null
   }
 
   fun deleteSelectedMatcher() {
@@ -226,13 +182,13 @@ class AddEditFilterViewModel @Inject constructor(
   fun getSuggestions(text: String, limit: Int = 5) {
     viewModelScope.launch {
       if (text.isEmpty()) {
-        _suggestions.update { Pair("", emptyList()) }
+        _suggestions.update { emptyList() }
       } else {
         withContext(Dispatchers.IO) {
           if (autocompleteHelper.items.isEmpty()) {
             manifestManager.populateItemAutocomplete()
           }
-          _suggestions.update { Pair(text, autocompleteHelper.suggest(text, limit)) }
+          _suggestions.update { autocompleteHelper.suggest(text, limit) }
         }
       }
     }

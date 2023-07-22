@@ -20,10 +20,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.google.android.material.R
 import com.lootspy.api.manifest.AutocompleteTable
 import com.lootspy.util.BungiePathHelper
 
@@ -87,8 +89,8 @@ data class AutocompleteItem(
   @Composable
   fun Composable(
     modifier: Modifier = Modifier,
-    placeholderPainter: Painter,
-    errorPainter: Painter,
+    placeholder: Painter = painterResource(id = com.lootspy.R.drawable.ic_launcher_foreground),
+    error: Painter = painterResource(id = R.drawable.mtrl_ic_cancel),
     onClick: (AutocompleteItem) -> Unit = {},
     damageIconSize: Dp = 24.dp
   ) {
@@ -111,7 +113,7 @@ data class AutocompleteItem(
           .fillMaxWidth()
           .fillMaxHeight()
       ) {
-        IconBox(placeholderPainter = placeholderPainter, errorPainter = errorPainter)
+        IconBox(placeholderPainter = placeholder, errorPainter = error)
         Text(
           text = name,
           modifier = modifier.weight(0.5f),
@@ -121,8 +123,8 @@ data class AutocompleteItem(
         )
         AsyncImage(
           model = BungiePathHelper.getFullUrlForPath(damageIconPath),
-          placeholder = placeholderPainter,
-          error = errorPainter,
+          placeholder = placeholder,
+          error = error,
           modifier = modifier
             .width(damageIconSize)
             .height(damageIconSize),

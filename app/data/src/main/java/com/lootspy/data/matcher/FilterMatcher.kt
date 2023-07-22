@@ -5,6 +5,12 @@ import com.lootspy.data.R
 import kotlinx.serialization.Serializable
 
 enum class MatcherType {
+  INVALID {
+    override fun printableName() = "INVALID"
+
+    override fun descriptionResource() = R.string.matcher_type_desc_invalid
+
+  },
   NAME {
     override fun printableName() = "Name"
     override fun descriptionResource() = R.string.matcher_type_desc_name

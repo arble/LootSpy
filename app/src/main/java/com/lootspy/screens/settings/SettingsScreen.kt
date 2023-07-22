@@ -229,7 +229,7 @@ private fun ItemSuggestion(
   item: AutocompleteItem,
 ) {
   SettingsCard(modifier.height(64.dp)) {
-    item.Composable(placeholderPainter = placeholderPainter, errorPainter = errorPainter)
+    item.Composable(placeholder = placeholderPainter, error = errorPainter)
   }
 }
 
