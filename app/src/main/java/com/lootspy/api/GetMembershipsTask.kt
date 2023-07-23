@@ -1,23 +1,18 @@
 package com.lootspy.api
 
-import android.Manifest
 import android.content.Context
-import android.content.pm.PackageManager
 import android.util.Log
-import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.lootspy.client.ApiClient
-import com.lootspy.client.model.UserGetMembershipDataById200Response
+import com.lootspy.client.api.UserApi
 import com.lootspy.data.ProfileRepository
 import com.lootspy.data.UserStore
 import com.lootspy.data.source.DestinyProfile
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
+import org.openapitools.client.infrastructure.ApiClient
 
 @HiltWorker
 class GetMembershipsTask @AssistedInject constructor(
@@ -36,31 +31,20 @@ class GetMembershipsTask @AssistedInject constructor(
     val notifyChannel = inputData.getString("notify_channel") ?: return Result.failure()
 
     Log.d("LootSpy API Sync", "Beginning membership sync")
-    val apiClient = ApiClient()
-    apiClient.setAccessToken(accessToken)
-    val call = apiClient.buildCall(
-      "https://www.bungie.net/Platform",
-      "/User/GetMembershipsById/$membershipId/254",
-      "GET",
-      emptyList(),
-      emptyList(),
-      null,
-      mapOf("X-API-Key" to "50ef71cc77324212886181190ea75ba7"),
-      emptyMap(),
-      emptyMap(),
-      emptyArray(),
-      null,
-    )
-    val apiResponse = apiClient.executeTyped<UserGetMembershipDataById200Response>(call)
+    val apiClient = UserApi()
+//    ApiClient.accessToken = accessToken
+    ApiClient.apiKey["X-API-Key"] = "50ef71cc77324212886181190ea75ba7"
+
+//    val apiResponse = apiClient.executeTyped<UserGetMembershipDataById200Response>(call)
+    val apiResponse = apiClient.userGetMembershipDataById(membershipId.toLong(), 254)
     Log.d("LootSpy API Sync", "Executed API call")
-    if (apiResponse.statusCode != 200) {
-      notifySyncFailure(apiResponse, context, notifyChannel)
+    if (apiResponse.errorCode != null && apiResponse.errorCode != 1) {
+//      notifySyncFailure(apiResponse, context, notifyChannel)
 //      userStore.deleteAuthInfo()
       return Result.failure()
     }
-    val membershipData = apiResponse.data.response ?: return Result.failure()
-
-    val memberships = apiResponse.data?.response?.destinyMemberships
+    val membershipData = apiResponse.response ?: return Result.failure()
+    val memberships = membershipData.destinyMemberships
     if (memberships != null) {
       val profiles = memberships.mapNotNull {
         Log.d("LootSpy API Sync", it.toString())

@@ -24,6 +24,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.lootspy.R
+import com.lootspy.api.GetCharactersTask
 import com.lootspy.api.GetMembershipsTask
 import com.lootspy.data.LootEntry
 import com.lootspy.util.LootTopAppBar
@@ -43,7 +44,14 @@ fun LootScreen(
     topBar = {
       LootTopAppBar(
         isSyncing = syncWorkInfo.value?.any { it.state == WorkInfo.State.RUNNING } ?: false,
-        onChangeFilter = {},
+        onChangeFilter = {
+          WorkBuilders.dispatchUniqueWorker(
+            context,
+            GetCharactersTask::class.java,
+            "sync_loot",
+            mapOf("notify_channel" to "lootspyApi")
+          )
+        },
         onRefresh = {
           WorkBuilders.dispatchUniqueWorker(
             context,

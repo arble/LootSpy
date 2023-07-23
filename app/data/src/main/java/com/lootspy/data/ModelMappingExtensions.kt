@@ -65,17 +65,17 @@ fun GroupsV2GroupUserInfoCard.toLocal(): DestinyProfile {
 fun List<GroupsV2GroupUserInfoCard>.toLocal() =
   map(GroupsV2GroupUserInfoCard::toLocal)
 
-fun DestinyProfile.toExternal(): GroupsV2GroupUserInfoCard {
-  val result = GroupsV2GroupUserInfoCard()
-  result.membershipId = membershipId
-  result.membershipType = membershipType
-  result.displayName = displayName
-  result.supplementalDisplayName = platformDisplayName
-  result.iconPath = iconPath
-  result.bungieGlobalDisplayName = bungieDisplayName
-  result.bungieGlobalDisplayNameCode = bungieDisplayNameCode
-  return result
-}
-
-@JvmName("localToExternalProfile")
-fun List<DestinyProfile>.toExternal() = map(DestinyProfile::toExternal)
+//fun DestinyProfile.toExternal(): GroupsV2GroupUserInfoCard {
+//  val result = GroupsV2GroupUserInfoCard()
+//  result.membershipId = membershipId
+//  result.membershipType = membershipType
+//  result.displayName = displayName
+//  result.supplementalDisplayName = platformDisplayName
+//  result.iconPath = iconPath
+//  result.bungieGlobalDisplayName = bungieDisplayName
+//  result.bungieGlobalDisplayNameCode = bungieDisplayNameCode
+//  return result
+//}
+//
+//@JvmName("localToExternalProfile")
+//fun List<DestinyProfile>.toExternal() = map(DestinyProfile::toExternal)

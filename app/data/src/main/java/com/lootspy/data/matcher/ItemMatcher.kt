@@ -6,11 +6,12 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("ItemMatcher")
-class ItemMatcher(val name: String, val hash: UInt) : FilterMatcher {
+class ItemMatcher(private val name: String, val hash: UInt) : FilterMatcher {
 
   override fun type() = MatcherType.NAME
 
   override fun match(item: DestinyItem) = item.name == name
 
-  override fun summaryString() = "Match single item: ${name.ifEmpty { "" }}"
+  override fun matcherTypeDescription() = "Match single item"
+  override fun describeMatcherValue() = name
 }

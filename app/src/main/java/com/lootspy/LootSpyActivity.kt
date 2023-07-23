@@ -10,7 +10,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -58,7 +57,7 @@ class LootSpyActivity : ComponentActivity() {
     authService.dispose()
   }
 
-  @OptIn(ExperimentalAnimationApi::class, ExperimentalMaterial3Api::class)
+  @OptIn(ExperimentalAnimationApi::class)
   @Composable
   private fun MainActivityContent(
     viewModel: LootSpyViewModel = hiltViewModel()
