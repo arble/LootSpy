@@ -27,8 +27,9 @@ class GetCharactersTask @AssistedInject constructor(
     val notifyChannel = inputData.getString("notify_channel") ?: return Result.failure()
 
     Log.d(LOG_TAG, "Beginning profile sync")
+
     val apiClient = Destiny2Api()
-//    ApiClient.accessToken = accessToken
+    ApiClient.accessToken = accessToken
     ApiClient.apiKey["X-API-Key"] = "50ef71cc77324212886181190ea75ba7"
     val apiResponse = apiClient.destiny2GetProfile(
       activeMembership.membershipId,

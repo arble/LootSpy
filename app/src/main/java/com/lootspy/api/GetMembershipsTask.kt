@@ -32,10 +32,8 @@ class GetMembershipsTask @AssistedInject constructor(
 
     Log.d("LootSpy API Sync", "Beginning membership sync")
     val apiClient = UserApi()
-//    ApiClient.accessToken = accessToken
+    ApiClient.accessToken = accessToken
     ApiClient.apiKey["X-API-Key"] = "50ef71cc77324212886181190ea75ba7"
-
-//    val apiResponse = apiClient.executeTyped<UserGetMembershipDataById200Response>(call)
     val apiResponse = apiClient.userGetMembershipDataById(membershipId.toLong(), 254)
     Log.d("LootSpy API Sync", "Executed API call")
     if (apiResponse.errorCode != null && apiResponse.errorCode != 1) {

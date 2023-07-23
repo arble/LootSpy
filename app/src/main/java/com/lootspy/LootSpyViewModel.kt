@@ -106,9 +106,11 @@ class LootSpyViewModel @Inject constructor(
             val accessToken = tokenResponse.accessToken
             val membershipId = tokenResponse.additionalParameters["membership_id"]
             if (accessToken != null && membershipId != null) {
-              Log.d("LootSpyAuth", "Got data: $accessToken and $membershipId")
+              Log.d("LootSpy Auth", "Got data: $accessToken")
+              Log.d("LootSpy Auth", "Expiry time: ${tokenResponse.accessTokenExpirationTime}")
               viewModelScope.launch {
                 userStore.saveAuthInfo(accessToken, membershipId)
+                Log.i("LootSpy Auth", accessToken)
                 WorkBuilders.dispatchUniqueWorker(
                   context,
                   GetMembershipsTask::class.java,

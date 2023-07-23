@@ -59,6 +59,7 @@ fun LootScreen(
             "sync_loot",
             mapOf("notify_channel" to "lootspyApi")
           )
+//          viewModel.deleteAuthInfo()
         },
       )
     },

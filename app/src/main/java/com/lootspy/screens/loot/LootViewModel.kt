@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.lootspy.R
 import com.lootspy.data.LootEntry
 import com.lootspy.data.LootRepository
+import com.lootspy.data.UserStore
 import com.lootspy.util.Async
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,6 +36,7 @@ data class FilteringUiInfo(
 class LootViewModel @Inject constructor(
   private val lootRepository: LootRepository,
   private val savedStateHandle: SavedStateHandle,
+  private val userStore: UserStore,
 ) : ViewModel() {
 
   companion object {
@@ -83,6 +85,12 @@ class LootViewModel @Inject constructor(
     started = SharingStarted.WhileSubscribed(5000),
     initialValue = LootUiState(isLoading = true)
   )
+
+  fun deleteAuthInfo() {
+    viewModelScope.launch {
+      userStore.deleteAuthInfo()
+    }
+  }
 
   fun setFiltering(requestType: LootFilterType) {
     savedStateHandle[LOOT_FILTER_SAVED_STATE_KEY] = requestType
