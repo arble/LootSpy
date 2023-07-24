@@ -23,16 +23,14 @@ class GetMembershipsTask @AssistedInject constructor(
 ) : CoroutineWorker(context, params) {
 
   override suspend fun doWork(): Result {
-    val authState = userStore.authState.first()
     val membershipId = userStore.bungieMembershipId.first()
     val notifyChannel = inputData.getString("notify_channel") ?: return Result.failure()
 
-    Log.d("LootSpy API Sync", "Beginning membership sync")
+    Log.d(LOG_TAG, "Beginning membership sync")
     val apiClient = UserApi()
-    ApiClient.accessToken = authState.accessToken
+    ApiClient.accessToken = inputData.getString("access_token") ?: return Result.failure()
     ApiClient.apiKey["X-API-Key"] = "50ef71cc77324212886181190ea75ba7"
     val apiResponse = apiClient.userGetMembershipDataById(membershipId.toLong(), 254)
-    Log.d("LootSpy API Sync", "Executed API call")
     if (apiResponse.errorCode != null && apiResponse.errorCode != 1) {
 //      notifySyncFailure(apiResponse, context, notifyChannel)
 //      userStore.deleteAuthInfo()
@@ -42,7 +40,7 @@ class GetMembershipsTask @AssistedInject constructor(
     val memberships = membershipData.destinyMemberships
     if (memberships != null) {
       val profiles = memberships.mapNotNull {
-        Log.d("LootSpy API Sync", it.toString())
+        Log.d(LOG_TAG, it.toString())
         try {
           DestinyProfile(
             it.membershipId!!,
@@ -54,16 +52,16 @@ class GetMembershipsTask @AssistedInject constructor(
             it.bungieGlobalDisplayNameCode!!,
           )
         } catch (e: NullPointerException) {
-          Log.e("LootSpy API Sync", "Received a membership lacking essential data")
+          Log.e(LOG_TAG, "Received a membership lacking essential data")
           null
         }
       }
       if (profiles.isEmpty()) {
-        Log.e("LootSpy API Sync", "No received profiles were valid")
+        Log.e(LOG_TAG, "No received profiles were valid")
         return Result.failure()
       }
       profileRepository.saveProfiles(profiles)
-      Log.d("LootSpy API Sync", "Retrieved ${profiles.size} memberships from Bungie")
+      Log.d(LOG_TAG, "Retrieved ${profiles.size} memberships from Bungie")
       val primaryMembershipId =
         membershipData.primaryMembershipId ?: profiles.getOrNull(0)?.membershipId
       if (primaryMembershipId != null) {
@@ -71,9 +69,13 @@ class GetMembershipsTask @AssistedInject constructor(
         userStore.savePrimaryMembership(primaryMembershipId)
       }
     } else {
-      Log.d("LootSpy API Sync", "No memberships")
+      Log.d(LOG_TAG, "No memberships")
     }
     userStore.saveLastSyncTime(System.currentTimeMillis())
     return Result.success()
+  }
+
+  companion object {
+    private const val LOG_TAG = "LootSpy API Sync"
   }
 }

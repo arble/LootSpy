@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import net.openid.appauth.AuthState
 import net.openid.appauth.AuthorizationException
 import net.openid.appauth.AuthorizationResponse
 import net.openid.appauth.AuthorizationService
@@ -100,32 +101,36 @@ class LootSpyViewModel @Inject constructor(
       val intent = result.data ?: return
       val authResponse = AuthorizationResponse.fromIntent(intent)
       val authException = AuthorizationException.fromIntent(intent)
-      viewModelScope.launch {
+      viewModelScope.launch outer@ {
         val authState = userStore.authState.first()
         authState.update(authResponse, authException)
         userStore.saveAuthState(authState)
-      }
-      if (authResponse?.authorizationCode != null) {
-        authService.performTokenRequest(
-          authResponse.createTokenExchangeRequest(),
-          ClientSecretBasic("AWmnuaM1JS6V2lFlGLn5jLwX8KbY65c-7jIK7VWFZOw")
-        ) { tokenResponse: TokenResponse?, tokenException: AuthorizationException? ->
-          Log.d(LOG_TAG, "Got token response: ${tokenResponse?.jsonSerialize()}")
-          viewModelScope.launch {
-            val authState = userStore.authState.first()
+        if (authResponse?.authorizationCode != null) {
+          authService.performTokenRequest(
+            authResponse.createTokenExchangeRequest(),
+            ClientSecretBasic("AWmnuaM1JS6V2lFlGLn5jLwX8KbY65c-7jIK7VWFZOw")
+          ) { tokenResponse: TokenResponse?, tokenException: AuthorizationException? ->
+            Log.d(LOG_TAG, "Got token response: ${tokenResponse?.jsonSerialize()}")
             authState.update(tokenResponse, tokenException)
-            userStore.saveAuthState(authState)
+            val token = authState.accessToken
+            if (token == null) {
+              Log.d(LOG_TAG, "Token response did not contain access token!")
+              return@performTokenRequest
+            }
             val bungieMembershipId = tokenResponse?.additionalParameters?.get("membership_id")
-              ?: return@launch
-            userStore.saveBungieMembership(bungieMembershipId)
-            Log.d(LOG_TAG, "Got data: ${authState.accessToken}")
-            Log.d(LOG_TAG, "Full data: ${authState.jsonSerialize()}")
-            WorkBuilders.dispatchUniqueWorker(
-              context,
-              GetMembershipsTask::class.java,
-              "sync_loot",
-              mapOf("notify_channel" to "lootspyApi")
-            )
+              ?: return@performTokenRequest
+            viewModelScope.launch {
+              userStore.saveAuthState(authState)
+              userStore.saveBungieMembership(bungieMembershipId)
+              Log.d(LOG_TAG, "Got data: $token")
+              Log.d(LOG_TAG, "Full data: ${authState.jsonSerialize()}")
+              WorkBuilders.dispatchUniqueWorker(
+                context,
+                GetMembershipsTask::class.java,
+                "sync_memberships",
+                mapOf("notify_channel" to "lootspyApi", "access_token" to token)
+              )
+            }
           }
         }
       }

@@ -24,8 +24,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.lootspy.R
-import com.lootspy.api.GetCharactersTask
 import com.lootspy.api.GetMembershipsTask
+import com.lootspy.api.GetCharactersTask
 import com.lootspy.data.LootEntry
 import com.lootspy.util.LootTopAppBar
 import com.lootspy.util.ScreenContentWithEmptyText
@@ -45,28 +45,28 @@ fun LootScreen(
       LootTopAppBar(
         isSyncing = syncWorkInfo.value?.any { it.state == WorkInfo.State.RUNNING } ?: false,
         onChangeFilter = {
-//          WorkBuilders.dispatchUniqueWorker(
-//            context,
-//            GetCharactersTask::class.java,
-//            "sync_loot",
-//            mapOf("notify_channel" to "lootspyApi")
-//          )
-          viewModel.deleteAuthInfo()
-        },
-        onRefresh = {
           WorkBuilders.dispatchUniqueWorkWithTokens(
             context,
             "sync_characters",
             mapOf("notify_channel" to "lootspyApi"),
-            listOf(GetMembershipsTask::class.java),
+            listOf(GetCharactersTask::class.java),
           )
+//          viewModel.deleteAuthInfo()
+        },
+        onRefresh = {
+//          WorkBuilders.dispatchUniqueWorkWithTokens(
+//            context,
+//            "sync_memberships",
+//            mapOf("notify_channel" to "lootspyApi"),
+//            listOf(GetMembershipsTask::class.java),
+//          )
 //          WorkBuilders.dispatchUniqueWorker(
 //            context,
 //            GetMembershipsTask::class.java,
 //            "sync_loot",
 //            mapOf("notify_channel" to "lootspyApi")
 //          )
-//          viewModel.deleteAuthInfo()
+          viewModel.deleteAuthInfo()
         },
       )
     },

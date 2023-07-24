@@ -11,9 +11,6 @@ import com.lootspy.data.UserStore
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
-import net.openid.appauth.AuthState.AuthStateAction
-import net.openid.appauth.AuthorizationException
-import net.openid.appauth.AuthorizationService
 import org.openapitools.client.infrastructure.ApiClient
 
 @HiltWorker
@@ -24,7 +21,6 @@ class GetCharactersTask @AssistedInject constructor(
   private val profileRepository: ProfileRepository,
 ) : CoroutineWorker(context, params) {
   override suspend fun doWork(): Result {
-    val authState = userStore.authState.first()
     val activeMembership = profileRepository.getProfile(userStore.activeMembership.first())
       ?: return Result.failure()
     val notifyChannel = inputData.getString("notify_channel") ?: return Result.failure()
@@ -32,21 +28,21 @@ class GetCharactersTask @AssistedInject constructor(
     Log.d(LOG_TAG, "Beginning profile sync")
 
     val apiClient = Destiny2Api()
-    ApiClient.accessToken = authState.accessToken
+    ApiClient.accessToken = inputData.getString("access_token") ?: return Result.failure()
     ApiClient.apiKey["X-API-Key"] = "50ef71cc77324212886181190ea75ba7"
     val apiResponse = apiClient.destiny2GetProfile(
       activeMembership.membershipId,
       activeMembership.membershipType,
-      listOf(100)
+      listOf(100) // Profiles
     )
     if (apiResponse.errorCode != null && apiResponse.errorCode != 1) {
 //      notifySyncFailure(apiResponse, context, notifyChannel)
       Log.d(LOG_TAG, "Error fetching character data. Raw response: $apiResponse")
       return Result.failure()
     }
-    val profileData = apiResponse.response?.profile?.data
+    val characterIds = apiResponse.response?.profile?.data?.characterIds ?: return Result.failure()
 
-    Log.d(LOG_TAG, "Retrieved profile data: $profileData")
+    Log.d(LOG_TAG, "Retrieved profile data: $characterIds")
     return Result.success()
   }
 

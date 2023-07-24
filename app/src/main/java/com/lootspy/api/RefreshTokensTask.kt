@@ -1,6 +1,7 @@
 package com.lootspy.api
 
 import android.content.Context
+import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.Data
@@ -9,6 +10,7 @@ import com.lootspy.data.UserStore
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import net.openid.appauth.AuthorizationService
 import net.openid.appauth.ClientSecretBasic
 import kotlin.coroutines.resume
@@ -32,12 +34,20 @@ class RefreshTokensTask @AssistedInject constructor(
         if (ex != null) {
           it.resumeWithException(ex)
         } else {
+          Log.d(LOG_TAG, "Refreshed token: $accessToken")
           val dataBuilder = Data.Builder()
           dataBuilder.putAll(inputData)
           dataBuilder.putString("access_token", accessToken)
+          runBlocking {
+            userStore.saveAuthState(authState)
+          }
           it.resume(Result.success(dataBuilder.build()))
         }
       }
     }
+  }
+
+  companion object {
+    private const val LOG_TAG = "LootSpy Token Refresh"
   }
 }

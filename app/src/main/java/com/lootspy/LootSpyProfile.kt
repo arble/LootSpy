@@ -32,7 +32,6 @@ import com.lootspy.api.GetCharactersTask
 import com.lootspy.data.source.DestinyProfile
 import com.lootspy.util.BungiePathHelper
 import com.lootspy.util.ScreenContent
-import com.lootspy.util.ScreenContentWithEmptyText
 import com.lootspy.util.WorkBuilders
 
 @OptIn(ExperimentalMaterial3Api::class)
