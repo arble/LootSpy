@@ -6,26 +6,10 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.ListenableWorker
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
-import androidx.work.WorkRequest
+import com.lootspy.api.RefreshTokensTask
 
 class WorkBuilders {
   companion object {
-    fun dispatchWorker(
-      context: Context,
-      workerClass: Class<out ListenableWorker>,
-      workData: Map<String, String>?
-    ) {
-      val workManager = WorkManager.getInstance(context)
-      val data = Data.Builder()
-      if (workData != null) {
-        data.putAll(workData)
-      }
-      val workRequest = OneTimeWorkRequest.Builder(workerClass)
-        .setInputData(data.build())
-        .build()
-      workManager.enqueue(workRequest)
-    }
-
     fun dispatchUniqueWorker(
       context: Context,
       workerClass: Class<out ListenableWorker>,
@@ -61,6 +45,34 @@ class WorkBuilders {
         val nextRequest = OneTimeWorkRequest.Builder(subsequentClass)
         tags?.forEach { nextRequest.addTag(it) }
         chain = chain.then(nextRequest.build())
+      }
+      chain.enqueue()
+    }
+
+    /**
+     * Enqueue a list of Workers, but perform a token refresh if needed before they run.
+     */
+    fun dispatchUniqueWorkWithTokens(
+      context: Context,
+      workName: String,
+      workData: Map<String, String>?,
+      jobs: List<Class<out ListenableWorker>>,
+      policy: ExistingWorkPolicy = ExistingWorkPolicy.KEEP,
+      tags: List<String>? = null,
+    ) {
+      val workManager = WorkManager.getInstance(context)
+      val inputData = Data.Builder()
+      if (workData != null) {
+        inputData.putAll(workData)
+      }
+      val tokenRequestBuilder =
+        OneTimeWorkRequest.Builder(RefreshTokensTask::class.java).setInputData(inputData.build())
+      tags?.forEach { tokenRequestBuilder.addTag(it) }
+      var chain = workManager.beginUniqueWork(workName, policy, tokenRequestBuilder.build())
+      jobs.forEach { nextClass ->
+        val nextRequestBuilder = OneTimeWorkRequest.Builder(nextClass)
+        tags?.forEach { nextRequestBuilder.addTag(it) }
+        chain = chain.then(nextRequestBuilder.build())
       }
       chain.enqueue()
     }

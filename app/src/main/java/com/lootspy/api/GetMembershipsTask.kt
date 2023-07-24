@@ -23,16 +23,13 @@ class GetMembershipsTask @AssistedInject constructor(
 ) : CoroutineWorker(context, params) {
 
   override suspend fun doWork(): Result {
-    val accessToken = userStore.accessToken.first()
-    val membershipId = userStore.membershipId.first()
-    if (accessToken.isEmpty() || membershipId.isEmpty()) {
-      return Result.failure()
-    }
+    val authState = userStore.authState.first()
+    val membershipId = userStore.bungieMembershipId.first()
     val notifyChannel = inputData.getString("notify_channel") ?: return Result.failure()
 
     Log.d("LootSpy API Sync", "Beginning membership sync")
     val apiClient = UserApi()
-    ApiClient.accessToken = accessToken
+    ApiClient.accessToken = authState.accessToken
     ApiClient.apiKey["X-API-Key"] = "50ef71cc77324212886181190ea75ba7"
     val apiResponse = apiClient.userGetMembershipDataById(membershipId.toLong(), 254)
     Log.d("LootSpy API Sync", "Executed API call")

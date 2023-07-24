@@ -45,20 +45,27 @@ fun LootScreen(
       LootTopAppBar(
         isSyncing = syncWorkInfo.value?.any { it.state == WorkInfo.State.RUNNING } ?: false,
         onChangeFilter = {
-          WorkBuilders.dispatchUniqueWorker(
-            context,
-            GetCharactersTask::class.java,
-            "sync_loot",
-            mapOf("notify_channel" to "lootspyApi")
-          )
+//          WorkBuilders.dispatchUniqueWorker(
+//            context,
+//            GetCharactersTask::class.java,
+//            "sync_loot",
+//            mapOf("notify_channel" to "lootspyApi")
+//          )
+          viewModel.deleteAuthInfo()
         },
         onRefresh = {
-          WorkBuilders.dispatchUniqueWorker(
+          WorkBuilders.dispatchUniqueWorkWithTokens(
             context,
-            GetMembershipsTask::class.java,
-            "sync_loot",
-            mapOf("notify_channel" to "lootspyApi")
+            "sync_characters",
+            mapOf("notify_channel" to "lootspyApi"),
+            listOf(GetMembershipsTask::class.java),
           )
+//          WorkBuilders.dispatchUniqueWorker(
+//            context,
+//            GetMembershipsTask::class.java,
+//            "sync_loot",
+//            mapOf("notify_channel" to "lootspyApi")
+//          )
 //          viewModel.deleteAuthInfo()
         },
       )

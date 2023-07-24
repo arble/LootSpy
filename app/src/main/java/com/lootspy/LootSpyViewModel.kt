@@ -17,12 +17,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.openid.appauth.AuthorizationException
 import net.openid.appauth.AuthorizationResponse
 import net.openid.appauth.AuthorizationService
+import net.openid.appauth.ClientSecretBasic
 import net.openid.appauth.TokenResponse
 import javax.inject.Inject
 
@@ -51,18 +53,18 @@ class LootSpyViewModel @Inject constructor(
     combine(
       _isDoingToken,
       _isFetchingManifest,
-      userStore.accessToken,
-      userStore.membershipId,
+      userStore.authState,
+      userStore.bungieMembershipId,
       profileRepository.getProfilesStream(),
       userStore.activeMembership,
       userStore.lastManifestDb,
-    ) { isDoingToken, isFetchingManifest, token, membershipId, allMemberships, activeMembership, databaseName ->
+    ) { isDoingToken, isFetchingManifest, authState, bungieMembershipId, allMemberships, activeMembership, databaseName ->
       if (isDoingToken) {
         MainUiState(pendingToken = true)
       } else {
         MainUiState(
-          accessToken = token,
-          membershipId = membershipId,
+          accessToken = authState.accessToken ?: "",
+          membershipId = bungieMembershipId,
           allMemberships = allMemberships,
           activeMembership = activeMembership,
           databaseName = databaseName,
@@ -93,36 +95,45 @@ class LootSpyViewModel @Inject constructor(
     authService: AuthorizationService,
     context: Context
   ) {
-    Log.d("LootSpyAuth", "Got auth response")
+    Log.d(LOG_TAG, "Got auth response")
     if (result.resultCode == Activity.RESULT_OK) {
       val intent = result.data ?: return
-      val response = AuthorizationResponse.fromIntent(intent)
-      val exception = AuthorizationException.fromIntent(intent)
-      if (response?.authorizationCode != null) {
+      val authResponse = AuthorizationResponse.fromIntent(intent)
+      val authException = AuthorizationException.fromIntent(intent)
+      viewModelScope.launch {
+        val authState = userStore.authState.first()
+        authState.update(authResponse, authException)
+        userStore.saveAuthState(authState)
+      }
+      if (authResponse?.authorizationCode != null) {
         authService.performTokenRequest(
-          response.createTokenExchangeRequest()
-        ) { tokenResponse: TokenResponse?, authorizationException: AuthorizationException? ->
-          if (tokenResponse != null) {
-            val accessToken = tokenResponse.accessToken
-            val membershipId = tokenResponse.additionalParameters["membership_id"]
-            if (accessToken != null && membershipId != null) {
-              Log.d("LootSpy Auth", "Got data: $accessToken")
-              Log.d("LootSpy Auth", "Expiry time: ${tokenResponse.accessTokenExpirationTime}")
-              viewModelScope.launch {
-                userStore.saveAuthInfo(accessToken, membershipId)
-                Log.i("LootSpy Auth", accessToken)
-                WorkBuilders.dispatchUniqueWorker(
-                  context,
-                  GetMembershipsTask::class.java,
-                  "sync_loot",
-                  mapOf("notify_channel" to "lootspyApi")
-                )
-              }
-            }
+          authResponse.createTokenExchangeRequest(),
+          ClientSecretBasic("AWmnuaM1JS6V2lFlGLn5jLwX8KbY65c-7jIK7VWFZOw")
+        ) { tokenResponse: TokenResponse?, tokenException: AuthorizationException? ->
+          Log.d(LOG_TAG, "Got token response: ${tokenResponse?.jsonSerialize()}")
+          viewModelScope.launch {
+            val authState = userStore.authState.first()
+            authState.update(tokenResponse, tokenException)
+            userStore.saveAuthState(authState)
+            val bungieMembershipId = tokenResponse?.additionalParameters?.get("membership_id")
+              ?: return@launch
+            userStore.saveBungieMembership(bungieMembershipId)
+            Log.d(LOG_TAG, "Got data: ${authState.accessToken}")
+            Log.d(LOG_TAG, "Full data: ${authState.jsonSerialize()}")
+            WorkBuilders.dispatchUniqueWorker(
+              context,
+              GetMembershipsTask::class.java,
+              "sync_loot",
+              mapOf("notify_channel" to "lootspyApi")
+            )
           }
         }
       }
     }
+  }
+
+  companion object {
+    private const val LOG_TAG = "LootSpy Auth"
   }
 
   private fun <T1, T2, T3, T4, T5, T6, T7, R> combine(

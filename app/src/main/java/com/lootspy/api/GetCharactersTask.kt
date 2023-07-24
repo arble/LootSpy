@@ -11,6 +11,9 @@ import com.lootspy.data.UserStore
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
+import net.openid.appauth.AuthState.AuthStateAction
+import net.openid.appauth.AuthorizationException
+import net.openid.appauth.AuthorizationService
 import org.openapitools.client.infrastructure.ApiClient
 
 @HiltWorker
@@ -21,7 +24,7 @@ class GetCharactersTask @AssistedInject constructor(
   private val profileRepository: ProfileRepository,
 ) : CoroutineWorker(context, params) {
   override suspend fun doWork(): Result {
-    val accessToken = userStore.accessToken.first()
+    val authState = userStore.authState.first()
     val activeMembership = profileRepository.getProfile(userStore.activeMembership.first())
       ?: return Result.failure()
     val notifyChannel = inputData.getString("notify_channel") ?: return Result.failure()
@@ -29,7 +32,7 @@ class GetCharactersTask @AssistedInject constructor(
     Log.d(LOG_TAG, "Beginning profile sync")
 
     val apiClient = Destiny2Api()
-    ApiClient.accessToken = accessToken
+    ApiClient.accessToken = authState.accessToken
     ApiClient.apiKey["X-API-Key"] = "50ef71cc77324212886181190ea75ba7"
     val apiResponse = apiClient.destiny2GetProfile(
       activeMembership.membershipId,

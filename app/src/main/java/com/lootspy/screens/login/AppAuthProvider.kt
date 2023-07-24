@@ -1,9 +1,12 @@
 package com.lootspy.screens.login
 
+import android.content.Context
 import android.net.Uri
+import dagger.hilt.android.qualifiers.ApplicationContext
+import net.openid.appauth.AuthorizationService
 import net.openid.appauth.AuthorizationServiceConfiguration
 
-class AppAuthConfigProvider {
+class AppAuthProvider {
   companion object {
     val SERVICE_CONFIG = AuthorizationServiceConfiguration(
       Uri.parse("https://www.bungie.net/en/oauth/authorize"),

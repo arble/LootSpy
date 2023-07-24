@@ -30,10 +30,10 @@ class GetManifestTask @AssistedInject constructor(
   private val userStore: UserStore,
 ) : CoroutineWorker(context, params) {
   override suspend fun doWork(): Result {
-    val accessToken = userStore.accessToken.first()
+    val authState = userStore.authState.first()
     val lastManifest = userStore.lastManifest.first()
     val apiClient = Destiny2Api()
-    ApiClient.accessToken = accessToken
+    ApiClient.accessToken = authState.accessToken
     ApiClient.apiKey["X-API-Key"] = "50ef71cc77324212886181190ea75ba7"
     val apiResponse = apiClient.destiny2GetDestinyManifest()
     if (apiResponse.errorCode != null && apiResponse.errorCode != 1) {
