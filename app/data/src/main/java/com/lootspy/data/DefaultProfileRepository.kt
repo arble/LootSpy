@@ -1,6 +1,7 @@
 package com.lootspy.data
 
 import com.lootspy.data.source.DestinyProfile
+import com.lootspy.data.source.ProfileDao
 import com.lootspy.di.ApplicationScope
 import com.lootspy.di.DefaultDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
@@ -10,7 +11,7 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class DefaultProfileRepository @Inject constructor(
-  private val localDataSource: com.lootspy.data.source.ProfileDao,
+  private val localDataSource: ProfileDao,
   @DefaultDispatcher private val dispatcher: CoroutineDispatcher,
   @ApplicationScope private val scope: CoroutineScope,
 ) : ProfileRepository {

@@ -7,13 +7,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
-//inline fun <reified T> ApiClient.executeTyped(call: Call): ApiResponse<T> {
-//  return execute(call, T::class.java)
-//}
-//
-//private fun pairsToApiClientPairs(pairs: List<Pair<String, String>>) =
-//  pairs.map { com.lootspy.client.Pair(it.first, it.second) }
-
 fun Cursor.manifestColumns(): Pair<UInt, JsonObject> {
   val idIndex = getColumnIndex("id")
   val jsonIndex = getColumnIndex("json")
@@ -21,6 +14,10 @@ fun Cursor.manifestColumns(): Pair<UInt, JsonObject> {
     getBlob(jsonIndex).toString(Charsets.US_ASCII).let { it.substring(0, it.length - 1) }
   return Pair(getInt(idIndex).toUInt(), Json.decodeFromString(jsonString))
 }
+
+fun JsonObject.displayString(prop: String): String? =
+  get("displayProperties")?.jsonObject?.get(prop)?.jsonPrimitive?.content
+
 
 fun Cursor.blobToJson(index: Int): JsonObject {
   val blob = getBlob(index)

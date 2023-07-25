@@ -54,19 +54,13 @@ fun LootScreen(
 //          viewModel.deleteAuthInfo()
         },
         onRefresh = {
-//          WorkBuilders.dispatchUniqueWorkWithTokens(
-//            context,
-//            "sync_memberships",
-//            mapOf("notify_channel" to "lootspyApi"),
-//            listOf(GetMembershipsTask::class.java),
-//          )
-//          WorkBuilders.dispatchUniqueWorker(
-//            context,
-//            GetMembershipsTask::class.java,
-//            "sync_loot",
-//            mapOf("notify_channel" to "lootspyApi")
-//          )
-          viewModel.deleteAuthInfo()
+          WorkBuilders.dispatchUniqueWorkWithTokens(
+            context,
+            "sync_memberships",
+            mapOf("notify_channel" to "lootspyApi"),
+            listOf(GetMembershipsTask::class.java),
+          )
+//          viewModel.deleteAuthInfo()
         },
       )
     },
