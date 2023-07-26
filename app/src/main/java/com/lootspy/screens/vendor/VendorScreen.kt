@@ -4,6 +4,8 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -12,7 +14,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lootspy.R
 import com.lootspy.util.ScreenContentWithEmptyText
-import com.lootspy.util.VendorTopAppBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,7 +25,9 @@ fun VendorScreen(
   BackHandler(onBack = onBack)
   Scaffold(
     topBar = {
-      VendorTopAppBar()
+      TopAppBar(
+        title = { Text(text = stringResource(R.string.vendor_title)) }
+      )
     }
   ) { paddingValues ->
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()

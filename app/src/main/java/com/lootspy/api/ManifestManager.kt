@@ -4,6 +4,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
 import com.lootspy.api.manifest.AutocompleteTable
+import com.lootspy.data.DestinyItem
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -360,6 +361,27 @@ class ManifestManager @Inject constructor(
       }
     }
     return Pair(raceMap, classMap)
+  }
+
+  fun lookupItemData(itemHashes: Collection<UInt>): List<DestinyItem> {
+    val result = mutableListOf<DestinyItem>()
+    val selectionArgs = itemHashes.map { it.toInt().toString() }.toTypedArray()
+    getManifestDb().query(
+      "DestinyInventoryItemDefinition",
+      null,
+      "id IN ${makeQuestionMarkList(itemHashes.size)}",
+      selectionArgs,
+      null,
+      null,
+      null
+    ).use {
+      while (it.moveToNext()) {
+        val (hash, obj) = it.manifestColumns()
+        val name = obj.displayString("name") ?: continue
+        result.add(DestinyItem(name, hash, 0))
+      }
+    }
+    return result
   }
 
   private fun makeQuestionMarkList(count: Int): String {

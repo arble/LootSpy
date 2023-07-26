@@ -3,6 +3,7 @@ package com.lootspy.data
 import com.lootspy.di.ApplicationScope
 import com.lootspy.di.DefaultDispatcher
 import com.lootspy.data.matcher.FilterMatcher
+import com.lootspy.data.source.FilterDao
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -16,7 +17,7 @@ import javax.inject.Singleton
 
 @Singleton
 class DefaultFilterRepository @Inject constructor(
-  private val localDataSource: com.lootspy.data.source.FilterDao,
+  private val localDataSource: FilterDao,
   @DefaultDispatcher private val dispatcher: CoroutineDispatcher,
   @ApplicationScope private val scope: CoroutineScope,
 ) : FilterRepository {

@@ -26,7 +26,7 @@ fun LootTopAppBar(
   TopAppBar(
     title = { Text(text = stringResource(id = R.string.app_name)) },
     modifier = Modifier.fillMaxWidth(),
-    colors = TopAppBarDefaults.smallTopAppBarColors(),
+    colors = TopAppBarDefaults.topAppBarColors(),
     actions = {
       IconButton(onClick = onChangeFilter) {
         Icon(Icons.Default.List, null)
@@ -41,14 +41,3 @@ fun LootTopAppBar(
     }
   )
 }
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun VendorTopAppBar(
-
-) {
-  TopAppBar(
-    title = { Text(text = stringResource(R.string.vendor_title)) }
-  )
-}
-

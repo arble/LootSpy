@@ -20,6 +20,7 @@ import com.lootspy.screens.addeditfilter.AddEditFilterScreen
 import com.lootspy.screens.filter.FilterScreen
 import com.lootspy.screens.loot.LootScreen
 import com.lootspy.screens.settings.SettingsScreen
+import com.lootspy.screens.vendor.VendorScreen
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
@@ -110,7 +111,7 @@ fun LootSpyNavGraph(
         type = NavType.IntType; defaultValue = 0
       }),
     ) {
-
+      VendorScreen(onClickVendor = { /*TODO*/ }, onBack = { navController.popBackStack() })
     }
     composable(LootSpyDestinations.SETTINGS_ROUTE,
       arguments = listOf(navArgument(USER_MESSAGE_ARG) {
