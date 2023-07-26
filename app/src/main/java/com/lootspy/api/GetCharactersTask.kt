@@ -44,7 +44,6 @@ class GetCharactersTask @AssistedInject constructor(
       Log.d(LOG_TAG, "Error fetching character data. Raw response: $apiResponse")
       return Result.failure()
     }
-//    val characterIds = apiResponse.response?.profile?.data?.characterIds ?: return Result.failure()
     val characterComponents = apiResponse.response?.characters?.data ?: return Result.failure()
 
     val characterBuilders = mutableMapOf<Long, DestinyCharacter.Builder>()

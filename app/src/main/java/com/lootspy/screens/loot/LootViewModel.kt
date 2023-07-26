@@ -4,10 +4,13 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lootspy.R
+import com.lootspy.data.CharacterRepository
 import com.lootspy.data.LootEntry
 import com.lootspy.data.LootRepository
 import com.lootspy.data.UserStore
+import com.lootspy.data.source.DestinyCharacter
 import com.lootspy.util.Async
+import com.lootspy.util.combine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,6 +25,8 @@ import javax.inject.Inject
 
 data class LootUiState(
   val items: List<LootEntry> = emptyList(),
+  val characters: List<DestinyCharacter> = emptyList(),
+  val activeCharacter: Long = 0,
   val isLoading: Boolean = false,
   val filteringUiInfo: FilteringUiInfo = FilteringUiInfo(),
   val userMessage: Int? = null
@@ -35,6 +40,7 @@ data class FilteringUiInfo(
 @HiltViewModel
 class LootViewModel @Inject constructor(
   private val lootRepository: LootRepository,
+  private val characterRepository: CharacterRepository,
   private val savedStateHandle: SavedStateHandle,
   private val userStore: UserStore,
 ) : ViewModel() {
@@ -60,15 +66,21 @@ class LootViewModel @Inject constructor(
     _filterUiInfo,
     _isLoading,
     _userMessage,
-    _filteredLootEntriesAsync
-  ) { filterUiInfo, isLoading, userMessage, lootEntriesAsync ->
+    _filteredLootEntriesAsync,
+    characterRepository.getCharactersStream(),
+    userStore.activeCharacter,
+  ) { filterUiInfo, isLoading, userMessage, lootEntriesAsync, characters, activeCharacter ->
     when (lootEntriesAsync) {
       is Async.Loading -> {
-        LootUiState(isLoading = true)
+        LootUiState(isLoading = true, characters = characters, activeCharacter = activeCharacter)
       }
 
       is Async.Error -> {
-        LootUiState(userMessage = lootEntriesAsync.errorMessage)
+        LootUiState(
+          userMessage = lootEntriesAsync.errorMessage,
+          characters = characters,
+          activeCharacter = activeCharacter
+        )
       }
 
       is Async.Success -> {
@@ -76,7 +88,9 @@ class LootViewModel @Inject constructor(
           items = lootEntriesAsync.data,
           isLoading = isLoading,
           filteringUiInfo = filterUiInfo,
-          userMessage = userMessage
+          userMessage = userMessage,
+          characters = characters,
+          activeCharacter = activeCharacter
         )
       }
     }
@@ -112,5 +126,9 @@ class LootViewModel @Inject constructor(
     viewModelScope.launch {
       lootRepository.createLootEntry(name)
     }
+  }
+
+  fun saveActiveCharacter(characterId: Long) {
+    viewModelScope.launch { userStore.saveActiveCharacter(characterId) }
   }
 }

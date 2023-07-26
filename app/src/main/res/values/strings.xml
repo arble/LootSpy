@@ -56,4 +56,5 @@
     <string name="manifest_updating_title">Updating Manifest</string>
     <string name="manifest_outdated_title">Outdated Manifest</string>
     <string name="item_matcher_already_matched">This item is already matched!</string>
+    <string name="loot_screen_loading">Loading current loot</string>
 </resources>

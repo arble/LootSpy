@@ -1,9 +1,6 @@
 package com.lootspy.screens.login
 
-import android.content.Context
 import android.net.Uri
-import dagger.hilt.android.qualifiers.ApplicationContext
-import net.openid.appauth.AuthorizationService
 import net.openid.appauth.AuthorizationServiceConfiguration
 
 class AppAuthProvider {
@@ -12,6 +9,6 @@ class AppAuthProvider {
       Uri.parse("https://www.bungie.net/en/oauth/authorize"),
       Uri.parse("https://www.bungie.net/platform/app/oauth/token/")
     )
-    val OAUTH_CLIENT_ID = 44724
+    const val OAUTH_CLIENT_ID = 44724
   }
 }

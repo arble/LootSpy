@@ -24,6 +24,7 @@ class UserStore(private val context: Context) {
     private val LAST_MANIFEST = stringPreferencesKey("last_manifest")
     private val LAST_MANIFEST_DB = stringPreferencesKey("last_manifest_db")
     private val AUTH_STATE = stringPreferencesKey("auth_state")
+    private val ACTIVE_CHARACTER = longPreferencesKey("active_character")
   }
 
   val bungieMembershipId: Flow<String> = context.dataStore.data.map { it[MEMBERSHIP_ID] ?: "" }
@@ -32,6 +33,7 @@ class UserStore(private val context: Context) {
   val activeMembership: Flow<Long> = context.dataStore.data.map { it[ACTIVE_MEMBERSHIP_ID] ?: 0 }
   val lastManifest: Flow<String> = context.dataStore.data.map { it[LAST_MANIFEST] ?: "" }
   val lastManifestDb: Flow<String> = context.dataStore.data.map { it[LAST_MANIFEST_DB] ?: "" }
+  val activeCharacter: Flow<Long> = context.dataStore.data.map { it[ACTIVE_CHARACTER] ?: 0 }
   val authState: Flow<AuthState> = context.dataStore.data.map {
     val authStateString = it[AUTH_STATE]
     return@map if (authStateString != null) {
@@ -66,6 +68,10 @@ class UserStore(private val context: Context) {
 
   suspend fun saveActiveMembership(membershipId: Long) {
     context.dataStore.edit { it[ACTIVE_MEMBERSHIP_ID] = membershipId }
+  }
+
+  suspend fun saveActiveCharacter(characterId: Long) {
+    context.dataStore.edit { it[ACTIVE_CHARACTER] = characterId }
   }
 
   suspend fun saveLastManifest(manifest: String) {
