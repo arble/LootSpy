@@ -5,41 +5,82 @@ import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.lootspy.client.ApiClient
-import com.lootspy.client.model.Destiny2GetProfile200Response
+import com.lootspy.client.api.Destiny2Api
+import com.lootspy.data.CharacterRepository
 import com.lootspy.data.ProfileRepository
 import com.lootspy.data.UserStore
+import com.lootspy.data.source.DestinyCharacter
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
+import org.openapitools.client.infrastructure.ApiClient
 
 @HiltWorker
 class GetCharactersTask @AssistedInject constructor(
   @Assisted private val context: Context,
   @Assisted params: WorkerParameters,
   private val userStore: UserStore,
+  private val manifestManager: ManifestManager,
   private val profileRepository: ProfileRepository,
+  private val characterRepository: CharacterRepository,
 ) : CoroutineWorker(context, params) {
   override suspend fun doWork(): Result {
-    val accessToken = userStore.accessToken.first()
     val activeMembership = profileRepository.getProfile(userStore.activeMembership.first())
       ?: return Result.failure()
     val notifyChannel = inputData.getString("notify_channel") ?: return Result.failure()
 
-    Log.d("LootSpy API Sync", "Beginning profile sync")
-    val apiClient = ApiClient()
-    apiClient.setAccessToken(accessToken)
-    val apiPath =
-      "/Destiny2/${activeMembership.membershipType}/Profile/${activeMembership.membershipId}/"
-    val call = apiClient.buildBungieCall(apiPath, queryParams = listOf(Pair("components", "100")))
-    val apiResponse = apiClient.executeTyped<Destiny2GetProfile200Response>(call)
-    if (apiResponse.statusCode != 200) {
-      notifySyncFailure(apiResponse, context, notifyChannel)
+    Log.d(LOG_TAG, "Beginning character sync")
+
+    val apiClient = Destiny2Api()
+    ApiClient.accessToken = inputData.getString("access_token") ?: return Result.failure()
+    ApiClient.apiKey["X-API-Key"] = "50ef71cc77324212886181190ea75ba7"
+    val apiResponse = apiClient.destiny2GetProfile(
+      activeMembership.membershipId,
+      activeMembership.membershipType,
+      listOf(200) // Characters
+    )
+    if (apiResponse.errorCode != null && apiResponse.errorCode != 1) {
+//      notifySyncFailure(apiResponse, context, notifyChannel)
+      Log.d(LOG_TAG, "Error fetching character data. Raw response: $apiResponse")
+      return Result.failure()
+    }
+    val characterComponents = apiResponse.response?.characters?.data ?: return Result.failure()
+
+    val characterBuilders = mutableMapOf<Long, DestinyCharacter.Builder>()
+    val (raceMap, classMap) = manifestManager.getCharacterDefinitions() // only three rows each
+    val emblemHashes = mutableMapOf<UInt, Long>()
+    characterComponents.forEach {
+      try {
+        // emblem path is the only field we need to look up specifically
+        val id = it.key.toLong()
+        val character = it.value
+        characterBuilders[id] = DestinyCharacter.Builder(
+          id,
+          character.membershipId!!,
+          character.membershipType!!,
+          character.light!!,
+          raceMap[character.raceHash!!.toUInt()]!!,
+          classMap[character.classHash!!.toUInt()]!!,
+          character.emblemColor!!
+        )
+        emblemHashes[character.emblemHash!!.toUInt()] = id
+      } catch (e: NullPointerException) {
+        return Result.failure()
+      }
+    }
+    val emblemPaths = manifestManager.getEmblemPaths(emblemHashes)
+    try {
+      val characters = characterBuilders.map { it.value.emblemPath(emblemPaths[it.key]!!).build() }
+      Log.d(LOG_TAG, "Retrieved characters: $characters")
+      characterRepository.saveCharacters(characters)
+    } catch (e: NullPointerException) {
       return Result.failure()
     }
 
-    val profileData = apiResponse.data.response?.profile?.data ?: return Result.failure()
-    Log.d("LootSpy API Sync", "Retrieved profile data: $profileData")
     return Result.success()
+  }
+
+  companion object {
+    private const val LOG_TAG = "LootSpy API Sync"
   }
 }

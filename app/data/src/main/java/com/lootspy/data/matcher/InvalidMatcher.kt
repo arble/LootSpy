@@ -15,7 +15,11 @@ object InvalidMatcher : FilterMatcher {
     TODO("Not yet implemented")
   }
 
-  override fun summaryString(): String {
+  override fun matcherTypeDescription(): String {
+    TODO("Not yet implemented")
+  }
+
+  override fun describeMatcherValue(): String {
     TODO("Not yet implemented")
   }
 }

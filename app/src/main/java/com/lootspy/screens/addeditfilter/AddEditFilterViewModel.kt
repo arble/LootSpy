@@ -119,31 +119,6 @@ class AddEditFilterViewModel @Inject constructor(
     }
   }
 
-  private fun checkAlreadyMatchedName(
-    newMatcher: ItemMatcher,
-    matchers: List<ItemMatcher>
-  ): Pair<Boolean, Set<ItemMatcher>> {
-    val redundantMatchers = HashSet<ItemMatcher>()
-    for (matcher in matchers) {
-      if (matcher.name.contains(newMatcher.name)) {
-        return Pair(true, redundantMatchers)
-      }
-      if (newMatcher.name.contains(matcher.name)) {
-        redundantMatchers.add(matcher)
-      }
-    }
-    return Pair(false, redundantMatchers)
-  }
-
-  fun existingItemMatcher(index: Int, item: AutocompleteItem): Boolean {
-    uiState.value.matchers.forEachIndexed { oldIndex, matcher ->
-      if (matcher is ItemMatcher && matcher.hash == item.hash && oldIndex != index) {
-        return true
-      }
-    }
-    return false
-  }
-
   fun saveItemMatcher(index: Int?, item: AutocompleteItem): Boolean {
     uiState.value.matchers.forEachIndexed { oldIndex, matcher ->
       if (matcher is ItemMatcher && matcher.hash == item.hash && oldIndex != index) {

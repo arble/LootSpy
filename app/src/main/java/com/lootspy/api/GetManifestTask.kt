@@ -9,8 +9,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.lootspy.R
-import com.lootspy.client.ApiClient
-import com.lootspy.client.model.Destiny2GetDestinyManifest200Response
+import com.lootspy.client.api.Destiny2Api
 import com.lootspy.data.UserStore
 import com.lootspy.util.BungiePathHelper
 import dagger.assisted.Assisted
@@ -18,6 +17,7 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import org.openapitools.client.infrastructure.ApiClient
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -30,20 +30,19 @@ class GetManifestTask @AssistedInject constructor(
   private val userStore: UserStore,
 ) : CoroutineWorker(context, params) {
   override suspend fun doWork(): Result {
-    val accessToken = userStore.accessToken.first()
+    val authState = userStore.authState.first()
     val lastManifest = userStore.lastManifest.first()
-    val apiClient = ApiClient()
-    apiClient.setAccessToken(accessToken)
-    val apiPath = "/Destiny2/Manifest/"
-    val call = apiClient.buildBungieCall(apiPath)
-    val apiResponse = apiClient.executeTyped<Destiny2GetDestinyManifest200Response>(call)
-    if (apiResponse.statusCode != 200) {
+    val apiClient = Destiny2Api()
+    ApiClient.accessToken = authState.accessToken
+    ApiClient.apiKey["X-API-Key"] = "50ef71cc77324212886181190ea75ba7"
+    val apiResponse = apiClient.destiny2GetDestinyManifest()
+    if (apiResponse.errorCode != null && apiResponse.errorCode != 1) {
       return Result.failure()
     }
-    val data = apiResponse.data.response?.mobileWorldContentPaths
-    Log.d(LOG_TAG, "Retrieved manifest data. $data")
+    val manifestData = apiResponse.response?.mobileWorldContentPaths
+    Log.d(LOG_TAG, "Retrieved manifest data. $manifestData")
     // TODO: localise
-    val enManifestPath = data?.get("en") ?: return Result.failure()
+    val enManifestPath = manifestData?.get("en") ?: return Result.failure()
     val fullPath = BungiePathHelper.getFullUrlForPath(enManifestPath)
     val manifestUri = Uri.parse(BungiePathHelper.getFullUrlForPath(enManifestPath))
     val fileName = URLUtil.guessFileName(fullPath, null, null)

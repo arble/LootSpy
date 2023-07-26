@@ -4,6 +4,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
 import com.lootspy.api.manifest.AutocompleteTable
+import com.lootspy.data.DestinyItem
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -35,6 +36,8 @@ class ManifestManager @Inject constructor(
   private val tierHashes = HashMap<UInt, String>()
   private val damageTypes = HashMap<UInt, Pair<String, String>>()
   private val powerCaps = HashMap<UInt, Int>()
+  private val raceMap = mutableMapOf<UInt, String>()
+  private val classMap = mutableMapOf<UInt, String>()
 
   private fun getManifestDbFile(): File {
     return context.getDatabasePath(MANIFEST_DATABASE)
@@ -336,6 +339,79 @@ class ManifestManager @Inject constructor(
         powerCaps[hash] = powerCap
       }
     }
+  }
+
+  fun getCharacterDefinitions(): Pair<Map<UInt, String>, Map<UInt, String>> {
+    if (raceMap.isNotEmpty() && classMap.isNotEmpty()) {
+      return Pair(raceMap, classMap)
+    }
+    getManifestDb().rawQuery("SELECT * FROM DestinyRaceDefinition", null).use {
+      while (it.moveToNext()) {
+        val (hash, obj) = it.manifestColumns()
+        val name =
+          obj["displayProperties"]?.jsonObject?.get("name")?.jsonPrimitive?.content ?: continue
+        raceMap[hash] = name
+      }
+    }
+    getManifestDb().rawQuery("SELECT * FROM DestinyClassDefinition", null).use {
+      while (it.moveToNext()) {
+        val (hash, obj) = it.manifestColumns()
+        val name = obj.displayString("name") ?: continue
+        classMap[hash] = name
+      }
+    }
+    return Pair(raceMap, classMap)
+  }
+
+  fun lookupItemData(itemHashes: Collection<UInt>): List<DestinyItem> {
+    val result = mutableListOf<DestinyItem>()
+    val selectionArgs = itemHashes.map { it.toInt().toString() }.toTypedArray()
+    getManifestDb().query(
+      "DestinyInventoryItemDefinition",
+      null,
+      "id IN ${makeQuestionMarkList(itemHashes.size)}",
+      selectionArgs,
+      null,
+      null,
+      null
+    ).use {
+      while (it.moveToNext()) {
+        val (hash, obj) = it.manifestColumns()
+        val name = obj.displayString("name") ?: continue
+        result.add(DestinyItem(name, hash, 0))
+      }
+    }
+    return result
+  }
+
+  private fun makeQuestionMarkList(count: Int): String {
+    val builder = StringBuilder().append('(')
+    builder.append(Array(count) { "?" }.joinToString(","))
+    builder.append(')')
+    return builder.toString()
+  }
+
+  fun getEmblemPaths(hashes: Map<UInt, Long>): Map<Long, String> {
+    val result = mutableMapOf<Long, String>()
+    val selectionArgs = hashes.keys.map { it.toInt().toString() }.toTypedArray()
+    getManifestDb().query(
+      "DestinyInventoryItemDefinition",
+      null,
+      "id IN ${makeQuestionMarkList(hashes.size)}",
+      selectionArgs,
+      null,
+      null,
+      null
+    ).use {
+      while (it.moveToNext()) {
+        val (hash, obj) = it.manifestColumns()
+        val icon =
+          obj["displayProperties"]?.jsonObject?.get("icon")?.jsonPrimitive?.content ?: continue
+        val characterId = hashes[hash] ?: continue
+        result[characterId] = icon
+      }
+    }
+    return result
   }
 
   fun dropAutocompleteTable() {

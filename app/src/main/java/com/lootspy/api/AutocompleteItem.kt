@@ -25,7 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.google.android.material.R
+import com.lootspy.R
 import com.lootspy.api.manifest.AutocompleteTable
 import com.lootspy.util.BungiePathHelper
 
@@ -89,8 +89,8 @@ data class AutocompleteItem(
   @Composable
   fun Composable(
     modifier: Modifier = Modifier,
-    placeholder: Painter = painterResource(id = com.lootspy.R.drawable.ic_launcher_foreground),
-    error: Painter = painterResource(id = R.drawable.mtrl_ic_cancel),
+    placeholder: Painter = painterResource(id = R.drawable.ic_launcher_foreground),
+    error: Painter = painterResource(id = com.google.android.material.R.drawable.mtrl_ic_cancel),
     onClick: (AutocompleteItem) -> Unit = {},
     damageIconSize: Dp = 24.dp
   ) {

@@ -10,7 +10,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -29,8 +28,8 @@ import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.lootspy.api.GetManifestTask
 import com.lootspy.api.PrepareAutocompleteTask
 import com.lootspy.api.UnzipManifestTask
-import com.lootspy.screens.login.AppAuthConfigProvider
-import com.lootspy.screens.login.AppAuthConfigProvider.Companion.OAUTH_CLIENT_ID
+import com.lootspy.screens.login.AppAuthProvider
+import com.lootspy.screens.login.AppAuthProvider.Companion.OAUTH_CLIENT_ID
 import com.lootspy.ui.theme.LootSpyTheme
 import com.lootspy.util.LootSpyNavBar
 import com.lootspy.util.ProgressAlertDialog
@@ -44,7 +43,7 @@ import net.openid.appauth.ResponseTypeValues
 
 @AndroidEntryPoint
 class LootSpyActivity : ComponentActivity() {
-  private lateinit var authService: AuthorizationService
+  private val authService by lazy { AuthorizationService(this) }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -58,7 +57,7 @@ class LootSpyActivity : ComponentActivity() {
     authService.dispose()
   }
 
-  @OptIn(ExperimentalAnimationApi::class, ExperimentalMaterial3Api::class)
+  @OptIn(ExperimentalAnimationApi::class)
   @Composable
   private fun MainActivityContent(
     viewModel: LootSpyViewModel = hiltViewModel()
@@ -66,7 +65,6 @@ class LootSpyActivity : ComponentActivity() {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
 
-    authService = AuthorizationService(this)
     val context = LocalContext.current
     val workFlow = WorkManager.getInstance(context).getWorkInfosByTagFlow("sync_manifest")
       .collectAsStateWithLifecycle(
@@ -91,7 +89,7 @@ class LootSpyActivity : ComponentActivity() {
           launcherForResult.launch(
             authService.getAuthorizationRequestIntent(
               AuthorizationRequest.Builder(
-                AppAuthConfigProvider.SERVICE_CONFIG,
+                AppAuthProvider.SERVICE_CONFIG,
                 OAUTH_CLIENT_ID.toString(),
                 ResponseTypeValues.CODE,
                 Uri.parse("dummy.lootspy.app://oauth")

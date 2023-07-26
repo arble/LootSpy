@@ -1,6 +1,8 @@
 package com.lootspy.di
 
 import android.content.Context
+import com.lootspy.data.CharacterRepository
+import com.lootspy.data.DefaultCharacterRepository
 import com.lootspy.data.DefaultFilterRepository
 import com.lootspy.data.DefaultLootRepository
 import com.lootspy.data.DefaultProfileRepository
@@ -8,6 +10,7 @@ import com.lootspy.data.FilterRepository
 import com.lootspy.data.LootRepository
 import com.lootspy.data.ProfileRepository
 import com.lootspy.data.UserStore
+import com.lootspy.data.source.CharacterDao
 import com.lootspy.data.source.FilterDao
 import com.lootspy.data.source.LootEntryDao
 import com.lootspy.data.source.LootSpyDatabase
@@ -34,6 +37,10 @@ abstract class RepositoryModule {
   @Singleton
   @Binds
   abstract fun bindProfileRepository(repository: DefaultProfileRepository): ProfileRepository
+
+  @Singleton
+  @Binds
+  abstract fun bindCharacterRepository(repository: DefaultCharacterRepository): CharacterRepository
 }
 
 @Module
@@ -49,14 +56,14 @@ object DatabaseModule {
   fun provideUserStore(@ApplicationContext context: Context) = UserStore(context)
 
   @Provides
-  fun provideLootDao(database: com.lootspy.data.source.LootSpyDatabase): LootEntryDao =
-    database.lootEntryDao()
+  fun provideLootDao(database: LootSpyDatabase): LootEntryDao = database.lootEntryDao()
 
   @Provides
-  fun provideFilterDao(database: com.lootspy.data.source.LootSpyDatabase): FilterDao =
-    database.filterDao()
+  fun provideFilterDao(database: LootSpyDatabase): FilterDao = database.filterDao()
 
   @Provides
-  fun provideProfileDao(database: com.lootspy.data.source.LootSpyDatabase): ProfileDao =
-    database.profileDao()
+  fun provideProfileDao(database: LootSpyDatabase): ProfileDao = database.profileDao()
+
+  @Provides
+  fun provideCharacterDao(database: LootSpyDatabase): CharacterDao = database.characterDao()
 }

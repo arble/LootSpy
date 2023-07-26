@@ -6,8 +6,8 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-  entities = [LocalLootEntry::class, LocalFilter::class, DestinyProfile::class],
-  version = 3,
+  entities = [LocalLootEntry::class, LocalFilter::class, DestinyProfile::class, DestinyCharacter::class],
+  version = 4,
   exportSchema = false
 )
 abstract class LootSpyDatabase : RoomDatabase() {
@@ -17,6 +17,8 @@ abstract class LootSpyDatabase : RoomDatabase() {
   abstract fun filterDao(): FilterDao
 
   abstract fun profileDao(): ProfileDao
+
+  abstract fun characterDao(): CharacterDao
 
   companion object {
     @Volatile

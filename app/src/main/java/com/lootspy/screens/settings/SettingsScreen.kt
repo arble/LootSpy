@@ -68,7 +68,7 @@ fun SettingsScreen(
       TopAppBar(
         title = { Text(text = stringResource(id = R.string.app_name)) },
         modifier = Modifier.fillMaxWidth(),
-        colors = TopAppBarDefaults.smallTopAppBarColors(),
+        colors = TopAppBarDefaults.topAppBarColors(),
         actions = {
           IconButton(onClick = {
             WorkBuilders.dispatchUniqueWorker(

@@ -74,6 +74,7 @@ dependencies {
     implementation 'androidx.compose.ui:ui-graphics'
     implementation 'androidx.compose.ui:ui-tooling-preview'
     implementation 'androidx.compose.material3:material3:1.1.1'
+    implementation "androidx.concurrent:concurrent-futures-ktx:1.1.0"
     implementation 'androidx.core:core-ktx:1.10.1'
     implementation 'androidx.datastore:datastore-preferences:1.0.0'
     implementation 'androidx.hilt:hilt-navigation-compose:1.0.0'
@@ -89,6 +90,8 @@ dependencies {
     implementation 'com.google.dagger:dagger:2.44'
     implementation "com.google.dagger:hilt-android:2.44"
     implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'com.squareup.moshi:moshi:1.14.0'
+    implementation 'com.squareup.moshi:moshi-kotlin:1.14.0'
     implementation 'com.squareup.okhttp3:okhttp:4.11.0'
     implementation 'io.coil-kt:coil-compose:2.4.0'
     implementation 'io.gsonfire:gson-fire:1.8.5'

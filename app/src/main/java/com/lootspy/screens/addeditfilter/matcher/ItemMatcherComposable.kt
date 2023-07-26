@@ -22,12 +22,10 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
 import com.lootspy.R
 import com.lootspy.data.matcher.FilterMatcher
 import com.lootspy.data.matcher.ItemMatcher
 import com.lootspy.screens.addeditfilter.AddEditFilterViewModel
-import com.lootspy.util.BungiePathHelper
 import com.lootspy.util.SupportingErrorText
 import com.lootspy.util.TextAlertDialog
 import com.lootspy.util.Validation
@@ -42,27 +40,37 @@ fun ItemMatcherSummary(
     shape = MaterialTheme.shapes.medium,
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
     modifier = Modifier
-      .clickable { onMatcherClick(index, matcher) },
+      .clickable { onMatcherClick(index, matcher) }.fillMaxWidth(),
   ) {
-    Row(
-      verticalAlignment = Alignment.CenterVertically,
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(
-          horizontal = dimensionResource(id = R.dimen.horizontal_margin),
-          vertical = dimensionResource(id = R.dimen.loot_item_padding),
-        )
-    ) {
-      Text(
-        text = matcher.summaryString(),
-        style = MaterialTheme.typography.headlineSmall,
-        modifier = Modifier.padding(
-          start = dimensionResource(
-            id = R.dimen.horizontal_margin
-          )
-        ),
-      )
-    }
+    Text(
+      text = matcher.matcherTypeDescription(),
+      style = MaterialTheme.typography.headlineSmall,
+      modifier = Modifier.align(Alignment.CenterHorizontally)
+    )
+    Text(
+      text = matcher.describeMatcherValue(),
+      style = MaterialTheme.typography.headlineSmall,
+      modifier = Modifier.align(Alignment.Start)
+    )
+//    Row(
+//      verticalAlignment = Alignment.CenterVertically,
+//      modifier = Modifier
+//        .fillMaxWidth()
+//        .padding(
+//          horizontal = dimensionResource(id = R.dimen.horizontal_margin),
+//          vertical = dimensionResource(id = R.dimen.loot_item_padding),
+//        )
+//    ) {
+//      Text(
+//        text = matcher.matcherTypeDescription(),
+//        style = MaterialTheme.typography.headlineSmall,
+//        modifier = Modifier.padding(
+//          start = dimensionResource(
+//            id = R.dimen.horizontal_margin
+//          )
+//        ),
+//      )
+//    }
   }
 }
 
@@ -104,7 +112,7 @@ fun ItemMatcherDetails(
       shape = MaterialTheme.shapes.medium,
       colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceTint),
     ) {
-      var nameText by remember { mutableStateOf(matcher.name) }
+      var nameText by remember { mutableStateOf(matcher.describeMatcherValue()) }
       var inputError by remember { mutableStateOf<Int?>(null) }
       Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -116,7 +124,7 @@ fun ItemMatcherDetails(
           )
       ) {
         Text(
-          text = matcher.summaryString(),
+          text = matcher.matcherTypeDescription(),
           style = MaterialTheme.typography.headlineSmall,
           modifier = Modifier.padding(
             start = dimensionResource(

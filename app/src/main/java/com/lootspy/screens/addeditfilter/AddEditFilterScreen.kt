@@ -84,7 +84,6 @@ fun AddEditFilterScreen(
       onBack()
     }
   }
-//  val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
   val sheetState =
     remember { SheetState(skipPartiallyExpanded = true, initialValue = SheetValue.Hidden) }
   val scope = rememberCoroutineScope()
@@ -96,9 +95,6 @@ fun AddEditFilterScreen(
         onBack = innerOnBack,
         addFilterMatcher = {
           showMatcherSheet = true
-//          scope.launch {
-//            sheetState.show()
-//          }
         },
         editFilterName = { showEditFilterNameDialog = true },
       )

@@ -33,5 +33,7 @@ sealed interface FilterMatcher {
 
   fun match(item: DestinyItem): Boolean
 
-  fun summaryString(): String
+  fun matcherTypeDescription(): String
+
+  fun describeMatcherValue(): String
 }
