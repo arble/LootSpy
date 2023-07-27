@@ -1,5 +1,8 @@
-package com.lootspy.data
+package com.lootspy.data.repo
 
+import com.lootspy.data.LootEntry
+import com.lootspy.data.toExternal
+import com.lootspy.data.toLocal
 import com.lootspy.di.ApplicationScope
 import com.lootspy.di.DefaultDispatcher
 import kotlinx.coroutines.CoroutineDispatcher

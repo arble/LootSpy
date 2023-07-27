@@ -4,9 +4,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lootspy.R
-import com.lootspy.data.CharacterRepository
+import com.lootspy.data.repo.CharacterRepository
 import com.lootspy.data.LootEntry
-import com.lootspy.data.LootRepository
+import com.lootspy.data.repo.LootRepository
 import com.lootspy.data.UserStore
 import com.lootspy.data.source.DestinyCharacter
 import com.lootspy.util.Async

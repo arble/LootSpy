@@ -47,8 +47,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.lootspy.R
 import com.lootspy.api.AutocompleteItem
-import com.lootspy.api.PrepareAutocompleteTask
-import com.lootspy.util.BungiePathHelper
+import com.lootspy.api.workers.PrepareAutocompleteWorker
+import com.lootspy.api.BungiePathHelper
 import com.lootspy.util.WorkBuilders
 import com.lootspy.util.popup.LootSpyPopup
 import com.lootspy.util.popup.PopupState
@@ -73,7 +73,7 @@ fun SettingsScreen(
           IconButton(onClick = {
             WorkBuilders.dispatchUniqueWorker(
               context,
-              PrepareAutocompleteTask::class.java,
+              PrepareAutocompleteWorker::class.java,
               "prepare_autocomplete",
               mapOf("notify_channel" to "lootspyApi")
             )

@@ -1,9 +1,11 @@
-package com.lootspy.data
+package com.lootspy.data.repo
 
+import com.lootspy.data.Filter
 import com.lootspy.di.ApplicationScope
 import com.lootspy.di.DefaultDispatcher
 import com.lootspy.data.matcher.FilterMatcher
 import com.lootspy.data.source.FilterDao
+import com.lootspy.data.toExternal
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow

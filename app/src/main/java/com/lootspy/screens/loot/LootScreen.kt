@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
@@ -59,11 +57,11 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import coil.compose.AsyncImage
 import com.lootspy.R
-import com.lootspy.api.GetCharactersTask
-import com.lootspy.api.GetMembershipsTask
+import com.lootspy.api.workers.GetCharactersWorker
+import com.lootspy.api.workers.GetMembershipsWorker
 import com.lootspy.data.LootEntry
 import com.lootspy.data.source.DestinyCharacter
-import com.lootspy.util.BungiePathHelper
+import com.lootspy.api.BungiePathHelper
 import com.lootspy.util.LootTopAppBar
 import com.lootspy.util.WorkBuilders
 import kotlinx.coroutines.launch
@@ -86,7 +84,7 @@ fun LootScreen(
             context,
             "sync_characters",
             mapOf("notify_channel" to "lootspyApi"),
-            listOf(GetCharactersTask::class.java),
+            listOf(GetCharactersWorker::class.java),
           )
 //          viewModel.deleteAuthInfo()
         },
@@ -95,7 +93,7 @@ fun LootScreen(
             context,
             "sync_memberships",
             mapOf("notify_channel" to "lootspyApi"),
-            listOf(GetMembershipsTask::class.java),
+            listOf(GetMembershipsWorker::class.java),
           )
 //          viewModel.deleteAuthInfo()
         },

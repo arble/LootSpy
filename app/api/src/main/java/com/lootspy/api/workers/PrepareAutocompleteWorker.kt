@@ -1,23 +1,17 @@
-package com.lootspy.api
+package com.lootspy.api.workers
 
 import android.content.Context
-import android.util.Log
-import androidx.compose.ui.res.stringResource
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
-import com.lootspy.R
+import com.lootspy.api.ManifestManager
+import com.lootspy.api.R
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
 
 @HiltWorker
-class PrepareAutocompleteTask @AssistedInject constructor(
+class PrepareAutocompleteWorker @AssistedInject constructor(
   @Assisted private val context: Context,
   @Assisted params: WorkerParameters,
   private val manifestManager: ManifestManager

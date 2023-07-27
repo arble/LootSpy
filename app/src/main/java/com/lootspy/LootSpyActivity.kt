@@ -25,9 +25,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
-import com.lootspy.api.GetManifestTask
-import com.lootspy.api.PrepareAutocompleteTask
-import com.lootspy.api.UnzipManifestTask
+import com.lootspy.api.workers.GetManifestWorker
+import com.lootspy.api.workers.PrepareAutocompleteWorker
+import com.lootspy.api.workers.UnzipManifestWorker
 import com.lootspy.screens.login.AppAuthProvider
 import com.lootspy.screens.login.AppAuthProvider.Companion.OAUTH_CLIENT_ID
 import com.lootspy.ui.theme.LootSpyTheme
@@ -147,12 +147,12 @@ class LootSpyActivity : ComponentActivity() {
         onConfirm = {
           WorkBuilders.dispatchUniqueWorkerLinearFollowers(
             context = context,
-            initialWorkerClass = GetManifestTask::class.java,
+            initialWorkerClass = GetManifestWorker::class.java,
             workName = "sync_manifest",
             workData = null,
             followingJobs = listOf(
-              UnzipManifestTask::class.java,
-              PrepareAutocompleteTask::class.java
+              UnzipManifestWorker::class.java,
+              PrepareAutocompleteWorker::class.java
             ),
             tags = listOf("sync_manifest")
           )

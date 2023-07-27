@@ -1,14 +1,14 @@
 package com.lootspy.di
 
 import android.content.Context
-import com.lootspy.data.CharacterRepository
-import com.lootspy.data.DefaultCharacterRepository
-import com.lootspy.data.DefaultFilterRepository
-import com.lootspy.data.DefaultLootRepository
-import com.lootspy.data.DefaultProfileRepository
-import com.lootspy.data.FilterRepository
-import com.lootspy.data.LootRepository
-import com.lootspy.data.ProfileRepository
+import com.lootspy.data.repo.CharacterRepository
+import com.lootspy.data.repo.DefaultCharacterRepository
+import com.lootspy.data.repo.DefaultFilterRepository
+import com.lootspy.data.repo.DefaultLootRepository
+import com.lootspy.data.repo.DefaultProfileRepository
+import com.lootspy.data.repo.FilterRepository
+import com.lootspy.data.repo.LootRepository
+import com.lootspy.data.repo.ProfileRepository
 import com.lootspy.data.UserStore
 import com.lootspy.data.source.CharacterDao
 import com.lootspy.data.source.FilterDao

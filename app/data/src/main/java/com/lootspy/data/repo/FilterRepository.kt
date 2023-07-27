@@ -1,5 +1,6 @@
-package com.lootspy.data
+package com.lootspy.data.repo
 
+import com.lootspy.data.Filter
 import com.lootspy.data.matcher.FilterMatcher
 import kotlinx.coroutines.flow.Flow
 

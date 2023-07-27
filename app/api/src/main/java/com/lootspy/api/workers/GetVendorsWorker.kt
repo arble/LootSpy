@@ -1,15 +1,16 @@
-package com.lootspy.api
+package com.lootspy.api.workers
 
 import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.lootspy.api.ManifestManager
 import com.lootspy.client.api.Destiny2Api
 import com.lootspy.client.model.Destiny2GetVendor200Response
-import com.lootspy.data.CharacterRepository
+import com.lootspy.data.repo.CharacterRepository
 import com.lootspy.data.DestinyItem
 import com.lootspy.data.Filter
-import com.lootspy.data.FilterRepository
+import com.lootspy.data.repo.FilterRepository
 import com.lootspy.data.UserStore
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -17,7 +18,7 @@ import kotlinx.coroutines.flow.first
 import org.openapitools.client.infrastructure.ApiClient
 
 @HiltWorker
-class GetVendorsTask @AssistedInject constructor(
+class GetVendorsWorker @AssistedInject constructor(
   @Assisted private val context: Context,
   @Assisted params: WorkerParameters,
   private val userStore: UserStore,
@@ -26,6 +27,10 @@ class GetVendorsTask @AssistedInject constructor(
   private val characterRepository: CharacterRepository,
 ) : CoroutineWorker(context, params) {
   override suspend fun doWork(): Result {
+    val allFilters = filterRepository.getFilters()
+    if (allFilters.isEmpty()) {
+      return Result.success()
+    }
     val activeCharacterId = userStore.activeCharacter.first()
     if (activeCharacterId == 0L) {
       return Result.failure()
@@ -57,7 +62,6 @@ class GetVendorsTask @AssistedInject constructor(
     ) {
       return Result.failure()
     }
-    val allFilters = filterRepository.getFilters()
     val itemData = manifestManager.lookupItemData(itemsForSale)
     val matchedLoot = mutableMapOf<Filter, DestinyItem>()
     for (item in itemData) {

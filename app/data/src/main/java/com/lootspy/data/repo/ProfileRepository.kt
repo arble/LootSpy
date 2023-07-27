@@ -1,7 +1,5 @@
-package com.lootspy.data
+package com.lootspy.data.repo
 
-import com.lootspy.client.model.DestinyResponsesDestinyProfileUserInfoCard
-import com.lootspy.client.model.GroupsV2GroupUserInfoCard
 import com.lootspy.data.source.DestinyProfile
 import kotlinx.coroutines.flow.Flow
 

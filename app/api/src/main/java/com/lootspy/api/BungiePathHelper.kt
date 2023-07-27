@@ -1,4 +1,4 @@
-package com.lootspy.util
+package com.lootspy.api
 
 class BungiePathHelper {
   companion object {

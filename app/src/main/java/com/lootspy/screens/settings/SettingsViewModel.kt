@@ -5,12 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.lootspy.api.AutocompleteHelper
 import com.lootspy.api.AutocompleteItem
 import com.lootspy.api.ManifestManager
-import com.lootspy.data.ProfileRepository
+import com.lootspy.data.repo.ProfileRepository
 import com.lootspy.data.UserStore
 import com.lootspy.data.source.DestinyProfile
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

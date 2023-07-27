@@ -20,3 +20,5 @@ dependencyResolutionManagement {
 rootProject.name = "LootSpy"
 include ':app'
 include ':app:data'
+include ':api'
+include ':app:api'

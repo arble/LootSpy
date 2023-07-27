@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lootspy.R
 import com.lootspy.data.Filter
-import com.lootspy.data.FilterRepository
+import com.lootspy.data.repo.FilterRepository
 import com.lootspy.util.Async
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

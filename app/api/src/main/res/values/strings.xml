@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tasks_download_progress">Downloading</string>
+    <string name="tasks_unzip_progress">Unzipping</string>
+    <string name="tasks_autocomplete_progress">Optimising database</string>
+</resources>

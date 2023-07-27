@@ -6,7 +6,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.ListenableWorker
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
-import com.lootspy.api.RefreshTokensTask
+import com.lootspy.api.workers.RefreshTokensWorker
 
 class WorkBuilders {
   companion object {
@@ -66,7 +66,7 @@ class WorkBuilders {
         inputData.putAll(workData)
       }
       val tokenRequestBuilder =
-        OneTimeWorkRequest.Builder(RefreshTokensTask::class.java).setInputData(inputData.build())
+        OneTimeWorkRequest.Builder(RefreshTokensWorker::class.java).setInputData(inputData.build())
       tags?.forEach { tokenRequestBuilder.addTag(it) }
       var chain = workManager.beginUniqueWork(workName, policy, tokenRequestBuilder.build())
       jobs.forEach { nextClass ->

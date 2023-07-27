@@ -1,4 +1,4 @@
-package com.lootspy.api
+package com.lootspy.api.workers
 
 import android.content.Context
 import android.util.Log
@@ -18,7 +18,7 @@ import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 @HiltWorker
-class RefreshTokensTask @AssistedInject constructor(
+class RefreshTokensWorker @AssistedInject constructor(
   @Assisted private val context: Context,
   @Assisted params: WorkerParameters,
   private val userStore: UserStore,

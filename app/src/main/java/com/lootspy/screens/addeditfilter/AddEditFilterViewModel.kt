@@ -9,7 +9,7 @@ import com.lootspy.api.AutocompleteHelper
 import com.lootspy.api.AutocompleteItem
 import com.lootspy.api.ManifestManager
 import com.lootspy.data.Filter
-import com.lootspy.data.FilterRepository
+import com.lootspy.data.repo.FilterRepository
 import com.lootspy.data.matcher.FilterMatcher
 import com.lootspy.data.matcher.InvalidMatcher
 import com.lootspy.data.matcher.MatcherType

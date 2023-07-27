@@ -1,13 +1,14 @@
-package com.lootspy.api
+package com.lootspy.api.workers
 
 import android.content.Context
 import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.lootspy.api.ManifestManager
 import com.lootspy.client.api.Destiny2Api
-import com.lootspy.data.CharacterRepository
-import com.lootspy.data.ProfileRepository
+import com.lootspy.data.repo.CharacterRepository
+import com.lootspy.data.repo.ProfileRepository
 import com.lootspy.data.UserStore
 import com.lootspy.data.source.DestinyCharacter
 import dagger.assisted.Assisted
@@ -16,7 +17,7 @@ import kotlinx.coroutines.flow.first
 import org.openapitools.client.infrastructure.ApiClient
 
 @HiltWorker
-class GetCharactersTask @AssistedInject constructor(
+class GetCharactersWorker @AssistedInject constructor(
   @Assisted private val context: Context,
   @Assisted params: WorkerParameters,
   private val userStore: UserStore,

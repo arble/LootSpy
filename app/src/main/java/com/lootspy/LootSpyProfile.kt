@@ -28,9 +28,9 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
-import com.lootspy.api.GetCharactersTask
+import com.lootspy.api.workers.GetCharactersWorker
 import com.lootspy.data.source.DestinyProfile
-import com.lootspy.util.BungiePathHelper
+import com.lootspy.api.BungiePathHelper
 import com.lootspy.util.ScreenContent
 import com.lootspy.util.WorkBuilders
 
@@ -52,7 +52,7 @@ fun LootSpyProfilePrompt(
           IconButton(onClick = {
             WorkBuilders.dispatchUniqueWorker(
               context,
-              GetCharactersTask::class.java,
+              GetCharactersWorker::class.java,
               "sync_loot",
               mapOf("notify_channel" to "lootspyApi")
             )

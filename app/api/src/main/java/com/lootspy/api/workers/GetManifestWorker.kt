@@ -1,4 +1,4 @@
-package com.lootspy.api
+package com.lootspy.api.workers
 
 import android.content.Context
 import android.net.Uri
@@ -8,10 +8,10 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
-import com.lootspy.R
+import com.lootspy.api.BungiePathHelper
+import com.lootspy.api.R
 import com.lootspy.client.api.Destiny2Api
 import com.lootspy.data.UserStore
-import com.lootspy.util.BungiePathHelper
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
@@ -24,7 +24,7 @@ import java.io.IOException
 import java.net.URL
 
 @HiltWorker
-class GetManifestTask @AssistedInject constructor(
+class GetManifestWorker @AssistedInject constructor(
   @Assisted private val context: Context,
   @Assisted params: WorkerParameters,
   private val userStore: UserStore,

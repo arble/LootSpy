@@ -1,4 +1,4 @@
-package com.lootspy.api
+package com.lootspy.api.workers
 
 import android.content.Context
 import android.util.Log
@@ -6,7 +6,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.lootspy.client.api.UserApi
-import com.lootspy.data.ProfileRepository
+import com.lootspy.data.repo.ProfileRepository
 import com.lootspy.data.UserStore
 import com.lootspy.data.source.DestinyProfile
 import dagger.assisted.Assisted
@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.first
 import org.openapitools.client.infrastructure.ApiClient
 
 @HiltWorker
-class GetMembershipsTask @AssistedInject constructor(
+class GetMembershipsWorker @AssistedInject constructor(
   @Assisted private val context: Context,
   @Assisted params: WorkerParameters,
   private val userStore: UserStore,

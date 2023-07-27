@@ -6,23 +6,20 @@ import android.util.Log
 import androidx.activity.result.ActivityResult
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.lootspy.api.GetMembershipsTask
-import com.lootspy.data.ProfileRepository
+import com.lootspy.api.workers.GetMembershipsWorker
+import com.lootspy.data.repo.ProfileRepository
 import com.lootspy.data.UserStore
 import com.lootspy.data.source.DestinyProfile
 import com.lootspy.util.WorkBuilders
 import com.lootspy.util.combine
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import net.openid.appauth.AuthState
 import net.openid.appauth.AuthorizationException
 import net.openid.appauth.AuthorizationResponse
 import net.openid.appauth.AuthorizationService
@@ -127,7 +124,7 @@ class LootSpyViewModel @Inject constructor(
               Log.d(LOG_TAG, "Full data: ${authState.jsonSerialize()}")
               WorkBuilders.dispatchUniqueWorker(
                 context,
-                GetMembershipsTask::class.java,
+                GetMembershipsWorker::class.java,
                 "sync_memberships",
                 mapOf("notify_channel" to "lootspyApi", "access_token" to token)
               )

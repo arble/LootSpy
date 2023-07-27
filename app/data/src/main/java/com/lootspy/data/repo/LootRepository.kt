@@ -1,5 +1,6 @@
-package com.lootspy.data
+package com.lootspy.data.repo
 
+import com.lootspy.data.LootEntry
 import kotlinx.coroutines.flow.Flow
 
 interface LootRepository {

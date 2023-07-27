@@ -1,4 +1,4 @@
-package com.lootspy.data
+package com.lootspy.data.repo
 
 import com.lootspy.data.source.DestinyProfile
 import com.lootspy.data.source.ProfileDao
