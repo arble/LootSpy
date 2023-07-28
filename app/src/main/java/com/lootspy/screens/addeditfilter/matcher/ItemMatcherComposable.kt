@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -23,9 +22,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lootspy.R
+import com.lootspy.elements.BasicItemElement
 import com.lootspy.filter.matcher.FilterMatcher
 import com.lootspy.filter.matcher.ItemMatcher
-import com.lootspy.elements.BasicItemElement
 import com.lootspy.screens.addeditfilter.AddEditFilterViewModel
 import com.lootspy.util.SupportingErrorText
 import com.lootspy.util.TextAlertDialog
@@ -76,10 +75,9 @@ fun ItemMatcherSummary(
   }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ItemMatcherDetails(
-  matcher: com.lootspy.filter.matcher.ItemMatcher,
+  matcher: ItemMatcher,
   index: Int?,
   onFinish: () -> Unit,
   viewModel: AddEditFilterViewModel = hiltViewModel()
@@ -107,9 +105,7 @@ fun ItemMatcherDetails(
       confirmDelete = false
     }
   }
-  Column() {
-
-
+  Column {
     Card(
       shape = MaterialTheme.shapes.medium,
       colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceTint),

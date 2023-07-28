@@ -8,7 +8,7 @@ import com.lootspy.filter.matcher.MatcherType
 import javax.inject.Inject
 
 data class MatcherUiState(
-  val selectedMatcherType: com.lootspy.filter.matcher.MatcherType = com.lootspy.filter.matcher.MatcherType.NAME,
+  val selectedMatcherType: MatcherType = MatcherType.NAME,
 
   )
 
@@ -17,8 +17,6 @@ class MatcherViewModel @Inject constructor(
 ): ViewModel() {
 
   private val filterId: String? = savedStateHandle[LootSpyDestinationArgs.FILTER_ID_ARG]
-  private val matcher: com.lootspy.filter.matcher.FilterMatcher? = savedStateHandle[LootSpyDestinationArgs.MATCHER_ARG]
-
-
+  private val matcher: FilterMatcher? = savedStateHandle[LootSpyDestinationArgs.MATCHER_ARG]
 
 }

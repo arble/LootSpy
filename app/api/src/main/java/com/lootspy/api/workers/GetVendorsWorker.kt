@@ -8,7 +8,6 @@ import com.lootspy.manifest.ManifestManager
 import com.lootspy.client.api.Destiny2Api
 import com.lootspy.client.model.Destiny2GetVendor200Response
 import com.lootspy.data.repo.CharacterRepository
-import com.lootspy.data.DestinyItem
 import com.lootspy.data.repo.FilterRepository
 import com.lootspy.data.UserStore
 import com.lootspy.filter.Filter
