@@ -5,7 +5,7 @@ import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.lootspy.api.ManifestManager
+import com.lootspy.manifest.ManifestManager
 import com.lootspy.client.api.Destiny2Api
 import com.lootspy.data.repo.CharacterRepository
 import com.lootspy.data.repo.ProfileRepository

@@ -63,6 +63,7 @@ dependencies {
 
     implementation project(":app:data")
     implementation project(":app:api")
+    implementation project(":app:filter")
 
     kapt "org.xerial:sqlite-jdbc:3.36.0"
     implementation 'androidx.core:core-ktx:1.10.1'

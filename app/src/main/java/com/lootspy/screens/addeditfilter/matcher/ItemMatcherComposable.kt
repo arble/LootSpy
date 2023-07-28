@@ -23,8 +23,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lootspy.R
-import com.lootspy.data.matcher.FilterMatcher
-import com.lootspy.data.matcher.ItemMatcher
+import com.lootspy.filter.matcher.FilterMatcher
+import com.lootspy.filter.matcher.ItemMatcher
+import com.lootspy.elements.BasicItemElement
 import com.lootspy.screens.addeditfilter.AddEditFilterViewModel
 import com.lootspy.util.SupportingErrorText
 import com.lootspy.util.TextAlertDialog
@@ -40,7 +41,8 @@ fun ItemMatcherSummary(
     shape = MaterialTheme.shapes.medium,
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
     modifier = Modifier
-      .clickable { onMatcherClick(index, matcher) }.fillMaxWidth(),
+      .clickable { onMatcherClick(index, matcher) }
+      .fillMaxWidth(),
   ) {
     Text(
       text = matcher.matcherTypeDescription(),
@@ -77,7 +79,7 @@ fun ItemMatcherSummary(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ItemMatcherDetails(
-  matcher: ItemMatcher,
+  matcher: com.lootspy.filter.matcher.ItemMatcher,
   index: Int?,
   onFinish: () -> Unit,
   viewModel: AddEditFilterViewModel = hiltViewModel()
@@ -152,13 +154,14 @@ fun ItemMatcherDetails(
       }
     }
     suggestions.value.forEach { item ->
-      item.Composable(onClick = {
-        if (viewModel.saveItemMatcher(index, it)) {
-          onFinish()
-        } else {
-          alreadyMatched = true
-        }
-      })
+      BasicItemElement(item = item,
+        onClick = {
+          if (viewModel.saveItemMatcher(index, it)) {
+            onFinish()
+          } else {
+            alreadyMatched = true
+          }
+        })
     }
   }
 }

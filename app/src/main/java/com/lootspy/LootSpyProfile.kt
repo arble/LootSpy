@@ -29,8 +29,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.lootspy.api.workers.GetCharactersWorker
+import com.lootspy.data.bungiePath
 import com.lootspy.data.source.DestinyProfile
-import com.lootspy.api.BungiePathHelper
 import com.lootspy.util.ScreenContent
 import com.lootspy.util.WorkBuilders
 
@@ -105,7 +105,7 @@ private fun ProfileCard(
         .clickable { onClickProfile(profile) }
     ) {
       Image(
-        painter = rememberAsyncImagePainter(model = BungiePathHelper.getFullUrlForPath(profile.iconPath)),
+        painter = rememberAsyncImagePainter(model = profile.iconPath.bungiePath()),
         contentDescription = null
       )
       Text(text = profile.platformDisplayName, style = MaterialTheme.typography.headlineSmall)

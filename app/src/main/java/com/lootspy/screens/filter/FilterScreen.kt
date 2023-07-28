@@ -30,10 +30,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lootspy.R
-import com.lootspy.data.Filter
+import com.lootspy.filter.Filter
 import com.lootspy.util.ScreenContentWithEmptyText
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FilterScreen(
   onAddFilter: () -> Unit,
@@ -48,7 +47,7 @@ fun FilterScreen(
   Scaffold(
     topBar = {
       FilterTopAppBar(
-        onDeleteAll = { viewModel.deleteAll() }
+        onDeleteAll = viewModel::deleteAll
       )
     },
     modifier = modifier.fillMaxSize(),

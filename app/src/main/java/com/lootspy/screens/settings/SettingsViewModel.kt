@@ -2,9 +2,9 @@ package com.lootspy.screens.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.lootspy.api.AutocompleteHelper
-import com.lootspy.api.AutocompleteItem
-import com.lootspy.api.ManifestManager
+import com.lootspy.manifest.AutocompleteHelper
+import com.lootspy.manifest.BasicItem
+import com.lootspy.manifest.ManifestManager
 import com.lootspy.data.repo.ProfileRepository
 import com.lootspy.data.UserStore
 import com.lootspy.data.source.DestinyProfile
@@ -49,7 +49,7 @@ class SettingsViewModel @Inject constructor(
       initialValue = SettingsUiState()
     )
 
-  private val _suggestions = MutableStateFlow(listOf<AutocompleteItem>())
+  private val _suggestions = MutableStateFlow(listOf<BasicItem>())
   val suggestions = _suggestions.asStateFlow()
 
   suspend fun saveActiveMembership(profile: DestinyProfile) {

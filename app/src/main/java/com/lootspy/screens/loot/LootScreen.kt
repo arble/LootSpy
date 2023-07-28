@@ -61,7 +61,7 @@ import com.lootspy.api.workers.GetCharactersWorker
 import com.lootspy.api.workers.GetMembershipsWorker
 import com.lootspy.data.LootEntry
 import com.lootspy.data.source.DestinyCharacter
-import com.lootspy.api.BungiePathHelper
+import com.lootspy.data.bungiePath
 import com.lootspy.util.LootTopAppBar
 import com.lootspy.util.WorkBuilders
 import kotlinx.coroutines.launch
@@ -207,7 +207,7 @@ private fun CharacterSelectorItem(
       verticalAlignment = Alignment.CenterVertically
     ) {
       AsyncImage(
-        model = BungiePathHelper.getFullUrlForPath(character.emblemPath),
+        model = character.emblemPath.bungiePath(),
         placeholder = placeholder,
         error = error,
         modifier = Modifier

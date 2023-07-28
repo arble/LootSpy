@@ -5,15 +5,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lootspy.LootSpyDestinationArgs
 import com.lootspy.R
-import com.lootspy.api.AutocompleteHelper
-import com.lootspy.api.AutocompleteItem
-import com.lootspy.api.ManifestManager
-import com.lootspy.data.Filter
 import com.lootspy.data.repo.FilterRepository
-import com.lootspy.data.matcher.FilterMatcher
-import com.lootspy.data.matcher.InvalidMatcher
-import com.lootspy.data.matcher.MatcherType
-import com.lootspy.data.matcher.ItemMatcher
+import com.lootspy.filter.matcher.FilterMatcher
+import com.lootspy.filter.toExternal
+import com.lootspy.manifest.AutocompleteHelper
+import com.lootspy.manifest.BasicItem
+import com.lootspy.manifest.ManifestManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,12 +18,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
 data class AddEditFilterUiState(
   val id: String = "",
   val name: String = "",
-  val filter: Filter? = null,
+  val filter: com.lootspy.filter.Filter? = null,
   val matchers: List<FilterMatcher> = listOf(),
   val selectedMatcher: Int? = null,
   val selectedMatcherFields: Map<String, String>? = null,
@@ -48,9 +47,10 @@ class AddEditFilterViewModel @Inject constructor(
 
   private val _uiState = MutableStateFlow(AddEditFilterUiState())
   val uiState = _uiState.asStateFlow()
-  private val _suggestions = MutableStateFlow(listOf<AutocompleteItem>())
+  private val _suggestions = MutableStateFlow(listOf<BasicItem>())
   val suggestions = _suggestions.asStateFlow()
-  private val _activeMatcher = MutableStateFlow<Pair<FilterMatcher?, Int?>>(Pair(null, null))
+  private val _activeMatcher =
+    MutableStateFlow<Pair<FilterMatcher?, Int?>>(Pair(null, null))
   val activeMatcher = _activeMatcher.asStateFlow()
 
   init {
@@ -60,7 +60,7 @@ class AddEditFilterViewModel @Inject constructor(
   }
 
   fun createNewFilter(name: String) = viewModelScope.launch {
-    filterRepository.saveNewFilter(name, uiState.value.matchers)
+    filterRepository.saveNewFilter(name, Json.encodeToString(uiState.value.matchers))
     _uiState.update { it.copy() }
   }
 
@@ -69,7 +69,11 @@ class AddEditFilterViewModel @Inject constructor(
       throw RuntimeException("updateFilter on null filterId")
     }
     viewModelScope.launch {
-      filterRepository.updateFilter(filterId, uiState.value.name, uiState.value.matchers)
+      filterRepository.updateFilter(
+        filterId,
+        uiState.value.name,
+        Json.encodeToString(uiState.value.matchers)
+      )
       _uiState.update {
         it.copy(isFilterSaved = true)
       }
@@ -84,7 +88,8 @@ class AddEditFilterViewModel @Inject constructor(
     _uiState.update { it.copy(isLoading = true) }
 
     viewModelScope.launch {
-      filterRepository.getFilter(filterId).let { filter: Filter? ->
+      filterRepository.getFilter(filterId).let { localFilter ->
+        val filter = localFilter?.toExternal()
         if (filter != null) {
           _uiState.update {
             it.copy(
@@ -106,26 +111,30 @@ class AddEditFilterViewModel @Inject constructor(
   fun setActiveMatcher(
     matcher: FilterMatcher? = null,
     index: Int? = null,
-    type: MatcherType = MatcherType.INVALID
+    type: com.lootspy.filter.matcher.MatcherType = com.lootspy.filter.matcher.MatcherType.INVALID
   ) {
     if (matcher != null && index != null) {
       _activeMatcher.update { Pair(matcher, index) }
     } else {
       val newMatcher = when (type) {
-        MatcherType.NAME -> ItemMatcher("", 0U)
-        else -> InvalidMatcher
+        com.lootspy.filter.matcher.MatcherType.NAME -> com.lootspy.filter.matcher.ItemMatcher(
+          "",
+          0U
+        )
+
+        else -> com.lootspy.filter.matcher.InvalidMatcher
       }
       _activeMatcher.update { Pair(newMatcher, index) }
     }
   }
 
-  fun saveItemMatcher(index: Int?, item: AutocompleteItem): Boolean {
+  fun saveItemMatcher(index: Int?, item: BasicItem): Boolean {
     uiState.value.matchers.forEachIndexed { oldIndex, matcher ->
-      if (matcher is ItemMatcher && matcher.hash == item.hash && oldIndex != index) {
+      if (matcher is com.lootspy.filter.matcher.ItemMatcher && matcher.hash == item.hash && oldIndex != index) {
         return false
       }
     }
-    val newMatcher = ItemMatcher(item.name, item.hash)
+    val newMatcher = com.lootspy.filter.matcher.ItemMatcher(item.name, item.hash)
     val newMatchers = uiState.value.matchers.toMutableList()
     if (index != null) {
       newMatchers[index] = newMatcher
@@ -141,8 +150,8 @@ class AddEditFilterViewModel @Inject constructor(
     _activeMatcher.update { Pair(null, null) }
   }
 
-  fun isItemAlreadyMatched(item: AutocompleteItem): Boolean {
-    return uiState.value.matchers.find { it is ItemMatcher && it.hash == item.hash } != null
+  fun isItemAlreadyMatched(item: BasicItem): Boolean {
+    return uiState.value.matchers.find { it is com.lootspy.filter.matcher.ItemMatcher && it.hash == item.hash } != null
   }
 
   fun deleteSelectedMatcher() {

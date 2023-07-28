@@ -46,9 +46,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.lootspy.R
-import com.lootspy.api.AutocompleteItem
 import com.lootspy.api.workers.PrepareAutocompleteWorker
-import com.lootspy.api.BungiePathHelper
+import com.lootspy.data.bungiePath
+import com.lootspy.elements.BasicItemElement
+import com.lootspy.manifest.BasicItem
 import com.lootspy.util.WorkBuilders
 import com.lootspy.util.popup.LootSpyPopup
 import com.lootspy.util.popup.PopupState
@@ -128,7 +129,7 @@ fun SettingsScreen(
             )
             val popupState = remember { PopupState(false) }
             AsyncImage(
-              model = BungiePathHelper.getFullUrlForPath(uiState.value.selectedMembership?.iconPath),
+              model = uiState.value.selectedMembership?.iconPath?.bungiePath(),
               placeholder = painterResource(id = R.drawable.ic_launcher_foreground),
               error = errorPainter,
               fallback = errorPainter,
@@ -154,7 +155,7 @@ fun SettingsScreen(
             ) {
               uiState.value.allProfiles.forEach { profile ->
                 ProfileSelectorEntry(
-                  iconPath = BungiePathHelper.getFullUrlForPath(profile.iconPath),
+                  iconPath = profile.iconPath.bungiePath(),
                   displayName = profile.platformDisplayName,
                   placeholderPainter = placeholderPainter,
                   errorPainter = errorPainter,
@@ -226,10 +227,10 @@ private fun ItemSuggestion(
   modifier: Modifier = Modifier,
   errorPainter: Painter,
   placeholderPainter: Painter,
-  item: AutocompleteItem,
+  item: BasicItem,
 ) {
   SettingsCard(modifier.height(64.dp)) {
-    item.Composable(placeholder = placeholderPainter, error = errorPainter)
+    BasicItemElement(item = item, placeholder = placeholderPainter, error = errorPainter)
   }
 }
 

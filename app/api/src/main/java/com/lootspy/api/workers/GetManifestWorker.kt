@@ -8,10 +8,10 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
-import com.lootspy.api.BungiePathHelper
 import com.lootspy.api.R
 import com.lootspy.client.api.Destiny2Api
 import com.lootspy.data.UserStore
+import com.lootspy.data.bungiePath
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
@@ -43,8 +43,8 @@ class GetManifestWorker @AssistedInject constructor(
     Log.d(LOG_TAG, "Retrieved manifest data. $manifestData")
     // TODO: localise
     val enManifestPath = manifestData?.get("en") ?: return Result.failure()
-    val fullPath = BungiePathHelper.getFullUrlForPath(enManifestPath)
-    val manifestUri = Uri.parse(BungiePathHelper.getFullUrlForPath(enManifestPath))
+    val fullPath = enManifestPath.bungiePath()
+    val manifestUri = Uri.parse(fullPath)
     val fileName = URLUtil.guessFileName(fullPath, null, null)
     if (fileName == null) {
       Log.e(LOG_TAG, "Could not resolve filename from manifest URL")

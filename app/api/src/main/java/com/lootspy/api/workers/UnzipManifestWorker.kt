@@ -6,7 +6,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
-import com.lootspy.api.ManifestManager
+import com.lootspy.manifest.ManifestManager
 import com.lootspy.api.R
 import com.lootspy.data.UserStore
 import dagger.assisted.Assisted

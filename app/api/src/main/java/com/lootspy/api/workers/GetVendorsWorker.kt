@@ -4,14 +4,16 @@ import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.lootspy.api.ManifestManager
+import com.lootspy.manifest.ManifestManager
 import com.lootspy.client.api.Destiny2Api
 import com.lootspy.client.model.Destiny2GetVendor200Response
 import com.lootspy.data.repo.CharacterRepository
 import com.lootspy.data.DestinyItem
-import com.lootspy.data.Filter
 import com.lootspy.data.repo.FilterRepository
 import com.lootspy.data.UserStore
+import com.lootspy.filter.Filter
+import com.lootspy.filter.toExternal
+import com.lootspy.manifest.BasicItem
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
@@ -27,7 +29,7 @@ class GetVendorsWorker @AssistedInject constructor(
   private val characterRepository: CharacterRepository,
 ) : CoroutineWorker(context, params) {
   override suspend fun doWork(): Result {
-    val allFilters = filterRepository.getFilters()
+    val allFilters = filterRepository.getFilters().map { it.toExternal() }
     if (allFilters.isEmpty()) {
       return Result.success()
     }
@@ -62,8 +64,8 @@ class GetVendorsWorker @AssistedInject constructor(
     ) {
       return Result.failure()
     }
-    val itemData = manifestManager.lookupItemData(itemsForSale)
-    val matchedLoot = mutableMapOf<Filter, DestinyItem>()
+    val itemData = manifestManager.resolveItems(itemsForSale)
+    val matchedLoot = mutableMapOf<Filter, BasicItem>()
     for (item in itemData) {
       for (filter in allFilters) {
         if (filter.match(item)) {
