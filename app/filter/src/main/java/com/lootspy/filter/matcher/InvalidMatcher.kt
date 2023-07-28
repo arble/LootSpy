@@ -1,7 +1,7 @@
 package com.lootspy.filter.matcher
 
 import kotlinx.serialization.SerialName
-import com.lootspy.data.DestinyItem
+import com.lootspy.manifest.BasicItem
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -11,7 +11,7 @@ object InvalidMatcher : FilterMatcher {
     TODO("Not yet implemented")
   }
 
-  override fun match(item: DestinyItem): Boolean {
+  override fun match(item: BasicItem): Boolean {
     TODO("Not yet implemented")
   }
 
