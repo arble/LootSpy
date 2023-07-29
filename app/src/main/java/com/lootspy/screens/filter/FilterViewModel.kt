@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lootspy.R
+import com.lootspy.data.UserStore
 import com.lootspy.filter.Filter
 import com.lootspy.data.repo.FilterRepository
 import com.lootspy.data.source.LocalFilter
@@ -22,6 +23,7 @@ import javax.inject.Inject
 
 data class FilterUiState(
   val items: List<Filter> = emptyList(),
+  val alwaysPatterns: Boolean = false,
   val isLoading: Boolean = false,
   val userMessage: Int? = null,
 )
@@ -29,6 +31,7 @@ data class FilterUiState(
 @HiltViewModel
 class FilterViewModel @Inject constructor(
   private val filterRepository: FilterRepository,
+  private val userStore: UserStore,
 ) : ViewModel() {
   private val _isLoading = MutableStateFlow(false)
   private val _userMessage: MutableStateFlow<Int?> = MutableStateFlow(null)
@@ -40,7 +43,12 @@ class FilterViewModel @Inject constructor(
   }
 
   val uiState: StateFlow<FilterUiState> =
-    combine(_filtersAsync, _isLoading, _userMessage) { filtersAsync, isLoading, userMessage ->
+    combine(
+      _filtersAsync,
+      _isLoading,
+      _userMessage,
+      userStore.alwaysPatterns
+    ) { filtersAsync, isLoading, userMessage, alwaysPatterns ->
       when (filtersAsync) {
         is Async.Loading -> {
           FilterUiState(isLoading = true)
@@ -53,6 +61,7 @@ class FilterViewModel @Inject constructor(
         is Async.Success -> {
           FilterUiState(
             items = filtersAsync.data.toExternal(),
+            alwaysPatterns = alwaysPatterns,
             isLoading = isLoading,
             userMessage = userMessage
           )
@@ -66,5 +75,9 @@ class FilterViewModel @Inject constructor(
 
   fun deleteAll() {
     viewModelScope.launch { filterRepository.deleteAllFilters() }
+  }
+
+  fun saveAlwaysPatterns(patterns: Boolean) {
+    viewModelScope.launch { userStore.saveAlwaysPatterns(patterns) }
   }
 }

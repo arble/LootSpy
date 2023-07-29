@@ -27,35 +27,30 @@ import androidx.compose.ui.unit.dp
 fun <T> ScreenContent(
   loading: Boolean,
   items: List<T>,
-  itemContent: @Composable (Int, T) -> Unit,
   modifier: Modifier = Modifier,
+  headerContent: @Composable () -> Unit = {},
+  itemContent: @Composable (Int, T) -> Unit,
+  footerContent: @Composable () -> Unit = {},
   loadingText: String = "",
   emptyComposable: @Composable () -> Unit,
 ) {
-  if (loading) {
-    Box(modifier = modifier.fillMaxSize(), contentAlignment = Center) {
-      Text(text = loadingText)
-      CircularProgressIndicator(modifier = modifier)
-    }
-  } else if (items.isNotEmpty()) {
-//    LazyColumn(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-//      itemsIndexed(items = items) {index, item ->
-////        Row(Modifier.animateItemPlacement(
-////          tween(durationMillis = 500, easing = LinearEasing)
-////        )) {
-//          itemContent(index, item)
-////        }
-//      }
-//    }
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+  Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    headerContent()
+    if (loading) {
+      Box(modifier = modifier.fillMaxSize(), contentAlignment = Center) {
+        Text(text = loadingText)
+        CircularProgressIndicator(modifier = modifier)
+      }
+    } else if (items.isNotEmpty()) {
       items.forEachIndexed { index, item ->
         itemContent(index, item)
       }
+    } else {
+      Box(modifier = modifier.fillMaxHeight(), contentAlignment = CenterStart) {
+        emptyComposable()
+      }
     }
-  } else {
-    Box(modifier = modifier.fillMaxHeight(), contentAlignment = CenterStart) {
-      emptyComposable()
-    }
+    footerContent()
   }
 }
 
@@ -63,12 +58,21 @@ fun <T> ScreenContent(
 fun <T> ScreenContentWithEmptyText(
   loading: Boolean,
   items: List<T>,
-  itemContent: @Composable (Int, T) -> Unit,
-  emptyText: String,
   modifier: Modifier = Modifier,
+  headerContent: @Composable () -> Unit = {},
+  itemContent: @Composable (Int, T) -> Unit,
+  footerContent: @Composable () -> Unit = {},
+  emptyText: String,
   textStyle: TextStyle = MaterialTheme.typography.headlineMedium
 ) {
-  ScreenContent(loading = loading, items = items, itemContent = itemContent, modifier = modifier) {
+  ScreenContent(
+    loading = loading,
+    items = items,
+    headerContent = headerContent,
+    itemContent = itemContent,
+    footerContent = footerContent,
+    modifier = modifier
+  ) {
     Text(
       text = emptyText,
       style = textStyle

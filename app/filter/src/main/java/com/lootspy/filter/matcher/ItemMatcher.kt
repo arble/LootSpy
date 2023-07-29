@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("ItemMatcher")
-class ItemMatcher(private val name: String, private val hash: UInt) : FilterMatcher {
+class ItemMatcher(private val name: String, val hash: UInt) : FilterMatcher {
 
   override fun type() = MatcherType.NAME
 

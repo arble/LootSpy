@@ -7,6 +7,7 @@ import com.lootspy.LootSpyDestinationArgs
 import com.lootspy.R
 import com.lootspy.data.repo.FilterRepository
 import com.lootspy.filter.matcher.FilterMatcher
+import com.lootspy.filter.matcher.ItemMatcher
 import com.lootspy.filter.toExternal
 import com.lootspy.manifest.AutocompleteHelper
 import com.lootspy.manifest.BasicItem
@@ -117,7 +118,7 @@ class AddEditFilterViewModel @Inject constructor(
       _activeMatcher.update { Pair(matcher, index) }
     } else {
       val newMatcher = when (type) {
-        com.lootspy.filter.matcher.MatcherType.NAME -> com.lootspy.filter.matcher.ItemMatcher(
+        com.lootspy.filter.matcher.MatcherType.NAME -> ItemMatcher(
           "",
           0U
         )
@@ -130,11 +131,11 @@ class AddEditFilterViewModel @Inject constructor(
 
   fun saveItemMatcher(index: Int?, item: BasicItem): Boolean {
     uiState.value.matchers.forEachIndexed { oldIndex, matcher ->
-      if (matcher is com.lootspy.filter.matcher.ItemMatcher && matcher.hash == item.hash && oldIndex != index) {
+      if (matcher is ItemMatcher && matcher.hash == item.hash && oldIndex != index) {
         return false
       }
     }
-    val newMatcher = com.lootspy.filter.matcher.ItemMatcher(item.name, item.hash)
+    val newMatcher = ItemMatcher(item.name, item.hash)
     val newMatchers = uiState.value.matchers.toMutableList()
     if (index != null) {
       newMatchers[index] = newMatcher
@@ -151,7 +152,7 @@ class AddEditFilterViewModel @Inject constructor(
   }
 
   fun isItemAlreadyMatched(item: BasicItem): Boolean {
-    return uiState.value.matchers.find { it is com.lootspy.filter.matcher.ItemMatcher && it.hash == item.hash } != null
+    return uiState.value.matchers.find { it is ItemMatcher && it.hash == item.hash } != null
   }
 
   fun deleteSelectedMatcher() {

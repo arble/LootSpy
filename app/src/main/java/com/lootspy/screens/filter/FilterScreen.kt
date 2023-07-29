@@ -2,6 +2,8 @@ package com.lootspy.screens.filter
 
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,12 +20,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -46,9 +51,7 @@ fun FilterScreen(
   BackHandler(onBack = onBack)
   Scaffold(
     topBar = {
-      FilterTopAppBar(
-        onDeleteAll = viewModel::deleteAll
-      )
+      FilterTopAppBar(onDeleteAll = viewModel::deleteAll)
     },
     modifier = modifier.fillMaxSize(),
     floatingActionButton = {
@@ -58,6 +61,7 @@ fun FilterScreen(
     },
   ) { paddingValues ->
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     if (uiState.userMessage != null) {
       Toast.makeText(context, stringResource(id = uiState.userMessage!!), Toast.LENGTH_SHORT).show()
     }
@@ -65,12 +69,60 @@ fun FilterScreen(
     ScreenContentWithEmptyText(
       loading = uiState.isLoading,
       items = uiState.items,
+      headerContent = {
+        AlwaysGetPatternsSelector(uiState = uiState)
+      },
       itemContent = { _, filter ->
         FilterItem(filter = filter, onClickFilter = onClickFilter)
       },
       emptyText = stringResource(id = R.string.filter_screen_empty),
       modifier = Modifier.padding(paddingValues)
     )
+  }
+}
+
+@Composable
+private fun AlwaysGetPatternsSelector(
+  uiState: FilterUiState,
+  viewModel: FilterViewModel = hiltViewModel()
+) {
+  val targetColour = if (uiState.alwaysPatterns) {
+    MaterialTheme.colorScheme.surfaceTint
+  } else {
+    MaterialTheme.colorScheme.surfaceVariant
+  }
+  val background =
+    animateColorAsState(
+      targetValue = targetColour,
+      animationSpec = tween(250),
+      label = ""
+    )
+  Card(
+    shape = MaterialTheme.shapes.medium,
+    colors = CardDefaults.cardColors(containerColor = background.value)
+  ) {
+    Row(
+      verticalAlignment = Alignment.CenterVertically,
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(
+          horizontal = dimensionResource(id = R.dimen.horizontal_margin),
+          vertical = dimensionResource(id = R.dimen.loot_item_padding),
+        )
+    ) {
+      Text(
+        text = stringResource(id = R.string.always_get_incomplete_patterns),
+        modifier = Modifier.weight(1f)
+      )
+      Switch(
+        checked = uiState.alwaysPatterns, onCheckedChange = {
+          viewModel.saveAlwaysPatterns(it)
+        },
+        colors = SwitchDefaults.colors(
+          checkedBorderColor = Color.Black,
+        )
+      )
+    }
   }
 }
 
