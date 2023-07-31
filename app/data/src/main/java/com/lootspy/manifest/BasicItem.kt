@@ -4,7 +4,7 @@ import android.content.ContentValues
 import android.database.Cursor
 
 open class BasicItem(
-  val hash: UInt,
+  override val hash: UInt,
   val name: String,
   val tier: String,
   val type: String,
@@ -13,7 +13,7 @@ open class BasicItem(
   val isShelved: Boolean,
   val damageType: String,
   val damageIconPath: String,
-) {
+) : DestinyItem {
 
   fun toContentValues(): ContentValues =
     ContentValues().apply {

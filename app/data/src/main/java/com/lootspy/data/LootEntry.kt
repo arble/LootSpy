@@ -1,4 +1,5 @@
 package com.lootspy.data
 
-data class LootEntry(val id: String, val name: String = "") {
-}
+import com.lootspy.manifest.DestinyItem
+
+data class LootEntry(val item: DestinyItem, val filterNames: Collection<String>)

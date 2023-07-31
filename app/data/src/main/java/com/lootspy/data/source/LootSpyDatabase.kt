@@ -7,12 +7,12 @@ import androidx.room.RoomDatabase
 
 @Database(
   entities = [LocalLootEntry::class, LocalFilter::class, DestinyProfile::class, DestinyCharacter::class],
-  version = 4,
+  version = 5,
   exportSchema = false
 )
 abstract class LootSpyDatabase : RoomDatabase() {
 
-  abstract fun lootEntryDao(): LootEntryDao
+  abstract fun lootDao(): LootDao
 
   abstract fun filterDao(): FilterDao
 

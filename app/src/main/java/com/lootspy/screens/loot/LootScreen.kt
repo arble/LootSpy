@@ -59,6 +59,7 @@ import coil.compose.AsyncImage
 import com.lootspy.R
 import com.lootspy.api.workers.GetCharactersWorker
 import com.lootspy.api.workers.GetMembershipsWorker
+import com.lootspy.api.workers.GetVendorsWorker
 import com.lootspy.data.LootEntry
 import com.lootspy.data.source.DestinyCharacter
 import com.lootspy.data.bungiePath
@@ -93,7 +94,7 @@ fun LootScreen(
             context,
             "sync_memberships",
             mapOf("notify_channel" to "lootspyApi"),
-            listOf(GetMembershipsWorker::class.java),
+            listOf(GetVendorsWorker::class.java),
           )
 //          viewModel.deleteAuthInfo()
         },

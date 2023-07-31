@@ -9,6 +9,7 @@ import com.lootspy.data.LootEntry
 import com.lootspy.data.repo.LootRepository
 import com.lootspy.data.UserStore
 import com.lootspy.data.source.DestinyCharacter
+import com.lootspy.manifest.DestinyItem
 import com.lootspy.util.Async
 import com.lootspy.util.combine
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,7 +25,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class LootUiState(
-  val items: List<LootEntry> = emptyList(),
+  val items: List<DestinyItem> = emptyList(),
   val characters: List<DestinyCharacter> = emptyList(),
   val activeCharacter: Long = 0,
   val isLoading: Boolean = false,
@@ -60,7 +61,7 @@ class LootViewModel @Inject constructor(
     combine(lootRepository.getLootStream(), savedFilterType) { loot, type ->
       filterLoot(loot, type)
     }.map { Async.Success(it) }
-      .catch<Async<List<LootEntry>>> { emit(Async.Error(R.string.loading_tasks_error)) }
+      .catch<Async<List<DestinyItem>>> { emit(Async.Error(R.string.loading_tasks_error)) }
 
   val uiState: StateFlow<LootUiState> = combine(
     _filterUiInfo,
@@ -114,17 +115,11 @@ class LootViewModel @Inject constructor(
     return FilteringUiInfo()
   }
 
-  private fun filterLoot(loot: List<LootEntry>, type: LootFilterType): List<LootEntry> {
+  private fun filterLoot(loot: List<DestinyItem>, type: LootFilterType): List<DestinyItem> {
     return when (type) {
       LootFilterType.ALL_LOOT -> loot
       LootFilterType.VENDOR_LOOT -> loot
       LootFilterType.DAILY_ROTATION_LOOT -> loot
-    }
-  }
-
-  fun saveLoot(name: String) {
-    viewModelScope.launch {
-      lootRepository.createLootEntry(name)
     }
   }
 

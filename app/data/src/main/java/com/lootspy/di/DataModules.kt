@@ -12,7 +12,7 @@ import com.lootspy.data.repo.ProfileRepository
 import com.lootspy.data.UserStore
 import com.lootspy.data.source.CharacterDao
 import com.lootspy.data.source.FilterDao
-import com.lootspy.data.source.LootEntryDao
+import com.lootspy.data.source.LootDao
 import com.lootspy.data.source.LootSpyDatabase
 import com.lootspy.data.source.ProfileDao
 import dagger.Binds
@@ -56,7 +56,7 @@ object DatabaseModule {
   fun provideUserStore(@ApplicationContext context: Context) = UserStore(context)
 
   @Provides
-  fun provideLootDao(database: LootSpyDatabase): LootEntryDao = database.lootEntryDao()
+  fun provideLootDao(database: LootSpyDatabase): LootDao = database.lootDao()
 
   @Provides
   fun provideFilterDao(database: LootSpyDatabase): FilterDao = database.filterDao()

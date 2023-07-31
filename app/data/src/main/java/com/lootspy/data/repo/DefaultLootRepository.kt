@@ -10,13 +10,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class DefaultLootRepository @Inject constructor(
-  private val localDataSource: com.lootspy.data.source.LootEntryDao,
+  private val localDataSource: com.lootspy.data.source.LootDao,
   @DefaultDispatcher private val dispatcher: CoroutineDispatcher,
   @ApplicationScope private val scope: CoroutineScope,
 ) : LootRepository {
@@ -31,7 +30,7 @@ class DefaultLootRepository @Inject constructor(
     }
   }
 
-  override fun getLootEntryStream(lootEntryId: String): Flow<LootEntry?> {
+  override fun getLootEntryStream(lootEntryId: Long): Flow<LootEntry?> {
     return localDataSource.observeById(lootEntryId).map { it.toExternal() }
   }
 
@@ -39,16 +38,15 @@ class DefaultLootRepository @Inject constructor(
     TODO("Not yet implemented")
   }
 
-  override suspend fun getLootEntry(lootEntryId: String): LootEntry? {
+  override suspend fun getLootEntry(lootEntryId: Long): LootEntry? {
     return localDataSource.getById(lootEntryId)?.toExternal()
   }
 
-  override suspend fun createLootEntry(name: String): String {
-    val lootEntryId = withContext(dispatcher) {
-      UUID.randomUUID().toString()
-    }
-    val lootEntry = LootEntry(lootEntryId, name)
-    localDataSource.upsert(lootEntry.toLocal())
-    return lootEntryId
+  override suspend fun saveLootEntry(item: LootEntry) {
+    localDataSource.upsert(item.toLocal())
+  }
+
+  override suspend fun clearLoot() {
+    localDataSource.deleteAll()
   }
 }

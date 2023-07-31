@@ -4,6 +4,9 @@ import com.lootspy.client.model.DestinyResponsesDestinyProfileUserInfoCard
 import com.lootspy.client.model.GroupsV2GroupUserInfoCard
 import com.lootspy.data.source.DestinyProfile
 import com.lootspy.data.source.LocalLootEntry
+import com.lootspy.manifest.DestinyItem
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 private val json = Json {
@@ -12,12 +15,13 @@ private val json = Json {
   allowStructuredMapKeys = true
 }
 
-fun LootEntry.toLocal() = LocalLootEntry(id = id, name = name)
+fun LootEntry.toLocal() =
+  LocalLootEntry(item.hash.toLong(), Json.encodeToString(item), Json.encodeToString(filterNames))
+
+fun LocalLootEntry.toExternal() = Json.decodeFromString<LootEntry>(itemData)
 
 @JvmName("externalToLocalLootEntry")
 fun List<LootEntry>.toLocal() = map(LootEntry::toLocal)
-
-fun LocalLootEntry.toExternal() = LootEntry(id = id, name = name)
 
 @JvmName("localToExternalLootEntry")
 fun List<LocalLootEntry>.toExternal() = map(LocalLootEntry::toExternal)

@@ -6,18 +6,18 @@ import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface LootEntryDao {
+interface LootDao {
   @Query("SELECT * FROM matched_loot")
   fun observeAll(): Flow<List<LocalLootEntry>>
 
-  @Query("SELECT * FROM matched_loot WHERE id = :lootEntryId")
-  fun observeById(lootEntryId: String): Flow<LocalLootEntry>
+  @Query("SELECT * FROM matched_loot WHERE hash = :lootEntryId")
+  fun observeById(lootEntryId: Long): Flow<LocalLootEntry>
 
   @Query("SELECT * FROM matched_loot")
   fun getAll(): List<LocalLootEntry>
 
-  @Query("SELECT * FROM matched_loot WHERE id = :lootEntryId")
-  fun getById(lootEntryId: String): LocalLootEntry?
+  @Query("SELECT * FROM matched_loot WHERE hash = :lootEntryId")
+  fun getById(lootEntryId: Long): LocalLootEntry?
 
   @Upsert
   suspend fun upsert(lootEntry: LocalLootEntry)
@@ -25,8 +25,8 @@ interface LootEntryDao {
   @Upsert
   suspend fun upsertAll(loot: List<LocalLootEntry>)
 
-  @Query("DELETE FROM matched_loot WHERE id = :lootEntryId")
-  suspend fun deleteById(lootEntryId: String)
+  @Query("DELETE FROM matched_loot WHERE hash = :lootEntryId")
+  suspend fun deleteById(lootEntryId: Long)
 
   @Query("DELETE FROM matched_loot")
   suspend fun deleteAll()

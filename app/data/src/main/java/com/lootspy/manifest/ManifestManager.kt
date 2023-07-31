@@ -298,10 +298,8 @@ class ManifestManager @Inject constructor(
       Log.d(LOG_TAG, "Loaded autocomplete table")
       return
     }
-    var offset = 0
     var numInserted = 0
     var numProcessed = 0
-    var exit = false
     loadDamageTypes()
     loadWeaponCategories()
     loadTiers()
@@ -387,7 +385,7 @@ class ManifestManager @Inject constructor(
     writeCraftingRecordsTable(db, craftingHashes)
   }
 
-  private fun loadCraftableRecords(db: SQLiteDatabase) {
+  private fun loadCraftableRecords(db: SQLiteDatabase = getManifestDb()) {
     if (craftingMap.isNotEmpty()) {
       return
     }
@@ -405,6 +403,41 @@ class ManifestManager @Inject constructor(
           it.getInt(it.getColumnIndexOrThrow(DeepsightTable.RECORD_HASH)).toUInt()
       }
     }
+  }
+
+  fun getCraftableRecords(): Map<UInt, UInt> {
+    loadCraftableRecords()
+    return craftingMap
+  }
+
+  fun resolveCraftingProgress(itemHashes: Collection<UInt>): Map<UInt, Int> {
+    val result = HashMap<UInt, Int>()
+    val recordHashes = mutableListOf<UInt>()
+    val db = getManifestDb()
+    db.query(
+      DeepsightTable.TABLE_NAME,
+      null,
+      "${DeepsightTable.ITEM_HASH} IN ${makeQuestionMarkList(itemHashes.size)}",
+      itemHashes.map { it.toString() }.toTypedArray(),
+      null,
+      null,
+      null
+    ).use {
+      recordHashes.add(it.getInt(it.getColumnIndexOrThrow(DeepsightTable.RECORD_HASH)).toUInt())
+    }
+    db.query(
+      "DestinyRecordDefinition",
+      null,
+      "id IN ${makeQuestionMarkList(itemHashes.size)}",
+      recordHashes.map { it.toString() }.toTypedArray(),
+      null,
+      null,
+      null
+    ).use {
+      val (_, obj) = it.manifestColumns()
+
+    }
+    return result
   }
 
   private fun loadDamageTypes() {

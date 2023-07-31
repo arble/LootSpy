@@ -1,6 +1,7 @@
 package com.lootspy.api.workers
 
 import android.content.Context
+import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
@@ -10,6 +11,8 @@ import com.lootspy.client.model.Destiny2GetVendor200Response
 import com.lootspy.data.repo.CharacterRepository
 import com.lootspy.data.repo.FilterRepository
 import com.lootspy.data.UserStore
+import com.lootspy.data.repo.DefaultLootRepository
+import com.lootspy.data.repo.LootRepository
 import com.lootspy.filter.Filter
 import com.lootspy.filter.toExternal
 import com.lootspy.manifest.BasicItem
@@ -26,6 +29,7 @@ class GetVendorsWorker @AssistedInject constructor(
   private val manifestManager: ManifestManager,
   private val filterRepository: FilterRepository,
   private val characterRepository: CharacterRepository,
+  private val lootRepository: LootRepository,
 ) : CoroutineWorker(context, params) {
   override suspend fun doWork(): Result {
     val allFilters = filterRepository.getFilters().map { it.toExternal() }
@@ -37,11 +41,13 @@ class GetVendorsWorker @AssistedInject constructor(
       return Result.failure()
     }
     val character = characterRepository.getCharacter(activeCharacterId) ?: return Result.failure()
+    val alwaysPatterns = userStore.alwaysPatterns.first()
+    val craftableRecordMap = manifestManager.getCraftableRecords()
 
     val apiClient = Destiny2Api()
     ApiClient.accessToken = inputData.getString("access_token") ?: return Result.failure()
+    Log.d(LOG_TAG, ApiClient.accessToken!!)
     ApiClient.apiKey["X-API-Key"] = "50ef71cc77324212886181190ea75ba7"
-
     val bansheeResponse = apiClient.destiny2GetVendor(
       character.characterId,
       character.membershipId,
@@ -58,25 +64,58 @@ class GetVendorsWorker @AssistedInject constructor(
     )
     val itemsForSale = mutableListOf<UInt>()
     if (
-      !process200Response(bansheeResponse, itemsForSale) ||
-      !process200Response(xurResponse, itemsForSale)
+      !processVendor200Response(bansheeResponse, itemsForSale) ||
+      !processVendor200Response(xurResponse, itemsForSale)
     ) {
       return Result.failure()
     }
     val itemData = manifestManager.resolveItems(itemsForSale)
-    val matchedLoot = mutableMapOf<Filter, BasicItem>()
+    val matchedLoot = mutableMapOf<BasicItem, MutableList<String>>()
     for (item in itemData) {
       for (filter in allFilters) {
         if (filter.match(item)) {
-          matchedLoot[filter] = item
-          break
+          var itemFilters = matchedLoot[item]
+          if (itemFilters == null) {
+            itemFilters = ArrayList()
+            matchedLoot[item] = itemFilters
+          }
+          itemFilters.add(filter.name)
+//          matchedLoot[filter] = item
         }
       }
+    }
+    if (alwaysPatterns) {
+      // Fetch character weapon crafting progress
+      val craftingProgressResponse = apiClient.destiny2GetProfile(
+        character.membershipId,
+        character.membershipType,
+        listOf(900) // Records
+      )
+      val records = craftingProgressResponse.response?.profileRecords?.data?.records
+      if (records == null) {
+        Log.e(LOG_TAG, "Crafting progress requested, but triumph response was missing.")
+        return Result.failure()
+      }
+      for (item in itemData) {
+        val craftableRecordHash = craftableRecordMap[item.hash] ?: continue
+        val recordComponent = records[craftableRecordHash.toString()]
+        if (recordComponent == null) {
+          Log.e(
+            LOG_TAG,
+            "Item ${item.hash} (mapped to ${craftableRecordHash}) had no crafting triumph."
+          )
+          return Result.failure()
+        }
+        lootRepository.saveLootEntry(item)
+      }
+//      if (records != null) {
+//        Log.d(LOG_TAG, "Records response: $records")
+//      }
     }
     return Result.success()
   }
 
-  private fun process200Response(
+  private fun processVendor200Response(
     response: Destiny2GetVendor200Response,
     items: MutableList<UInt>
   ): Boolean {
@@ -88,5 +127,9 @@ class GetVendorsWorker @AssistedInject constructor(
       }
     }
     return true
+  }
+
+  companion object {
+    const val LOG_TAG = "LootSpy Vendor Sync"
   }
 }

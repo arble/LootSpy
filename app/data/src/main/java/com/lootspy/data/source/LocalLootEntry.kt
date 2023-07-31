@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
   tableName = "matched_loot"
 )
 data class LocalLootEntry (
-  @PrimaryKey val id: String,
-  var name: String,
+  @PrimaryKey val hash: Long,
+  val itemData: String,
+  val filterData: String,
 )

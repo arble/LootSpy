@@ -8,11 +8,13 @@ interface LootRepository {
 
   suspend fun getLoot(): List<LootEntry>
 
-  fun getLootEntryStream(lootEntryId: String): Flow<LootEntry?>
+  fun getLootEntryStream(lootEntryId: Long): Flow<LootEntry?>
 
   suspend fun refresh()
 
-  suspend fun getLootEntry(lootEntryId: String): LootEntry?
+  suspend fun getLootEntry(lootEntryId: Long): LootEntry?
 
-  suspend fun createLootEntry(name: String): String
+  suspend fun saveLootEntry(item: LootEntry)
+
+  suspend fun clearLoot()
 }
