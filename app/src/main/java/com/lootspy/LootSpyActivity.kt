@@ -26,7 +26,7 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.lootspy.api.workers.GetManifestWorker
-import com.lootspy.api.workers.PrepareAutocompleteWorker
+import com.lootspy.api.workers.AddShortcutTablesWorker
 import com.lootspy.api.workers.UnzipManifestWorker
 import com.lootspy.screens.login.AppAuthProvider
 import com.lootspy.screens.login.AppAuthProvider.Companion.OAUTH_CLIENT_ID
@@ -145,14 +145,14 @@ class LootSpyActivity : ComponentActivity() {
         modal = true,
         onDismiss = { finish() },
         onConfirm = {
-          WorkBuilders.dispatchUniqueWorkerLinearFollowers(
+          WorkBuilders.dispatchUniqueWorkWithTokens(
             context = context,
-            initialWorkerClass = GetManifestWorker::class.java,
             workName = "sync_manifest",
-            workData = null,
-            followingJobs = listOf(
+            workData = mapOf("notify_channel" to "lootspyApi"),
+            jobs = listOf(
+              GetManifestWorker::class.java,
               UnzipManifestWorker::class.java,
-              PrepareAutocompleteWorker::class.java
+              AddShortcutTablesWorker::class.java
             ),
             tags = listOf("sync_manifest")
           )

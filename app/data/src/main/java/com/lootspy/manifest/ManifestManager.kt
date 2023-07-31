@@ -1,6 +1,8 @@
 package com.lootspy.manifest
 
+import android.content.ContentValues
 import android.content.Context
+import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -23,6 +25,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 typealias SuccessorMap = MutableMap<String, Triple<UInt, String, String>>
+typealias RowProcessor = suspend (Cursor) -> Unit
 
 @Singleton
 class ManifestManager @Inject constructor(
@@ -36,6 +39,7 @@ class ManifestManager @Inject constructor(
   private val powerCaps = HashMap<UInt, Int>()
   private val raceMap = mutableMapOf<UInt, String>()
   private val classMap = mutableMapOf<UInt, String>()
+  private val craftingMap = mutableMapOf<UInt, UInt>()
 
   private fun getManifestDbFile(): File {
     return context.getDatabasePath(MANIFEST_DATABASE)
@@ -153,11 +157,13 @@ class ManifestManager @Inject constructor(
     hash: UInt,
     obj: JsonObject,
     successorItems: SuccessorMap
-  ): BasicItem? {
+  ): Pair<BasicItem, UInt?>? {
     // Check categories first, to bail early on the most possible items
     val category = findWantedCategory(obj) ?: return null
     val tierTypeHash =
       obj["inventory"]?.jsonObject?.get("tierTypeHash")?.jsonPrimitive?.long ?: return null
+    val craftHash =
+      obj["inventory"]?.jsonObject?.get("recipeItemHash")?.jsonPrimitive?.long?.toUInt()
     val tier = tierHashes[tierTypeHash.toUInt()] ?: return null
     val (name, icon) = obj.displayPair("name", "icon") ?: return null
     val watermarkShelvedPair = getWatermarkAndShelved(obj) ?: return null
@@ -168,75 +174,69 @@ class ManifestManager @Inject constructor(
       return null
     }
     val damageTypeInfo = damageTypes[defaultDamageTypeHash.long.toUInt()] ?: return null
-    return BasicItem(
-      hash = hash,
-      name = name,
-      tier = tier,
-      type = category,
-      iconPath = icon,
-      watermarkPath = watermark,
-      isShelved = isShelved,
-      damageType = damageTypeInfo.first,
-      damageIconPath = damageTypeInfo.second,
+    return Pair(
+      BasicItem(
+        hash = hash,
+        name = name,
+        tier = tier,
+        type = category,
+        iconPath = icon,
+        watermarkPath = watermark,
+        isShelved = isShelved,
+        damageType = damageTypeInfo.first,
+        damageIconPath = damageTypeInfo.second,
+      ), craftHash
     )
   }
 
-  suspend fun populateItemAutocomplete(progressCallback: suspend (Int) -> Unit = {}) {
-    val db = getManifestDb()
-    if (loadItemAutocomplete(db)) {
-      // we did this already
-      Log.d(LOG_TAG, "Loaded autocomplete table")
-      return
-    }
-    var offset = 0
-    var numInserted = 0
-    var numProcessed = 0
-    var exit = false
-    loadDamageTypes()
-    loadWeaponCategories()
-    loadTiers()
-    loadPowerCaps()
-    Log.d(LOG_TAG, "Generating new autocomplete table from manifest")
-    // Get a row count first so that we can report accurate progress to the user
-    val rowCount =
-      db.rawQuery("SELECT COUNT(*) AS total FROM DestinyInventoryItemDefinition", null).use {
-        if (it.moveToFirst()) {
-          return@use it.getInt(it.getColumnIndexOrThrow("total"))
-        } else {
-          return@use 0
-        }
+  private fun getTableRowCount(db: SQLiteDatabase, tableName: String) =
+    db.rawQuery("SELECT COUNT(*) AS total FROM $tableName", null).use {
+      if (it.moveToFirst()) {
+        return@use it.getInt(it.getColumnIndexOrThrow("total"))
+      } else {
+        return@use 0
       }
-    if (rowCount == 0) {
-      Log.e(LOG_TAG, "No rows in DestinyInventoryItemDefinition table. Definitely a bug!")
-      return
     }
-    val decile = rowCount / 10
-    var currentDecile = 0
-    val successorItems: SuccessorMap = HashMap()
+
+  private fun getTotalRowCountThrowZero(db: SQLiteDatabase, tables: Collection<String>): Int {
+    var totalCount = 0
+    tables.forEach {
+      val rowCount = getTableRowCount(db, it)
+      if (rowCount == 0) {
+        throw IllegalStateException("Table $it had no rows. Please report this bug!")
+      }
+      totalCount += rowCount
+    }
+    return totalCount
+  }
+
+  private suspend fun windowedTableScan(
+    db: SQLiteDatabase,
+    tableName: String,
+    windowSize: Int = 250,
+    rowProcessor: RowProcessor,
+  ) {
+    var exit = false
+    var offset = 0
     while (true) {
-      db.rawQuery("SELECT * FROM DestinyInventoryItemDefinition LIMIT 250 OFFSET $offset", null)
+      db.rawQuery("SELECT * FROM $tableName LIMIT $windowSize OFFSET $offset", null)
         .use { cursor ->
           if (cursor.count == 0) {
             exit = true
             return@use
           }
           while (cursor.moveToNext()) {
-            if (++numProcessed > (currentDecile + 1) * decile) {
-              progressCallback(currentDecile)
-              currentDecile++
-            }
-            val (hash, obj) = cursor.manifestColumns()
-            val item = makeBasicItem(hash, obj, successorItems) ?: continue
-            if (autocompleteHelper.insert(item)) {
-              numInserted++
-            }
+            rowProcessor(cursor)
           }
         }
       if (exit) {
         break
       }
-      offset += 250
+      offset += windowSize
     }
+  }
+
+  private fun processSuccessors(successorItems: SuccessorMap) {
     for (entry in successorItems) {
       val name = entry.key
       val precursorItem = autocompleteHelper.items[name] ?: continue
@@ -255,11 +255,9 @@ class ManifestManager @Inject constructor(
       )
       autocompleteHelper.insertSuccessor(successorItem)
     }
-    if (numInserted == 0) {
-      Log.w(LOG_TAG, "Exiting early due to no valid items read")
-      return
-    }
-    Log.d(LOG_TAG, "Read $numProcessed rows and parsed $numInserted items")
+  }
+
+  private fun writeAutocompleteTable(db: SQLiteDatabase) {
     beginTransaction().use { transaction ->
       db.execSQL(AutocompleteTable.CREATE_TABLE)
       for (item in autocompleteHelper.items.values) {
@@ -273,6 +271,140 @@ class ManifestManager @Inject constructor(
       transaction.setTransactionSuccessful()
     }
     Log.d(LOG_TAG, "Wrote autocomplete database")
+  }
+
+  private fun writeCraftingRecordsTable(db: SQLiteDatabase, craftableItems: Map<UInt, UInt>) {
+    beginTransaction().use { transaction ->
+      db.execSQL(DeepsightTable.CREATE_TABLE)
+      for (mapping in craftableItems.entries) {
+        db.insertWithOnConflict(
+          DeepsightTable.TABLE_NAME,
+          null,
+          ContentValues().apply {
+            put(DeepsightTable.ITEM_HASH, mapping.key.toInt())
+            put(DeepsightTable.RECORD_HASH, mapping.value.toInt())
+          },
+          SQLiteDatabase.CONFLICT_REPLACE
+        )
+      }
+      transaction.setTransactionSuccessful()
+    }
+  }
+
+  suspend fun createShortcutTables(progressCallback: suspend (Int) -> Unit = {}) {
+    val db = getManifestDb()
+    if (loadItemAutocomplete(db)) {
+      // we did this already
+      Log.d(LOG_TAG, "Loaded autocomplete table")
+      return
+    }
+    var offset = 0
+    var numInserted = 0
+    var numProcessed = 0
+    var exit = false
+    loadDamageTypes()
+    loadWeaponCategories()
+    loadTiers()
+    loadPowerCaps()
+    Log.d(LOG_TAG, "Generating new autocomplete table from manifest")
+    // Get a row count first so that we can report accurate progress to the user
+    val rowCount = try {
+      getTotalRowCountThrowZero(
+        db,
+        listOf("DestinyInventoryItemDefinition", "DestinyRecordDefinition")
+      )
+    } catch (e: IllegalStateException) {
+      e.message?.let { Log.e(LOG_TAG, it) }
+      return
+    }
+    val decile = rowCount / 10
+    var currentDecile = 0
+    val successorItems: SuccessorMap = HashMap()
+    val craftableItems = hashMapOf<String, UInt>()
+
+    // Autocomplete table
+    windowedTableScan(db, "DestinyInventoryItemDefinition", 250) { cursor ->
+      if (++numProcessed > (currentDecile + 1) * decile) {
+        progressCallback(currentDecile)
+        currentDecile++
+      }
+      val (hash, obj) = cursor.manifestColumns()
+      val (item, craftHash) = makeBasicItem(hash, obj, successorItems) ?: return@windowedTableScan
+      if (autocompleteHelper.insert(item)) {
+        numInserted++
+      }
+      if (craftHash != null) {
+        craftableItems[item.name] = craftHash
+      }
+    }
+//    while (true) {
+//      db.rawQuery("SELECT * FROM DestinyInventoryItemDefinition LIMIT 250 OFFSET $offset", null)
+//        .use { cursor ->
+//          if (cursor.count == 0) {
+//            exit = true
+//            return@use
+//          }
+//          while (cursor.moveToNext()) {
+//            if (++numProcessed > (currentDecile + 1) * decile) {
+//              progressCallback(currentDecile)
+//              currentDecile++
+//            }
+//            val (hash, obj) = cursor.manifestColumns()
+//            val (item, isCraftable) = makeBasicItem(hash, obj, successorItems) ?: continue
+//            if (autocompleteHelper.insert(item)) {
+//              numInserted++
+//            }
+//            if (isCraftable) {
+//              craftableItemNames.add(item.name)
+//            }
+//          }
+//        }
+//      if (exit) {
+//        break
+//      }
+//      offset += 250
+//    }
+    processSuccessors(successorItems)
+    if (numInserted == 0) {
+      Log.w(LOG_TAG, "Exiting early due to no valid items read")
+      return
+    }
+    Log.d(LOG_TAG, "Read $numProcessed rows and parsed $numInserted items")
+    writeAutocompleteTable(db)
+
+    // Crafting progress table
+    val craftingHashes = HashMap<UInt, UInt>()
+    windowedTableScan(db, "DestinyRecordDefinition") { cursor ->
+      if (++numProcessed > (currentDecile + 1) * decile) {
+        progressCallback(currentDecile)
+        currentDecile++
+      }
+      val (recordHash, obj) = cursor.manifestColumns()
+      val name = obj.displayString("name") ?: return@windowedTableScan
+      val itemHash = craftableItems[name] ?: return@windowedTableScan
+      craftingHashes[itemHash] = recordHash
+    }
+    writeCraftingRecordsTable(db, craftingHashes)
+  }
+
+  private fun loadCraftableRecords(db: SQLiteDatabase) {
+    if (craftingMap.isNotEmpty()) {
+      return
+    }
+    db.rawQuery(
+      "SELECT DISTINCT tbl_name FROM sqlite_master WHERE tbl_name = '${DeepsightTable.TABLE_NAME}'",
+      null
+    ).use {
+      if (it.count == 0) {
+        throw IllegalStateException("Deepsight table doesn't exist. This should never be possible")
+      }
+    }
+    db.rawQuery("SELECT * FROM ${DeepsightTable.TABLE_NAME}", null).use {
+      while (it.moveToNext()) {
+        craftingMap[it.getInt(it.getColumnIndexOrThrow(DeepsightTable.ITEM_HASH)).toUInt()] =
+          it.getInt(it.getColumnIndexOrThrow(DeepsightTable.RECORD_HASH)).toUInt()
+      }
+    }
   }
 
   private fun loadDamageTypes() {
@@ -377,7 +509,8 @@ class ManifestManager @Inject constructor(
       while (it.moveToNext()) {
         val (hash, obj) = it.manifestColumns()
         val name = obj.displayString("name") ?: continue
-        itemMap[name] = makeBasicItem(hash, obj, successorItems) ?: continue
+        val item = makeBasicItem(hash, obj, successorItems)?.first ?: continue
+        itemMap[name] = item
       }
     }
     for (entry in successorItems) {

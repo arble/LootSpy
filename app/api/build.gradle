@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
+    id 'kotlin-kapt'
 }
 
 android {
@@ -35,6 +36,20 @@ android {
     }
 }
 
+kapt {
+    correctErrorTypes true
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(11))
+    }
+}
+
+kotlin {
+    jvmToolchain(11)
+}
+
 dependencies {
 
     def work_version = "2.9.0-alpha01"
@@ -57,6 +72,9 @@ dependencies {
     implementation 'io.gsonfire:gson-fire:1.8.5'
     implementation 'net.openid:appauth:0.11.1'
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0'
+
+    kapt "com.google.dagger:hilt-compiler:2.44"
+    kapt "androidx.hilt:hilt-compiler:1.0.0"
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'

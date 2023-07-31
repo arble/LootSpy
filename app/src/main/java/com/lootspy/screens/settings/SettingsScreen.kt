@@ -46,7 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.lootspy.R
-import com.lootspy.api.workers.PrepareAutocompleteWorker
+import com.lootspy.api.workers.AddShortcutTablesWorker
 import com.lootspy.data.bungiePath
 import com.lootspy.elements.BasicItemElement
 import com.lootspy.manifest.BasicItem
@@ -74,7 +74,7 @@ fun SettingsScreen(
           IconButton(onClick = {
             WorkBuilders.dispatchUniqueWorker(
               context,
-              PrepareAutocompleteWorker::class.java,
+              AddShortcutTablesWorker::class.java,
               "prepare_autocomplete",
               mapOf("notify_channel" to "lootspyApi")
             )
@@ -87,12 +87,6 @@ fun SettingsScreen(
                 Toast.makeText(context, "Cleared DB", Toast.LENGTH_SHORT).show()
               }
             }
-//            WorkBuilders.dispatchUniqueWorker(
-//              context,
-//              GetCharactersTask::class.java,
-//              "sync_chars",
-//              mapOf("notify_channel" to "lootspyApi")
-//            )
           }) {
             Icon(Icons.Default.MoreVert, null)
           }

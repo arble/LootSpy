@@ -74,7 +74,7 @@ class SettingsViewModel @Inject constructor(
       } else {
         withContext(Dispatchers.IO) {
           if (autocompleteHelper.items.isEmpty()) {
-            manifestManager.populateItemAutocomplete()
+            manifestManager.createShortcutTables()
           }
           _suggestions.update { autocompleteHelper.suggest(text, limit) }
         }
