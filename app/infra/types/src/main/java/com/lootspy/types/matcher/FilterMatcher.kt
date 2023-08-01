@@ -1,6 +1,6 @@
-package com.lootspy.filter.matcher
+package com.lootspy.types.matcher
 
-import com.lootspy.manifest.BasicItem
+import com.lootspy.types.item.BasicItem
 import kotlinx.serialization.Serializable
 
 

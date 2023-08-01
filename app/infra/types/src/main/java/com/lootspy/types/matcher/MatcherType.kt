@@ -1,6 +1,6 @@
-package com.lootspy.filter.matcher
+package com.lootspy.types.matcher
 
-import com.lootspy.filter.R
+import com.lootspy.types.R
 
 enum class MatcherType {
   INVALID {

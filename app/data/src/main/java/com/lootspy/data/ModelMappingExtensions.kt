@@ -4,7 +4,7 @@ import com.lootspy.client.model.DestinyResponsesDestinyProfileUserInfoCard
 import com.lootspy.client.model.GroupsV2GroupUserInfoCard
 import com.lootspy.data.source.DestinyProfile
 import com.lootspy.data.source.LocalLootEntry
-import com.lootspy.manifest.DestinyItem
+import com.lootspy.types.item.LootEntry
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json

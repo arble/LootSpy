@@ -5,17 +5,17 @@ import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.lootspy.api.R
 import com.lootspy.manifest.ManifestManager
 import com.lootspy.client.api.Destiny2Api
 import com.lootspy.client.model.Destiny2GetVendor200Response
 import com.lootspy.data.repo.CharacterRepository
 import com.lootspy.data.repo.FilterRepository
 import com.lootspy.data.UserStore
-import com.lootspy.data.repo.DefaultLootRepository
 import com.lootspy.data.repo.LootRepository
-import com.lootspy.filter.Filter
 import com.lootspy.filter.toExternal
-import com.lootspy.manifest.BasicItem
+import com.lootspy.types.item.BasicItem
+import com.lootspy.types.item.LootEntry
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
@@ -33,7 +33,8 @@ class GetVendorsWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, params) {
   override suspend fun doWork(): Result {
     val allFilters = filterRepository.getFilters().map { it.toExternal() }
-    if (allFilters.isEmpty()) {
+    val alwaysPatterns = userStore.alwaysPatterns.first()
+    if (allFilters.isEmpty() && !alwaysPatterns) {
       return Result.success()
     }
     val activeCharacterId = userStore.activeCharacter.first()
@@ -41,7 +42,6 @@ class GetVendorsWorker @AssistedInject constructor(
       return Result.failure()
     }
     val character = characterRepository.getCharacter(activeCharacterId) ?: return Result.failure()
-    val alwaysPatterns = userStore.alwaysPatterns.first()
     val craftableRecordMap = manifestManager.getCraftableRecords()
 
     val apiClient = Destiny2Api()
@@ -106,11 +106,20 @@ class GetVendorsWorker @AssistedInject constructor(
           )
           return Result.failure()
         }
-        lootRepository.saveLootEntry(item)
+        var itemFilters = matchedLoot[item]
+        if (itemFilters == null) {
+          itemFilters = ArrayList()
+          matchedLoot[item] = itemFilters
+        }
+        itemFilters.add(context.resources.getString(R.string.incomplete_pattern_filter))
+//        lootRepository.saveLootEntry(item)
       }
 //      if (records != null) {
 //        Log.d(LOG_TAG, "Records response: $records")
 //      }
+    }
+    for (entry in matchedLoot.entries) {
+      lootRepository.saveLootEntry(LootEntry(entry.key, entry.value))
     }
     return Result.success()
   }

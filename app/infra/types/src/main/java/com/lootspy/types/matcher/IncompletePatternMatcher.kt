@@ -1,4 +1,4 @@
-package com.lootspy.filter.matcher
+package com.lootspy.types.matcher
 
 import kotlinx.serialization.Serializable
 

@@ -23,8 +23,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lootspy.R
 import com.lootspy.elements.BasicItemElement
-import com.lootspy.filter.matcher.FilterMatcher
-import com.lootspy.filter.matcher.ItemMatcher
+import com.lootspy.types.matcher.FilterMatcher
+import com.lootspy.types.matcher.ItemMatcher
 import com.lootspy.screens.addeditfilter.AddEditFilterViewModel
 import com.lootspy.util.SupportingErrorText
 import com.lootspy.util.TextAlertDialog

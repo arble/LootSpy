@@ -23,7 +23,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.lootspy.manifest.BasicItem
+import com.lootspy.types.item.BasicItem
 import com.lootspy.api.R
 import com.lootspy.data.bungiePath
 

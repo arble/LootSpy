@@ -1,6 +1,7 @@
 package com.lootspy.manifest
 
 import android.content.Context
+import com.lootspy.types.item.BasicItem
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.TreeSet
 import javax.inject.Inject
@@ -17,7 +18,8 @@ class AutocompleteHelper @Inject constructor(
 
   private val root = Node()
   private val locale = context.resources.configuration.locales.get(0)
-//  val items: MutableMap<String, AutocompleteItem> = HashMap()
+
+  //  val items: MutableMap<String, AutocompleteItem> = HashMap()
   val items = object : HashMap<String, BasicItem>() {
     override fun get(key: String): BasicItem? {
       return super.get(key.uppercase(locale))

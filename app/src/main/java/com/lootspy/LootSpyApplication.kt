@@ -11,7 +11,8 @@ import javax.inject.Inject
 
 @HiltAndroidApp
 class LootSpyApplication : Application(), Configuration.Provider {
-  @Inject lateinit var workerFactory: HiltWorkerFactory
+  @Inject
+  lateinit var workerFactory: HiltWorkerFactory
 
   override val workManagerConfiguration
     get() = Configuration.Builder().setWorkerFactory(workerFactory).build()

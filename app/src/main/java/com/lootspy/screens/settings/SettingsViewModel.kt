@@ -3,7 +3,7 @@ package com.lootspy.screens.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lootspy.manifest.AutocompleteHelper
-import com.lootspy.manifest.BasicItem
+import com.lootspy.types.item.BasicItem
 import com.lootspy.manifest.ManifestManager
 import com.lootspy.data.repo.ProfileRepository
 import com.lootspy.data.UserStore

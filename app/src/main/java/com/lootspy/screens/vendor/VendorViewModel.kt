@@ -18,7 +18,7 @@ data class VendorUiState(
 @HiltViewModel
 class VendorViewModel @Inject constructor(
   savedStateHandle: SavedStateHandle,
-): ViewModel() {
+) : ViewModel() {
   private val _uiState = MutableStateFlow(VendorUiState())
   val uiState = _uiState.asStateFlow()
 

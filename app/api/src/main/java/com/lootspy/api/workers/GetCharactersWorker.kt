@@ -66,6 +66,7 @@ class GetCharactersWorker @AssistedInject constructor(
         )
         emblemHashes[character.emblemHash!!.toUInt()] = id
       } catch (e: NullPointerException) {
+        Log.e(LOG_TAG, "A character response did not have all required properties")
         return Result.failure()
       }
     }
@@ -75,6 +76,7 @@ class GetCharactersWorker @AssistedInject constructor(
       Log.d(LOG_TAG, "Retrieved characters: $characters")
       characterRepository.saveCharacters(characters)
     } catch (e: NullPointerException) {
+      Log.e(LOG_TAG, "A character response did not have an emblem path")
       return Result.failure()
     }
 

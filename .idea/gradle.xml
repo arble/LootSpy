@@ -16,6 +16,8 @@
             <option value="$PROJECT_DIR$/app/api" />
             <option value="$PROJECT_DIR$/app/data" />
             <option value="$PROJECT_DIR$/app/filter" />
+            <option value="$PROJECT_DIR$/app/infra" />
+            <option value="$PROJECT_DIR$/app/infra/types" />
           </set>
         </option>
       </GradleProjectSettings>

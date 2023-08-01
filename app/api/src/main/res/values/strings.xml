@@ -3,4 +3,5 @@
     <string name="tasks_download_progress">Downloading</string>
     <string name="tasks_unzip_progress">Unzipping</string>
     <string name="tasks_autocomplete_progress">Optimising database</string>
+    <string name="incomplete_pattern_filter">Incomplete Pattern</string>
 </resources>

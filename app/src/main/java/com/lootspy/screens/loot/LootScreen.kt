@@ -15,7 +15,10 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -29,6 +32,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -60,7 +65,7 @@ import com.lootspy.R
 import com.lootspy.api.workers.GetCharactersWorker
 import com.lootspy.api.workers.GetMembershipsWorker
 import com.lootspy.api.workers.GetVendorsWorker
-import com.lootspy.data.LootEntry
+import com.lootspy.types.item.LootEntry
 import com.lootspy.data.source.DestinyCharacter
 import com.lootspy.data.bungiePath
 import com.lootspy.util.LootTopAppBar
@@ -78,26 +83,49 @@ fun LootScreen(
     .observeAsState()
   Scaffold(
     topBar = {
-      LootTopAppBar(
-        isSyncing = syncWorkInfo.value?.any { it.state == WorkInfo.State.RUNNING } ?: false,
-        onChangeFilter = {
-          WorkBuilders.dispatchUniqueWorkWithTokens(
-            context,
-            "sync_characters",
-            mapOf("notify_channel" to "lootspyApi"),
-            listOf(GetCharactersWorker::class.java),
-          )
+      TopAppBar(
+        title = { Text(text = stringResource(id = R.string.app_name)) },
+        modifier = Modifier.fillMaxWidth(),
+        colors = TopAppBarDefaults.topAppBarColors(),
+        actions = {
+          IconButton(onClick = {
+            WorkBuilders.dispatchUniqueWorkWithTokens(
+              context,
+              "sync_characters",
+              mapOf("notify_channel" to "lootspyApi"),
+              listOf(GetMembershipsWorker::class.java),
+            )
 //          viewModel.deleteAuthInfo()
-        },
-        onRefresh = {
-          WorkBuilders.dispatchUniqueWorkWithTokens(
-            context,
-            "sync_memberships",
-            mapOf("notify_channel" to "lootspyApi"),
-            listOf(GetVendorsWorker::class.java),
-          )
+          }) {
+            Icon(Icons.Default.Check, null)
+          }
+          IconButton(onClick = {
+            WorkBuilders.dispatchUniqueWorkWithTokens(
+              context,
+              "sync_characters",
+              mapOf("notify_channel" to "lootspyApi"),
+              listOf(GetCharactersWorker::class.java),
+            )
 //          viewModel.deleteAuthInfo()
-        },
+          }) {
+            Icon(Icons.Default.List, null)
+          }
+          if (syncWorkInfo.value?.any { it.state == WorkInfo.State.RUNNING } == true) {
+            CircularProgressIndicator()
+          } else {
+            IconButton(onClick = {
+              WorkBuilders.dispatchUniqueWorkWithTokens(
+                context,
+                "sync_memberships",
+                mapOf("notify_channel" to "lootspyApi"),
+                listOf(GetVendorsWorker::class.java),
+              )
+//          viewModel.deleteAuthInfo()
+            }) {
+              Icon(Icons.Default.Refresh, null)
+            }
+          }
+        }
       )
     },
     modifier = modifier.fillMaxSize(),
@@ -170,7 +198,9 @@ fun LootScreen(
         ) {
           Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth().systemBarsPadding()
+            modifier = Modifier
+              .fillMaxWidth()
+              .systemBarsPadding()
           ) {
             uiState.characters.forEach { character ->
               CharacterSelectorItem(character = character) { clickedCharacter ->
@@ -264,7 +294,7 @@ private fun LootItem(
       .clickable { onLootClick(entry) }
   ) {
     Text(
-      text = entry.name,
+      text = entry.item.shortName(),
       style = MaterialTheme.typography.headlineSmall,
       modifier = Modifier.padding(
         start = dimensionResource(

@@ -54,9 +54,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lootspy.R
-import com.lootspy.filter.matcher.MatcherType
+import com.lootspy.types.matcher.MatcherType
 import com.lootspy.screens.addeditfilter.matcher.ItemMatcherDetails
 import com.lootspy.screens.addeditfilter.matcher.ItemMatcherSummary
+import com.lootspy.types.matcher.FilterMatcher
+import com.lootspy.types.matcher.ItemMatcher
 import com.lootspy.util.TextAlertDialog
 import com.lootspy.util.TextInputDialog
 import com.lootspy.util.Validation
@@ -191,7 +193,7 @@ fun AddEditFilterScreen(
                 fadeIn(initialAlpha = 0.3f)
           ) {
             when (activeMatcher) {
-              is com.lootspy.filter.matcher.ItemMatcher -> ItemMatcherDetails(
+              is ItemMatcher -> ItemMatcherDetails(
                 matcher = activeMatcher,
                 index = activeIndex,
                 onFinish = {
@@ -296,12 +298,12 @@ fun AddEditFilterTopAppBar(
 
 @Composable
 private fun MatcherSummary(
-  matcher: com.lootspy.filter.matcher.FilterMatcher,
+  matcher: FilterMatcher,
   index: Int,
-  onMatcherClick: (Int, com.lootspy.filter.matcher.FilterMatcher) -> Unit,
+  onMatcherClick: (Int, FilterMatcher) -> Unit,
 ) {
   when (matcher) {
-    is com.lootspy.filter.matcher.ItemMatcher -> ItemMatcherSummary(matcher, index, onMatcherClick)
+    is ItemMatcher -> ItemMatcherSummary(matcher, index, onMatcherClick)
     else -> Unit
   }
 }

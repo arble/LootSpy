@@ -34,7 +34,7 @@ fun VendorScreen(
     ScreenContentWithEmptyText(
       loading = uiState.isLoading,
       items = uiState.vendors,
-      itemContent = { _, _ ->  },
+      itemContent = { _, _ -> },
       emptyText = stringResource(id = R.string.vendor_screen_no_vendors),
       modifier = Modifier.padding(paddingValues),
     )

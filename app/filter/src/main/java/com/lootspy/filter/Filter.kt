@@ -1,7 +1,7 @@
 package com.lootspy.filter
 
-import com.lootspy.filter.matcher.FilterMatcher
-import com.lootspy.manifest.BasicItem
+import com.lootspy.types.matcher.FilterMatcher
+import com.lootspy.types.item.BasicItem
 import kotlinx.serialization.Serializable
 
 @Serializable

@@ -113,7 +113,8 @@ fun LootSpyNavGraph(
     ) {
       VendorScreen(onClickVendor = { /*TODO*/ }, onBack = { navController.popBackStack() })
     }
-    composable(LootSpyDestinations.SETTINGS_ROUTE,
+    composable(
+      LootSpyDestinations.SETTINGS_ROUTE,
       arguments = listOf(navArgument(USER_MESSAGE_ARG) {
         type = NavType.IntType; defaultValue = 0
       })

@@ -1,5 +1,3 @@
-package com.lootspy.data
-
-import com.lootspy.manifest.DestinyItem
+package com.lootspy.types.item
 
 data class LootEntry(val item: DestinyItem, val filterNames: Collection<String>)

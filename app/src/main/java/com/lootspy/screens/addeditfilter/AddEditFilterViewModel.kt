@@ -6,12 +6,14 @@ import androidx.lifecycle.viewModelScope
 import com.lootspy.LootSpyDestinationArgs
 import com.lootspy.R
 import com.lootspy.data.repo.FilterRepository
-import com.lootspy.filter.matcher.FilterMatcher
-import com.lootspy.filter.matcher.ItemMatcher
+import com.lootspy.types.matcher.FilterMatcher
+import com.lootspy.types.matcher.ItemMatcher
 import com.lootspy.filter.toExternal
 import com.lootspy.manifest.AutocompleteHelper
-import com.lootspy.manifest.BasicItem
+import com.lootspy.types.item.BasicItem
 import com.lootspy.manifest.ManifestManager
+import com.lootspy.types.matcher.InvalidMatcher
+import com.lootspy.types.matcher.MatcherType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -112,18 +114,18 @@ class AddEditFilterViewModel @Inject constructor(
   fun setActiveMatcher(
     matcher: FilterMatcher? = null,
     index: Int? = null,
-    type: com.lootspy.filter.matcher.MatcherType = com.lootspy.filter.matcher.MatcherType.INVALID
+    type: MatcherType = MatcherType.INVALID
   ) {
     if (matcher != null && index != null) {
       _activeMatcher.update { Pair(matcher, index) }
     } else {
       val newMatcher = when (type) {
-        com.lootspy.filter.matcher.MatcherType.NAME -> ItemMatcher(
+        MatcherType.NAME -> ItemMatcher(
           "",
           0U
         )
 
-        else -> com.lootspy.filter.matcher.InvalidMatcher
+        else -> InvalidMatcher
       }
       _activeMatcher.update { Pair(newMatcher, index) }
     }

@@ -5,6 +5,7 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
+import com.lootspy.types.item.BasicItem
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -126,7 +127,7 @@ class ManifestManager @Inject constructor(
     }
     db.rawQuery("SELECT * FROM ${AutocompleteTable.TABLE_NAME}", null).use {
       while (it.moveToNext()) {
-        autocompleteHelper.insert(BasicItem.fromCursor(it))
+        autocompleteHelper.insert(AutocompleteTable.fromCursor(it))
       }
     }
     return true
@@ -264,7 +265,7 @@ class ManifestManager @Inject constructor(
         db.insertWithOnConflict(
           AutocompleteTable.TABLE_NAME,
           null,
-          item.toContentValues(),
+          AutocompleteTable.toContentValues(item),
           SQLiteDatabase.CONFLICT_REPLACE
         )
       }

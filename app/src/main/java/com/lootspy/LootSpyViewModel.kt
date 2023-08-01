@@ -99,7 +99,7 @@ class LootSpyViewModel @Inject constructor(
       val intent = result.data ?: return
       val authResponse = AuthorizationResponse.fromIntent(intent)
       val authException = AuthorizationException.fromIntent(intent)
-      viewModelScope.launch outer@ {
+      viewModelScope.launch outer@{
         val authState = userStore.authState.first()
         authState.update(authResponse, authException)
         userStore.saveAuthState(authState)

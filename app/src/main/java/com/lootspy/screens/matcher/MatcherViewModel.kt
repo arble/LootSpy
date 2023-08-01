@@ -3,8 +3,8 @@ package com.lootspy.screens.matcher
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import com.lootspy.LootSpyDestinationArgs
-import com.lootspy.filter.matcher.FilterMatcher
-import com.lootspy.filter.matcher.MatcherType
+import com.lootspy.types.matcher.FilterMatcher
+import com.lootspy.types.matcher.MatcherType
 import javax.inject.Inject
 
 data class MatcherUiState(
@@ -14,7 +14,7 @@ data class MatcherUiState(
 
 class MatcherViewModel @Inject constructor(
   savedStateHandle: SavedStateHandle,
-): ViewModel() {
+) : ViewModel() {
 
   private val filterId: String? = savedStateHandle[LootSpyDestinationArgs.FILTER_ID_ARG]
   private val matcher: FilterMatcher? = savedStateHandle[LootSpyDestinationArgs.MATCHER_ARG]

@@ -1,5 +1,9 @@
 package com.lootspy.manifest
 
+import android.content.ContentValues
+import android.database.Cursor
+import com.lootspy.types.item.BasicItem
+
 class AutocompleteTable {
   companion object {
     const val TABLE_NAME = "AutocompleteItems"
@@ -26,5 +30,40 @@ class AutocompleteTable {
         "$DAMAGE_ICON_PATH TEXT NOT NULL" +
         ")"
 
+    fun toContentValues(item: BasicItem): ContentValues =
+      ContentValues().apply {
+        put(HASH, item.hash.toInt())
+        put(NAME, item.name)
+        put(TIER, item.tier)
+        put(TYPE, item.type)
+        put(ICON_PATH, item.iconPath)
+        put(WATERMARK_PATH, item.watermarkPath)
+        put(IS_SHELVED, if (item.isShelved) 1 else 0)
+        put(DAMAGE_TYPE, item.damageType)
+        put(DAMAGE_ICON_PATH, item.damageIconPath)
+      }
+
+    fun fromCursor(cursor: Cursor): BasicItem {
+      val hashIndex = cursor.getColumnIndex(HASH)
+      val nameIndex = cursor.getColumnIndex(NAME)
+      val tierIndex = cursor.getColumnIndex(TIER)
+      val typeIndex = cursor.getColumnIndex(TYPE)
+      val iconPathIndex = cursor.getColumnIndex(ICON_PATH)
+      val watermarkPathIndex = cursor.getColumnIndex(WATERMARK_PATH)
+      val isShelvedIndex = cursor.getColumnIndex(IS_SHELVED)
+      val damageTypeIndex = cursor.getColumnIndex(DAMAGE_TYPE)
+      val damageIconPathIndex = cursor.getColumnIndex(DAMAGE_ICON_PATH)
+      return BasicItem(
+        cursor.getInt(hashIndex).toUInt(),
+        cursor.getString(nameIndex),
+        cursor.getString(tierIndex),
+        cursor.getString(typeIndex),
+        cursor.getString(iconPathIndex),
+        cursor.getString(watermarkPathIndex),
+        cursor.getInt(isShelvedIndex) > 0,
+        cursor.getString(damageTypeIndex),
+        cursor.getString(damageIconPathIndex),
+      )
+    }
   }
 }

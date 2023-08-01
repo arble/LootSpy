@@ -1,6 +1,6 @@
 package com.lootspy.data.repo
 
-import com.lootspy.data.LootEntry
+import com.lootspy.types.item.LootEntry
 import com.lootspy.data.toExternal
 import com.lootspy.data.toLocal
 import com.lootspy.di.ApplicationScope

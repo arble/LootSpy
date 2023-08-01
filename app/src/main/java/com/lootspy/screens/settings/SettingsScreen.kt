@@ -49,7 +49,7 @@ import com.lootspy.R
 import com.lootspy.api.workers.AddShortcutTablesWorker
 import com.lootspy.data.bungiePath
 import com.lootspy.elements.BasicItemElement
-import com.lootspy.manifest.BasicItem
+import com.lootspy.types.item.BasicItem
 import com.lootspy.util.WorkBuilders
 import com.lootspy.util.popup.LootSpyPopup
 import com.lootspy.util.popup.PopupState
