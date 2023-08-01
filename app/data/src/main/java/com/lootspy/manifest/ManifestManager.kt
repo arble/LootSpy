@@ -158,13 +158,13 @@ class ManifestManager @Inject constructor(
     hash: UInt,
     obj: JsonObject,
     successorItems: SuccessorMap
-  ): Pair<BasicItem, UInt?>? {
+  ): Pair<BasicItem, Boolean>? {
     // Check categories first, to bail early on the most possible items
     val category = findWantedCategory(obj) ?: return null
     val tierTypeHash =
       obj["inventory"]?.jsonObject?.get("tierTypeHash")?.jsonPrimitive?.long ?: return null
-    val craftHash =
-      obj["inventory"]?.jsonObject?.get("recipeItemHash")?.jsonPrimitive?.long?.toUInt()
+    val isCraftable =
+      obj["inventory"]?.jsonObject?.get("recipeItemHash") != null
     val tier = tierHashes[tierTypeHash.toUInt()] ?: return null
     val (name, icon) = obj.displayPair("name", "icon") ?: return null
     val watermarkShelvedPair = getWatermarkAndShelved(obj) ?: return null
@@ -186,7 +186,7 @@ class ManifestManager @Inject constructor(
         isShelved = isShelved,
         damageType = damageTypeInfo.first,
         damageIconPath = damageTypeInfo.second,
-      ), craftHash
+      ), isCraftable
     )
   }
 
@@ -278,6 +278,9 @@ class ManifestManager @Inject constructor(
     beginTransaction().use { transaction ->
       db.execSQL(DeepsightTable.CREATE_TABLE)
       for (mapping in craftableItems.entries) {
+        if (mapping.value == 146759633U) {
+          Log.d(LOG_TAG, "About to insert Tarnished Mettle")
+        }
         db.insertWithOnConflict(
           DeepsightTable.TABLE_NAME,
           null,
@@ -301,10 +304,7 @@ class ManifestManager @Inject constructor(
     }
     var numInserted = 0
     var numProcessed = 0
-    loadDamageTypes()
-    loadWeaponCategories()
-    loadTiers()
-    loadPowerCaps()
+    ensureInit()
     Log.d(LOG_TAG, "Generating new autocomplete table from manifest")
     // Get a row count first so that we can report accurate progress to the user
     val rowCount = try {
@@ -328,12 +328,15 @@ class ManifestManager @Inject constructor(
         currentDecile++
       }
       val (hash, obj) = cursor.manifestColumns()
-      val (item, craftHash) = makeBasicItem(hash, obj, successorItems) ?: return@windowedTableScan
+//      if (hash == (-2076397552).toUInt()) {
+//        Log.d(LOG_TAG, "Processing Tarnished Mettle")
+//      }
+      val (item, isCraftable) = makeBasicItem(hash, obj, successorItems) ?: return@windowedTableScan
       if (autocompleteHelper.insert(item)) {
         numInserted++
       }
-      if (craftHash != null) {
-        craftableItems[item.name] = craftHash
+      if (isCraftable) {
+        craftableItems[item.name] = item.hash
       }
     }
 //    while (true) {
@@ -382,6 +385,9 @@ class ManifestManager @Inject constructor(
       val name = obj.displayString("name") ?: return@windowedTableScan
       val itemHash = craftableItems[name] ?: return@windowedTableScan
       craftingHashes[itemHash] = recordHash
+      if (name == "Tarnished Mettle") {
+        Log.d("HELLO!", "Processing Tarnished Mettle with record $recordHash")
+      }
     }
     writeCraftingRecordsTable(db, craftingHashes)
   }
@@ -528,6 +534,7 @@ class ManifestManager @Inject constructor(
   }
 
   fun resolveItems(hashes: Collection<UInt>): List<BasicItem> {
+    ensureInit()
     val itemMap = mutableMapOf<String, BasicItem>()
     val selectionArgs = hashes.map { it.toInt().toString() }.toTypedArray()
     val successorItems: SuccessorMap = HashMap()
@@ -545,6 +552,9 @@ class ManifestManager @Inject constructor(
         val name = obj.displayString("name") ?: continue
         val item = makeBasicItem(hash, obj, successorItems)?.first ?: continue
         itemMap[name] = item
+        if (name == "Tarnished Mettle") {
+          Log.d(LOG_TAG, "Resolved Tarnished Mettle with hash $hash")
+        }
       }
     }
     for (entry in successorItems) {
@@ -597,8 +607,17 @@ class ManifestManager @Inject constructor(
     return result
   }
 
-  fun dropAutocompleteTable() {
-    getManifestDb().execSQL("DROP TABLE IF EXISTS ${AutocompleteTable.TABLE_NAME}")
+  fun dropShortcutTables() {
+    val db = getManifestDb()
+    db.execSQL("DROP TABLE IF EXISTS ${AutocompleteTable.TABLE_NAME}")
+    db.execSQL("DROP TABLE IF EXISTS ${DeepsightTable.TABLE_NAME}")
+  }
+
+  fun ensureInit() {
+    loadDamageTypes()
+    loadWeaponCategories()
+    loadTiers()
+    loadPowerCaps()
   }
 
   private class ManifestTransaction(private val db: SQLiteDatabase) : Closeable {

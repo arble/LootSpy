@@ -118,6 +118,7 @@ class GetVendorsWorker @AssistedInject constructor(
 //        Log.d(LOG_TAG, "Records response: $records")
 //      }
     }
+    Log.d(LOG_TAG, "$matchedLoot")
     for (entry in matchedLoot.entries) {
       lootRepository.saveLootEntry(LootEntry(entry.key, entry.value))
     }

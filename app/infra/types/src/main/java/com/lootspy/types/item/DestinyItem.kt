@@ -1,6 +1,9 @@
 package com.lootspy.types.item
 
-interface DestinyItem {
+import kotlinx.serialization.Serializable
+
+@Serializable
+sealed interface DestinyItem {
   val hash: UInt
 
   fun shortName(): String

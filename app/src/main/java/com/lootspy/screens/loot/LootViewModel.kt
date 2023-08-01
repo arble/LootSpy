@@ -1,5 +1,6 @@
 package com.lootspy.screens.loot
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -58,10 +59,14 @@ class LootViewModel @Inject constructor(
   private val _userMessage: MutableStateFlow<Int?> = MutableStateFlow(null)
   private val _isLoading = MutableStateFlow(false)
   private val _filteredLootEntriesAsync =
-    combine(lootRepository.getLootStream(), savedFilterType) { loot, type ->
-      filterLoot(loot, type)
-    }.map { Async.Success(it) }
-      .catch<Async<List<LootEntry>>> { emit(Async.Error(R.string.loading_tasks_error)) }
+//    combine(lootRepository.getLootStream(), savedFilterType) { loot, type ->
+//      filterLoot(loot, type)
+//    }.map { Async.Success(it) }
+//      .catch<Async<List<LootEntry>>> { emit(Async.Error(R.string.loading_tasks_error)) }
+    lootRepository.getLootStream().map { Async.Success(it) }.catch<Async<List<LootEntry>>> {
+      Log.e("ViewModels", "$it")
+      emit(Async.Error(R.string.loading_tasks_error))
+    }
 
   val uiState: StateFlow<LootUiState> = combine(
     _filterUiInfo,

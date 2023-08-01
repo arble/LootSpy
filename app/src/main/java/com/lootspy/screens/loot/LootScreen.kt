@@ -2,6 +2,7 @@ package com.lootspy.screens.loot
 
 import android.widget.Toast
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -68,6 +69,8 @@ import com.lootspy.api.workers.GetVendorsWorker
 import com.lootspy.types.item.LootEntry
 import com.lootspy.data.source.DestinyCharacter
 import com.lootspy.data.bungiePath
+import com.lootspy.elements.BasicItemElement
+import com.lootspy.types.item.BasicItem
 import com.lootspy.util.LootTopAppBar
 import com.lootspy.util.WorkBuilders
 import kotlinx.coroutines.launch
@@ -154,6 +157,7 @@ fun LootScreen(
         .padding(paddingValues)
         .fillMaxWidth(),
       horizontalAlignment = Alignment.CenterHorizontally,
+      verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
       if (uiState.isLoading) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -167,6 +171,10 @@ fun LootScreen(
           style = MaterialTheme.typography.headlineMedium
         )
 //        }
+      } else {
+        for (entry in uiState.items) {
+          BasicItemElement(item = entry.item as BasicItem)
+        }
       }
       val activeCharacter = uiState.characters.find { it.characterId == uiState.activeCharacter }
         ?: uiState.characters.getOrNull(0)

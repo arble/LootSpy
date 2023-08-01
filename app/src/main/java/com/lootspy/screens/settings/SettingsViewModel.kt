@@ -83,5 +83,5 @@ class SettingsViewModel @Inject constructor(
   }
 
   suspend fun dropAutocompleteTable() =
-    withContext(Dispatchers.IO) { manifestManager.dropAutocompleteTable() }
+    withContext(Dispatchers.IO) { manifestManager.dropShortcutTables() }
 }
