@@ -71,7 +71,6 @@ import com.lootspy.data.source.DestinyCharacter
 import com.lootspy.data.bungiePath
 import com.lootspy.elements.BasicItemElement
 import com.lootspy.types.item.BasicItem
-import com.lootspy.util.LootTopAppBar
 import com.lootspy.util.WorkBuilders
 import kotlinx.coroutines.launch
 
@@ -82,8 +81,10 @@ fun LootScreen(
   viewModel: LootViewModel = hiltViewModel()
 ) {
   val context = LocalContext.current
-  val syncWorkInfo = WorkManager.getInstance(context).getWorkInfosForUniqueWorkLiveData("sync_loot")
-    .observeAsState()
+  val syncVendorWorkInfo =
+    WorkManager.getInstance(context).getWorkInfosForUniqueWorkLiveData("sync_vendors")
+      .observeAsState()
+  val isSyncingVendors = syncVendorWorkInfo.value?.any { it.state == WorkInfo.State.RUNNING }
   Scaffold(
     topBar = {
       TopAppBar(
@@ -113,20 +114,18 @@ fun LootScreen(
           }) {
             Icon(Icons.Default.List, null)
           }
-          if (syncWorkInfo.value?.any { it.state == WorkInfo.State.RUNNING } == true) {
-            CircularProgressIndicator()
-          } else {
-            IconButton(onClick = {
+          IconButton(
+            enabled = isSyncingVendors != true,
+            onClick = {
               WorkBuilders.dispatchUniqueWorkWithTokens(
                 context,
-                "sync_memberships",
+                "sync_vendors",
                 mapOf("notify_channel" to "lootspyApi"),
                 listOf(GetVendorsWorker::class.java),
               )
 //          viewModel.deleteAuthInfo()
             }) {
-              Icon(Icons.Default.Refresh, null)
-            }
+            Icon(Icons.Default.Refresh, null)
           }
         }
       )
@@ -159,10 +158,12 @@ fun LootScreen(
       horizontalAlignment = Alignment.CenterHorizontally,
       verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-      if (uiState.isLoading) {
+      if (uiState.isLoading || isSyncingVendors == true) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-          Text(text = stringResource(id = R.string.loot_screen_loading))
-          CircularProgressIndicator(modifier = modifier)
+          Column(modifier = modifier.fillMaxWidth()) {
+            Text(text = stringResource(id = R.string.loot_screen_loading))
+            CircularProgressIndicator(modifier = modifier)
+          }
         }
       } else if (uiState.items.isEmpty()) {
 //        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

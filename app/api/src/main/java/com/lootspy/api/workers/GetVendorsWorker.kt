@@ -13,13 +13,21 @@ import com.lootspy.data.repo.CharacterRepository
 import com.lootspy.data.repo.FilterRepository
 import com.lootspy.data.UserStore
 import com.lootspy.data.repo.LootRepository
+import com.lootspy.data.source.DestinyCharacter
 import com.lootspy.filter.toExternal
 import com.lootspy.types.item.BasicItem
 import com.lootspy.types.item.LootEntry
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonPrimitive
 import org.openapitools.client.infrastructure.ApiClient
+import org.openapitools.client.infrastructure.ServerError
+import org.openapitools.client.infrastructure.ServerException
 
 @HiltWorker
 class GetVendorsWorker @AssistedInject constructor(
@@ -32,6 +40,7 @@ class GetVendorsWorker @AssistedInject constructor(
   private val lootRepository: LootRepository,
 ) : CoroutineWorker(context, params) {
   override suspend fun doWork(): Result {
+    lootRepository.clearLoot()
     val allFilters = filterRepository.getFilters().map { it.toExternal() }
     val alwaysPatterns = userStore.alwaysPatterns.first()
     if (allFilters.isEmpty() && !alwaysPatterns) {
@@ -48,17 +57,15 @@ class GetVendorsWorker @AssistedInject constructor(
     ApiClient.accessToken = inputData.getString("access_token") ?: return Result.failure()
     Log.d(LOG_TAG, ApiClient.accessToken!!)
     ApiClient.apiKey["X-API-Key"] = "50ef71cc77324212886181190ea75ba7"
-    val bansheeResponse = apiClient.destiny2GetVendor(
-      character.characterId,
-      character.membershipId,
-      character.membershipType,
+    val bansheeResponse = getVendorSafe(
+      apiClient,
+      character,
       672118013, // Banshee-44
       listOf(402) // VendorSales
     )
-    val xurResponse = apiClient.destiny2GetVendor(
-      character.characterId,
-      character.membershipId,
-      character.membershipType,
+    val xurResponse = getVendorSafe(
+      apiClient,
+      character,
       2190858386, // Xur
       listOf(402) // VendorSales
     )
@@ -125,10 +132,45 @@ class GetVendorsWorker @AssistedInject constructor(
     return Result.success()
   }
 
+  private fun getVendorSafe(
+    apiClient: Destiny2Api,
+    character: DestinyCharacter,
+    vendorHash: Long,
+    components: List<Int>
+  ): Destiny2GetVendor200Response? {
+    return try {
+      apiClient.destiny2GetVendor(
+        character.characterId,
+        character.membershipId,
+        character.membershipType,
+        vendorHash,
+        components,
+      )
+    } catch (e: ServerException) {
+      // If this is a ServerError AND contains a JSON response AND the response contains error code
+      // 1627, this is a normal occurrence because Xur sometimes doesn't exist in-game. In all other
+      // cases, rethrow whatever got us here.
+      val body = when (val errorResponse = e.response) {
+        is ServerError<*> -> errorResponse.body as? String
+        else -> null
+      } ?: throw e
+      val responseObject = Json.decodeFromString<JsonObject>(body)
+      when (responseObject["ErrorCode"]?.jsonPrimitive?.int) {
+        1627 -> null
+        null -> throw e
+        else -> throw e
+      }
+    }
+  }
+
   private fun processVendor200Response(
-    response: Destiny2GetVendor200Response,
+    response: Destiny2GetVendor200Response?,
     items: MutableList<UInt>
   ): Boolean {
+    if (response == null) {
+      // Treat a null response as OK. Xur sometimes doesn't exist.
+      return true
+    }
     val sales = response.response?.sales?.data?.values ?: return false
     sales.forEach {
       val hash = it.itemHash
