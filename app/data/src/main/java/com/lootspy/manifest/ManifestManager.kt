@@ -41,6 +41,7 @@ class ManifestManager @Inject constructor(
   private val raceMap = mutableMapOf<UInt, String>()
   private val classMap = mutableMapOf<UInt, String>()
   private val craftingMap = mutableMapOf<UInt, UInt>()
+  private val statMap = mutableMapOf<UInt, Pair<String, String>>()
 
   private fun getManifestDbFile(): File {
     return context.getDatabasePath(MANIFEST_DATABASE)
@@ -498,6 +499,19 @@ class ManifestManager @Inject constructor(
     }
   }
 
+  private fun loadStats() {
+    if (tierHashes.isNotEmpty()) {
+      return
+    }
+    getManifestDb().rawQuery("SELECT * FROM DestinyStatDefinition", null).use {
+      while (it.moveToNext()) {
+        val (hash, obj) = it.manifestColumns()
+        val statNameAndDesc = obj.displayPair("name", "description") ?: continue
+        statMap[hash] = statNameAndDesc
+      }
+    }
+  }
+
   private fun loadPowerCaps() {
     if (powerCaps.isNotEmpty()) {
       return
@@ -533,15 +547,16 @@ class ManifestManager @Inject constructor(
     return Pair(raceMap, classMap)
   }
 
-  fun resolveItems(hashes: Collection<UInt>): List<BasicItem> {
+  fun resolveVendorItems(vendorItems: Map<UInt, Int>): Map<Int, BasicItem> {
     ensureInit()
     val itemMap = mutableMapOf<String, BasicItem>()
-    val selectionArgs = hashes.map { it.toInt().toString() }.toTypedArray()
+    val resultMap = mutableMapOf<Int, BasicItem>()
+    val selectionArgs = vendorItems.keys.map { it.toInt().toString() }.toTypedArray()
     val successorItems: SuccessorMap = HashMap()
     getManifestDb().query(
       "DestinyInventoryItemDefinition",
       null,
-      "id IN ${makeQuestionMarkList(hashes.size)}",
+      "id IN ${makeQuestionMarkList(vendorItems.size)}",
       selectionArgs,
       null,
       null,
@@ -574,7 +589,11 @@ class ManifestManager @Inject constructor(
         damageIconPath = precursorItem.damageIconPath,
       )
     }
-    return itemMap.values.toList()
+    for (entry in itemMap) {
+      // We just built itemMap from vendorItems. Must be present.
+      resultMap[vendorItems[entry.value.hash]!!] = entry.value
+    }
+    return resultMap
   }
 
   private fun makeQuestionMarkList(count: Int): String {

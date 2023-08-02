@@ -160,7 +160,10 @@ fun LootScreen(
     ) {
       if (uiState.isLoading || isSyncingVendors == true) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-          Column(modifier = modifier.fillMaxWidth()) {
+          Column(
+            modifier = modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+          ) {
             Text(text = stringResource(id = R.string.loot_screen_loading))
             CircularProgressIndicator(modifier = modifier)
           }

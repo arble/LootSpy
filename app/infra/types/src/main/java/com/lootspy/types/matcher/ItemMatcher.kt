@@ -13,5 +13,8 @@ class ItemMatcher(private val name: String, val hash: UInt) : FilterMatcher {
   override fun match(item: BasicItem) = item.hash == hash
 
   override fun matcherTypeDescription() = "Match single item"
+
   override fun describeMatcherValue() = name
+
+  override fun requiresItemDetails() = false
 }

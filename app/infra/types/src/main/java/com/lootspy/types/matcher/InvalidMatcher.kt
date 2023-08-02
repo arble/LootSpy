@@ -22,4 +22,8 @@ object InvalidMatcher : FilterMatcher {
   override fun describeMatcherValue(): String {
     TODO("Not yet implemented")
   }
+
+  override fun requiresItemDetails(): Boolean {
+    TODO("Not yet implemented")
+  }
 }

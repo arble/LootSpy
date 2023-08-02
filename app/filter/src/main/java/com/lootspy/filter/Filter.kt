@@ -11,4 +11,6 @@ class Filter(
   val matchers: List<FilterMatcher>
 ) {
   fun match(item: BasicItem) = matchers.any { it.match(item) }
+
+  fun requiresItemDetails() = matchers.any { it.requiresItemDetails() }
 }
