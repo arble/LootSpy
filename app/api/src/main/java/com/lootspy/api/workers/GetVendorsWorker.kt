@@ -8,12 +8,16 @@ import androidx.work.WorkerParameters
 import com.lootspy.api.R
 import com.lootspy.client.api.Destiny2Api
 import com.lootspy.client.model.Destiny2GetVendor200Response
+import com.lootspy.client.model.DestinyEntitiesItemsDestinyItemPerksComponent
+import com.lootspy.client.model.DestinyEntitiesItemsDestinyItemSocketsComponent
+import com.lootspy.client.model.DestinyEntitiesItemsDestinyItemStatsComponent
 import com.lootspy.data.UserStore
 import com.lootspy.data.repo.CharacterRepository
 import com.lootspy.data.repo.FilterRepository
 import com.lootspy.data.repo.LootRepository
 import com.lootspy.data.source.DestinyCharacter
 import com.lootspy.filter.toExternal
+import com.lootspy.manifest.ItemComponents
 import com.lootspy.manifest.ManifestManager
 import com.lootspy.types.item.BasicItem
 import com.lootspy.types.item.LootEntry
@@ -42,7 +46,6 @@ class GetVendorsWorker @AssistedInject constructor(
   override suspend fun doWork(): Result {
     lootRepository.clearLoot()
     val allFilters = filterRepository.getFilters().map { it.toExternal() }
-    val needDetails = allFilters.any { it.requiresItemDetails() }
     val alwaysPatterns = userStore.alwaysPatterns.first()
     if (allFilters.isEmpty() && !alwaysPatterns) {
       return Result.success()
@@ -59,34 +62,30 @@ class GetVendorsWorker @AssistedInject constructor(
     Log.d(LOG_TAG, ApiClient.accessToken!!)
     ApiClient.apiKey["X-API-Key"] = "50ef71cc77324212886181190ea75ba7"
 
-    // Request a smaller API response if no filters need stat or perk data
-    val requiredComponents = if (needDetails) {
-      listOf(302, 304, 402) // ItemPerks, ItemStats, VendorSales
-    } else {
-      listOf(402) // VendorSales
-    }
     val bansheeResponse = getVendorSafe(
       apiClient,
       character,
       672118013, // Banshee-44
-      requiredComponents
+      listOf(302, 304, 310, 402) // ItemPerks, ItemStats, ItemReusablePlugs, VendorSales
     )
     val xurResponse = getVendorSafe(
       apiClient,
       character,
       2190858386, // Xur
-      requiredComponents
+      listOf(302, 304, 310, 402) // ItemPerks, ItemStats, ItemReusablePlugs, VendorSales
     )
-    val vendorItems = mutableMapOf<UInt, Int>()
+    val bansheeItems = mutableMapOf<UInt, ItemComponents>()
+    val xurItems = mutableMapOf<UInt, ItemComponents>()
     if (
-      !processVendor200Response(bansheeResponse, vendorItems) ||
-      !processVendor200Response(xurResponse, vendorItems)
+      !processVendor200Response(bansheeResponse, bansheeItems) ||
+      !processVendor200Response(xurResponse, xurItems)
     ) {
       return Result.failure()
     }
-    val basicItemData = manifestManager.resolveVendorItems(vendorItems)
+    val basicItemData = manifestManager.resolveVendorItems(xurItems)
     val matchedLoot = mutableMapOf<BasicItem, MutableList<String>>()
     val itemData = basicItemData.values
+    val needDetails = allFilters.any { it.requiresItemDetails() }
     for (item in itemData) {
       for (filter in allFilters) {
         if (filter.match(item)) {
@@ -174,16 +173,24 @@ class GetVendorsWorker @AssistedInject constructor(
 
   private fun processVendor200Response(
     response: Destiny2GetVendor200Response?,
-    vendorItems: MutableMap<UInt, Int>
+    vendorItems: MutableMap<UInt, ItemComponents>,
   ): Boolean {
     if (response == null) {
       // Treat a null response as OK. Xur sometimes doesn't exist.
       return true
     }
     val salesMap = response.response?.sales?.data ?: return false
+    val itemComponents = response.response?.itemComponents ?: return false
+    val statsMap = itemComponents.stats?.data ?: return false
+    val socketsMap = itemComponents.sockets?.data ?: return false
+    val perksMap = itemComponents.perks?.data ?: return false
     for (entry in salesMap) {
-      val hash = entry.value.itemHash ?: continue
-      vendorItems[hash.toUInt()] = entry.key.toInt()
+      val vendorItemIndex = entry.key
+      val hash = entry.value.itemHash ?: return false
+      val statsComponent = statsMap[vendorItemIndex] ?: return false
+      val socketsComponent = socketsMap[vendorItemIndex] ?: return false
+      val perksComponent = perksMap[vendorItemIndex] ?: return false
+      vendorItems[hash.toUInt()] = ItemComponents(statsComponent, socketsComponent, perksComponent)
     }
     return true
   }

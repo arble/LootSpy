@@ -5,7 +5,11 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
+import com.lootspy.client.model.DestinyEntitiesItemsDestinyItemPerksComponent
+import com.lootspy.client.model.DestinyEntitiesItemsDestinyItemSocketsComponent
+import com.lootspy.client.model.DestinyEntitiesItemsDestinyItemStatsComponent
 import com.lootspy.types.item.BasicItem
+import com.lootspy.types.item.DestinyItem
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -27,6 +31,9 @@ import javax.inject.Singleton
 
 typealias SuccessorMap = MutableMap<String, Triple<UInt, String, String>>
 typealias RowProcessor = suspend (Cursor) -> Unit
+typealias ItemComponents = Triple<DestinyEntitiesItemsDestinyItemStatsComponent,
+    DestinyEntitiesItemsDestinyItemSocketsComponent,
+    DestinyEntitiesItemsDestinyItemPerksComponent>
 
 @Singleton
 class ManifestManager @Inject constructor(
@@ -547,10 +554,10 @@ class ManifestManager @Inject constructor(
     return Pair(raceMap, classMap)
   }
 
-  fun resolveVendorItems(vendorItems: Map<UInt, Int>): Map<Int, BasicItem> {
+  fun resolveVendorItems(vendorItems: Map<UInt, ItemComponents>): Map<Int, DestinyItem> {
     ensureInit()
-    val itemMap = mutableMapOf<String, BasicItem>()
-    val resultMap = mutableMapOf<Int, BasicItem>()
+    val itemMap = mutableMapOf<String, DestinyItem>()
+    val resultMap = mutableMapOf<Int, DestinyItem>()
     val selectionArgs = vendorItems.keys.map { it.toInt().toString() }.toTypedArray()
     val successorItems: SuccessorMap = HashMap()
     getManifestDb().query(
@@ -571,23 +578,6 @@ class ManifestManager @Inject constructor(
           Log.d(LOG_TAG, "Resolved Tarnished Mettle with hash $hash")
         }
       }
-    }
-    for (entry in successorItems) {
-      val name = entry.key
-      val precursorItem = itemMap[name] ?: continue
-      val (hash, icon, watermark) = entry.value
-      itemMap[name] = BasicItem(
-        hash = hash,
-        name = name,
-        tier = precursorItem.tier,
-        type = precursorItem.type,
-        iconPath = icon,
-        watermarkPath = watermark,
-        // TODO: is this always valid?
-        isShelved = false,
-        damageType = precursorItem.damageType,
-        damageIconPath = precursorItem.damageIconPath,
-      )
     }
     for (entry in itemMap) {
       // We just built itemMap from vendorItems. Must be present.
