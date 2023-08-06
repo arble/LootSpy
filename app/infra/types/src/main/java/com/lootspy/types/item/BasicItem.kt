@@ -15,5 +15,8 @@ open class BasicItem(
   val damageType: String,
   val damageIconPath: String,
 ) : DestinyItem {
+
+  override fun basicItem() = this
+
   override fun shortName() = name
 }

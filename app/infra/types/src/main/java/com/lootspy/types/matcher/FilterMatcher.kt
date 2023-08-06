@@ -1,6 +1,7 @@
 package com.lootspy.types.matcher
 
 import com.lootspy.types.item.BasicItem
+import com.lootspy.types.item.DestinyItem
 import kotlinx.serialization.Serializable
 
 
@@ -9,7 +10,7 @@ sealed interface FilterMatcher {
 
   fun type(): MatcherType
 
-  fun match(item: BasicItem): Boolean
+  fun match(item: DestinyItem): Boolean
 
   fun matcherTypeDescription(): String
 

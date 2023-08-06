@@ -2,16 +2,17 @@ package com.lootspy.types.matcher
 
 import kotlinx.serialization.SerialName
 import com.lootspy.types.item.BasicItem
+import com.lootspy.types.item.DestinyItem
 import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("InvalidMatcher")
-object InvalidMatcher : FilterMatcher {
+data object InvalidMatcher : FilterMatcher {
   override fun type(): MatcherType {
     TODO("Not yet implemented")
   }
 
-  override fun match(item: BasicItem): Boolean {
+  override fun match(item: DestinyItem): Boolean {
     TODO("Not yet implemented")
   }
 

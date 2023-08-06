@@ -8,9 +8,6 @@ import androidx.work.WorkerParameters
 import com.lootspy.api.R
 import com.lootspy.client.api.Destiny2Api
 import com.lootspy.client.model.Destiny2GetVendor200Response
-import com.lootspy.client.model.DestinyEntitiesItemsDestinyItemPerksComponent
-import com.lootspy.client.model.DestinyEntitiesItemsDestinyItemSocketsComponent
-import com.lootspy.client.model.DestinyEntitiesItemsDestinyItemStatsComponent
 import com.lootspy.data.UserStore
 import com.lootspy.data.repo.CharacterRepository
 import com.lootspy.data.repo.FilterRepository
@@ -19,8 +16,8 @@ import com.lootspy.data.source.DestinyCharacter
 import com.lootspy.filter.toExternal
 import com.lootspy.manifest.ItemComponents
 import com.lootspy.manifest.ManifestManager
-import com.lootspy.types.item.BasicItem
 import com.lootspy.types.item.LootEntry
+import com.lootspy.types.item.VendorItem
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
@@ -66,27 +63,29 @@ class GetVendorsWorker @AssistedInject constructor(
       apiClient,
       character,
       672118013, // Banshee-44
-      listOf(302, 304, 310, 402) // ItemPerks, ItemStats, ItemReusablePlugs, VendorSales
+      VENDOR_COMPONENTS
     )
     val xurResponse = getVendorSafe(
       apiClient,
       character,
       2190858386, // Xur
-      listOf(302, 304, 310, 402) // ItemPerks, ItemStats, ItemReusablePlugs, VendorSales
+      VENDOR_COMPONENTS
     )
-    val bansheeItems = mutableMapOf<UInt, ItemComponents>()
-    val xurItems = mutableMapOf<UInt, ItemComponents>()
-    if (
-      !processVendor200Response(bansheeResponse, bansheeItems) ||
-      !processVendor200Response(xurResponse, xurItems)
-    ) {
+    val bansheeItems = resolveSafe(bansheeResponse)
+    val xurItems = resolveSafe(xurResponse)
+    val finalItems = mutableListOf<VendorItem>()
+    if (bansheeItems != null) {
+      finalItems.addAll(bansheeItems)
+    }
+    if (xurItems != null) {
+      finalItems.addAll(xurItems)
+    }
+    if (finalItems.isEmpty()) {
       return Result.failure()
     }
-    val basicItemData = manifestManager.resolveVendorItems(xurItems)
-    val matchedLoot = mutableMapOf<BasicItem, MutableList<String>>()
-    val itemData = basicItemData.values
+    val matchedLoot = mutableMapOf<VendorItem, MutableList<String>>()
     val needDetails = allFilters.any { it.requiresItemDetails() }
-    for (item in itemData) {
+    for (item in finalItems) {
       for (filter in allFilters) {
         if (filter.match(item)) {
           var itemFilters = matchedLoot[item]
@@ -111,7 +110,7 @@ class GetVendorsWorker @AssistedInject constructor(
         Log.e(LOG_TAG, "Crafting progress requested, but triumph response was missing.")
         return Result.failure()
       }
-      for (item in itemData) {
+      for (item in finalItems) {
         val craftableRecordHash = craftableRecordMap[item.hash] ?: continue
         val recordComponent = records[craftableRecordHash.toString()]
         if (recordComponent == null) {
@@ -171,6 +170,18 @@ class GetVendorsWorker @AssistedInject constructor(
     }
   }
 
+  private fun resolveSafe(response: Destiny2GetVendor200Response?): List<VendorItem>? {
+    return if (response != null) {
+      try {
+        manifestManager.resolveVendorItems(response)
+      } catch (e: NullPointerException) {
+        null
+      }
+    } else {
+      null
+    }
+  }
+
   private fun processVendor200Response(
     response: Destiny2GetVendor200Response?,
     vendorItems: MutableMap<UInt, ItemComponents>,
@@ -197,5 +208,6 @@ class GetVendorsWorker @AssistedInject constructor(
 
   companion object {
     const val LOG_TAG = "LootSpy Vendor Sync"
+    val VENDOR_COMPONENTS = listOf(302, 304, 305, 310, 402)
   }
 }

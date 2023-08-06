@@ -5,11 +5,13 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
+import com.lootspy.client.model.Destiny2GetVendor200Response
 import com.lootspy.client.model.DestinyEntitiesItemsDestinyItemPerksComponent
 import com.lootspy.client.model.DestinyEntitiesItemsDestinyItemSocketsComponent
 import com.lootspy.client.model.DestinyEntitiesItemsDestinyItemStatsComponent
+import com.lootspy.types.component.ItemPerk
 import com.lootspy.types.item.BasicItem
-import com.lootspy.types.item.DestinyItem
+import com.lootspy.types.item.VendorItem
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -165,7 +167,7 @@ class ManifestManager @Inject constructor(
   private fun makeBasicItem(
     hash: UInt,
     obj: JsonObject,
-    successorItems: SuccessorMap
+    successorItems: SuccessorMap?
   ): Pair<BasicItem, Boolean>? {
     // Check categories first, to bail early on the most possible items
     val category = findWantedCategory(obj) ?: return null
@@ -179,7 +181,7 @@ class ManifestManager @Inject constructor(
     val (watermark, isShelved) = watermarkShelvedPair
     val defaultDamageTypeHash = obj["defaultDamageTypeHash"]?.jsonPrimitive
     if (defaultDamageTypeHash == null) {
-      successorItems[name] = Triple(hash, icon, watermark)
+      successorItems?.set(name, Triple(hash, icon, watermark))
       return null
     }
     val damageTypeInfo = damageTypes[defaultDamageTypeHash.long.toUInt()] ?: return null
@@ -554,36 +556,76 @@ class ManifestManager @Inject constructor(
     return Pair(raceMap, classMap)
   }
 
-  fun resolveVendorItems(vendorItems: Map<UInt, ItemComponents>): Map<Int, DestinyItem> {
+  fun resolveVendorItems(response: Destiny2GetVendor200Response): List<VendorItem> {
     ensureInit()
-    val itemMap = mutableMapOf<String, DestinyItem>()
-    val resultMap = mutableMapOf<Int, DestinyItem>()
-    val selectionArgs = vendorItems.keys.map { it.toInt().toString() }.toTypedArray()
-    val successorItems: SuccessorMap = HashMap()
+    val allItemKeys = mutableListOf<String>()
+    val salesMap = response.response!!.sales!!.data!!
+    val itemComponents = response.response!!.itemComponents!!
+    val statsMap = itemComponents.stats!!.data!!
+    val socketsMap = itemComponents.sockets!!.data!!
+    val plugsMap = itemComponents.reusablePlugs!!.data!!
+
+    val results = mutableListOf<VendorItem>()
+    val basicItemMap = mutableMapOf<UInt, BasicItem>()
+    val plugMap = mutableMapOf<UInt, ItemPerk>()
+    val allPlugs = mutableSetOf<UInt>()
+    val pendingItems = mutableMapOf<UInt, VendorItem.Builder>()
+    for (entry in salesMap) {
+      val vendorItemIndex = entry.key
+      val hash = entry.value.itemHash!!.toUInt()
+      val itemStats = statsMap[vendorItemIndex]!!.stats!!.mapKeys { it.key.toUInt() }.mapValues {
+        it.value.value!!
+      }
+      val itemPlugs = plugsMap[vendorItemIndex]!!.plugs!!.map {
+        it.value.map { plug ->
+          val plugHash = plug.plugItemHash!!.toUInt()
+          allPlugs.add(plugHash)
+          plugHash
+        }
+      }
+      val frameTypePlugHash =
+        socketsMap[vendorItemIndex]!!.sockets!!.getOrNull(0)!!.plugHash!!.toUInt()
+
+      allItemKeys.add(vendorItemIndex)
+      pendingItems[hash] = VendorItem.Builder()
+        .statHashes(itemStats)
+        .perkHashes(listOf(listOf(frameTypePlugHash)) + itemPlugs)
+    }
     getManifestDb().query(
       "DestinyInventoryItemDefinition",
       null,
-      "id IN ${makeQuestionMarkList(vendorItems.size)}",
-      selectionArgs,
+      "id IN ${makeQuestionMarkList(allItemKeys.size)}",
+      allItemKeys.toTypedArray(),
       null,
       null,
       null
     ).use {
       while (it.moveToNext()) {
         val (hash, obj) = it.manifestColumns()
-        val name = obj.displayString("name") ?: continue
-        val item = makeBasicItem(hash, obj, successorItems)?.first ?: continue
-        itemMap[name] = item
-        if (name == "Tarnished Mettle") {
-          Log.d(LOG_TAG, "Resolved Tarnished Mettle with hash $hash")
-        }
+        val item = makeBasicItem(hash, obj, null)?.first ?: continue
+        basicItemMap[hash] = item
       }
     }
-    for (entry in itemMap) {
-      // We just built itemMap from vendorItems. Must be present.
-      resultMap[vendorItems[entry.value.hash]!!] = entry.value
+    getManifestDb().query(
+      "DestinyInventoryItemDefinition",
+      null,
+      "id IN ${makeQuestionMarkList(allPlugs.size)}",
+      allPlugs.map { it.toInt().toString() }.toTypedArray(),
+      null,
+      null,
+      null
+    ).use {
+      while (it.moveToNext()) {
+        val (hash, obj) = it.manifestColumns()
+        val (name, icon) = obj.displayPair("name", "icon")!!
+        plugMap[hash] = ItemPerk(hash, name, icon)
+      }
     }
-    return resultMap
+
+    for (entry in pendingItems) {
+      results.add(entry.value.build(basicItemMap[entry.key]!!, statMap, plugMap))
+    }
+    return results
   }
 
   private fun makeQuestionMarkList(count: Int): String {
@@ -622,11 +664,12 @@ class ManifestManager @Inject constructor(
     db.execSQL("DROP TABLE IF EXISTS ${DeepsightTable.TABLE_NAME}")
   }
 
-  fun ensureInit() {
+  private fun ensureInit() {
     loadDamageTypes()
     loadWeaponCategories()
     loadTiers()
     loadPowerCaps()
+    loadStats()
   }
 
   private class ManifestTransaction(private val db: SQLiteDatabase) : Closeable {
