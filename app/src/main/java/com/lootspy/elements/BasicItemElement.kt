@@ -23,17 +23,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.lootspy.types.item.BasicItem
 import com.lootspy.api.R
 import com.lootspy.data.bungiePath
+import com.lootspy.types.item.VendorItem
 
 @Composable
 fun BasicItemElement(
-  item: BasicItem,
+  item: VendorItem,
   modifier: Modifier = Modifier,
   placeholder: Painter = painterResource(id = R.drawable.ic_launcher_foreground),
   error: Painter = painterResource(id = R.drawable.ic_launcher_foreground),
-  onClick: (BasicItem) -> Unit = {},
+  onClick: (VendorItem) -> Unit = {},
   damageIconSize: Dp = 24.dp
 ) {
   val (cardColour, textColour) = when (item.tier) {
@@ -87,7 +87,7 @@ fun BasicItemElement(
         color = textColour
       )
       AsyncImage(
-        model = item.damageIconPath.bungiePath(),
+        model = item.damageIconPath?.bungiePath(),
         placeholder = placeholder,
         error = error,
         modifier = modifier
@@ -101,8 +101,25 @@ fun BasicItemElement(
           .weight(0.5f),
         horizontalAlignment = Alignment.Start
       ) {
-        Text(text = item.type, modifier = modifier.weight(0.5f), color = textColour)
-        Text(text = item.damageType, modifier = modifier.weight(0.5f), color = textColour)
+        Text(text = item.itemType, modifier = modifier.weight(0.5f), color = textColour)
+        Text(text = item.damageType ?: "err", modifier = modifier.weight(0.5f), color = textColour)
+      }
+    }
+    val statsMap = item.statsMap
+    if (statsMap != null) {
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier
+          .fillMaxWidth()
+          .fillMaxHeight()
+      ) {
+        for (entry in statsMap) {
+          Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(text = entry.key)
+            Text(text = entry.value.first.toString())
+          }
+        }
       }
     }
   }

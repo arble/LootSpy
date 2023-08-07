@@ -3,6 +3,7 @@ package com.lootspy.manifest
 import android.content.ContentValues
 import android.database.Cursor
 import com.lootspy.types.item.BasicItem
+import com.lootspy.types.item.VendorItem
 
 class AutocompleteTable {
   companion object {
@@ -30,12 +31,12 @@ class AutocompleteTable {
         "$DAMAGE_ICON_PATH TEXT NOT NULL" +
         ")"
 
-    fun toContentValues(item: BasicItem): ContentValues =
+    fun toContentValues(item: VendorItem): ContentValues =
       ContentValues().apply {
         put(HASH, item.hash.toInt())
         put(NAME, item.name)
         put(TIER, item.tier)
-        put(TYPE, item.type)
+        put(TYPE, item.itemType)
         put(ICON_PATH, item.iconPath)
         put(WATERMARK_PATH, item.watermarkPath)
         put(IS_SHELVED, if (item.isShelved) 1 else 0)
@@ -43,7 +44,7 @@ class AutocompleteTable {
         put(DAMAGE_ICON_PATH, item.damageIconPath)
       }
 
-    fun fromCursor(cursor: Cursor): BasicItem {
+    fun fromCursor(cursor: Cursor): VendorItem {
       val hashIndex = cursor.getColumnIndex(HASH)
       val nameIndex = cursor.getColumnIndex(NAME)
       val tierIndex = cursor.getColumnIndex(TIER)
@@ -53,7 +54,7 @@ class AutocompleteTable {
       val isShelvedIndex = cursor.getColumnIndex(IS_SHELVED)
       val damageTypeIndex = cursor.getColumnIndex(DAMAGE_TYPE)
       val damageIconPathIndex = cursor.getColumnIndex(DAMAGE_ICON_PATH)
-      return BasicItem(
+      return VendorItem(
         cursor.getInt(hashIndex).toUInt(),
         cursor.getString(nameIndex),
         cursor.getString(tierIndex),

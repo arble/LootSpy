@@ -2,6 +2,7 @@ package com.lootspy.types.matcher
 
 import com.lootspy.types.item.BasicItem
 import com.lootspy.types.item.DestinyItem
+import com.lootspy.types.item.VendorItem
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -11,7 +12,7 @@ class ItemMatcher(private val name: String, val hash: UInt) : FilterMatcher {
 
   override fun type() = MatcherType.NAME
 
-  override fun match(item: DestinyItem) = item.hash == hash
+  override fun match(item: VendorItem) = item.hash == hash
 
   override fun matcherTypeDescription() = "Match single item"
 

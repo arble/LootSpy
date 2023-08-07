@@ -12,6 +12,7 @@ import com.lootspy.filter.toExternal
 import com.lootspy.manifest.AutocompleteHelper
 import com.lootspy.types.item.BasicItem
 import com.lootspy.manifest.ManifestManager
+import com.lootspy.types.item.VendorItem
 import com.lootspy.types.matcher.InvalidMatcher
 import com.lootspy.types.matcher.MatcherType
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -50,7 +51,7 @@ class AddEditFilterViewModel @Inject constructor(
 
   private val _uiState = MutableStateFlow(AddEditFilterUiState())
   val uiState = _uiState.asStateFlow()
-  private val _suggestions = MutableStateFlow(listOf<BasicItem>())
+  private val _suggestions = MutableStateFlow(listOf<VendorItem>())
   val suggestions = _suggestions.asStateFlow()
   private val _activeMatcher =
     MutableStateFlow<Pair<FilterMatcher?, Int?>>(Pair(null, null))
@@ -131,7 +132,7 @@ class AddEditFilterViewModel @Inject constructor(
     }
   }
 
-  fun saveItemMatcher(index: Int?, item: BasicItem): Boolean {
+  fun saveItemMatcher(index: Int?, item: VendorItem): Boolean {
     uiState.value.matchers.forEachIndexed { oldIndex, matcher ->
       if (matcher is ItemMatcher && matcher.hash == item.hash && oldIndex != index) {
         return false

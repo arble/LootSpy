@@ -1,7 +1,7 @@
 package com.lootspy.manifest
 
 import android.content.Context
-import com.lootspy.types.item.BasicItem
+import com.lootspy.types.item.VendorItem
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.TreeSet
 import javax.inject.Inject
@@ -20,21 +20,21 @@ class AutocompleteHelper @Inject constructor(
   private val locale = context.resources.configuration.locales.get(0)
 
   //  val items: MutableMap<String, AutocompleteItem> = HashMap()
-  val items = object : HashMap<String, BasicItem>() {
-    override fun get(key: String): BasicItem? {
+  val items = object : HashMap<String, VendorItem>() {
+    override fun get(key: String): VendorItem? {
       return super.get(key.uppercase(locale))
     }
 
-    override fun putIfAbsent(key: String, value: BasicItem): BasicItem? {
+    override fun putIfAbsent(key: String, value: VendorItem): VendorItem? {
       return super.putIfAbsent(key.uppercase(locale), value)
     }
 
-    override fun put(key: String, value: BasicItem): BasicItem? {
+    override fun put(key: String, value: VendorItem): VendorItem? {
       return super.put(key.uppercase(locale), value)
     }
   }
 
-  fun insert(item: BasicItem): Boolean {
+  fun insert(item: VendorItem): Boolean {
     if (items.putIfAbsent(item.name.uppercase(locale), item) != null) {
       return false
     }
@@ -42,7 +42,7 @@ class AutocompleteHelper @Inject constructor(
     return true
   }
 
-  fun insertSuccessor(item: BasicItem) {
+  fun insertSuccessor(item: VendorItem) {
     items[item.name] = item
   }
 
@@ -81,7 +81,7 @@ class AutocompleteHelper @Inject constructor(
     return true
   }
 
-  fun suggest(prefix: String, limit: Int = 0): List<BasicItem> {
+  fun suggest(prefix: String, limit: Int = 0): List<VendorItem> {
     val resultNames = TreeSet<String>()
     var leaf = root
     val current = StringBuilder()
@@ -90,7 +90,7 @@ class AutocompleteHelper @Inject constructor(
       current.append(ch)
     }
     suggestHelper(leaf, resultNames, current, limit)
-    val result = ArrayList<BasicItem>(resultNames.size)
+    val result = ArrayList<VendorItem>(resultNames.size)
     resultNames.forEach { name -> items[name]?.let { result.add(it) } }
     return result
   }

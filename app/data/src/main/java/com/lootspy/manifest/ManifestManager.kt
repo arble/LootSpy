@@ -168,29 +168,18 @@ class ManifestManager @Inject constructor(
   private fun makeCoreProperties(
     hash: UInt,
     obj: JsonObject,
-    successorItems: SuccessorMap?
   ): VendorItemCoreProperties? {
-    // Check categories first, to bail early on the most possible items
-    val category = findWantedCategory(obj) ?: return null
     val tierTypeHash =
       obj["inventory"]?.jsonObject?.get("tierTypeHash")?.jsonPrimitive?.long ?: return null
-    val isCraftable =
-      obj["inventory"]?.jsonObject?.get("recipeItemHash") != null
     val tier = tierHashes[tierTypeHash.toUInt()] ?: return null
     val (name, icon) = obj.displayPair("name", "icon") ?: return null
-    val watermarkShelvedPair = getWatermarkAndShelved(obj) ?: return null
-    val (watermark, isShelved) = watermarkShelvedPair
-    val defaultDamageTypeHash = obj["defaultDamageTypeHash"]?.jsonPrimitive
-    if (defaultDamageTypeHash == null) {
-      successorItems?.set(name, Triple(hash, icon, watermark))
-      return null
-    }
-    val damageTypeInfo = damageTypes[defaultDamageTypeHash.long.toUInt()] ?: return null
+    val itemType = obj["itemTypeDisplayName"]?.jsonPrimitive?.content ?: return null
+    val (watermark, isShelved) = getWatermarkAndShelved(obj) ?: return null
     return VendorItemCoreProperties(
       hash = hash,
       name = name,
       tier = tier,
-      itemType = category,
+      itemType = itemType,
       iconPath = icon,
       watermarkPath = watermark,
       isShelved = isShelved,
@@ -201,7 +190,7 @@ class ManifestManager @Inject constructor(
     hash: UInt,
     obj: JsonObject,
     successorItems: SuccessorMap?
-  ): Pair<BasicItem, Boolean>? {
+  ): Pair<VendorItem, Boolean>? {
     // Check categories first, to bail early on the most possible items
     val category = findWantedCategory(obj) ?: return null
     val tierTypeHash =
@@ -219,11 +208,11 @@ class ManifestManager @Inject constructor(
     }
     val damageTypeInfo = damageTypes[defaultDamageTypeHash.long.toUInt()] ?: return null
     return Pair(
-      BasicItem(
+      VendorItem(
         hash = hash,
         name = name,
         tier = tier,
-        type = category,
+        itemType = category,
         iconPath = icon,
         watermarkPath = watermark,
         isShelved = isShelved,
@@ -285,11 +274,11 @@ class ManifestManager @Inject constructor(
       val name = entry.key
       val precursorItem = autocompleteHelper.items[name] ?: continue
       val (hash, icon, watermark) = entry.value
-      val successorItem = BasicItem(
+      val successorItem = VendorItem(
         hash = hash,
         name = name,
         tier = precursorItem.tier,
-        type = precursorItem.type,
+        itemType = precursorItem.itemType,
         iconPath = icon,
         watermarkPath = watermark,
         // TODO: is this always valid?
@@ -382,33 +371,6 @@ class ManifestManager @Inject constructor(
         craftableItems[item.name] = item.hash
       }
     }
-//    while (true) {
-//      db.rawQuery("SELECT * FROM DestinyInventoryItemDefinition LIMIT 250 OFFSET $offset", null)
-//        .use { cursor ->
-//          if (cursor.count == 0) {
-//            exit = true
-//            return@use
-//          }
-//          while (cursor.moveToNext()) {
-//            if (++numProcessed > (currentDecile + 1) * decile) {
-//              progressCallback(currentDecile)
-//              currentDecile++
-//            }
-//            val (hash, obj) = cursor.manifestColumns()
-//            val (item, isCraftable) = makeBasicItem(hash, obj, successorItems) ?: continue
-//            if (autocompleteHelper.insert(item)) {
-//              numInserted++
-//            }
-//            if (isCraftable) {
-//              craftableItemNames.add(item.name)
-//            }
-//          }
-//        }
-//      if (exit) {
-//        break
-//      }
-//      offset += 250
-//    }
     processSuccessors(successorItems)
     if (numInserted == 0) {
       Log.w(LOG_TAG, "Exiting early due to no valid items read")
@@ -542,7 +504,7 @@ class ManifestManager @Inject constructor(
   }
 
   private fun loadStats() {
-    if (tierHashes.isNotEmpty()) {
+    if (statMap.isNotEmpty()) {
       return
     }
     getManifestDb().rawQuery("SELECT * FROM DestinyStatDefinition", null).use {
@@ -601,6 +563,7 @@ class ManifestManager @Inject constructor(
     val results = mutableListOf<VendorItem>()
     val corePropertiesMap = mutableMapOf<UInt, VendorItemCoreProperties>()
     val plugMap = mutableMapOf<UInt, ItemPerk>()
+    val damageTypeMap = mutableMapOf<UInt, Pair<String, String>>()
     val allPlugs = mutableSetOf<UInt>()
     val pendingItems = mutableMapOf<UInt, VendorItem.Builder>()
     for (entry in salesMap) {
@@ -618,13 +581,16 @@ class ManifestManager @Inject constructor(
       }
       val frameTypePlugHash =
         socketsMap[vendorItemIndex]?.sockets?.getOrNull(0)?.plugHash?.toUInt()
+      if (frameTypePlugHash != null) {
+        allPlugs.add(frameTypePlugHash)
+      }
       val finalPerkHashes = if (itemPlugs != null && frameTypePlugHash != null) {
         listOf(listOf(frameTypePlugHash)) + itemPlugs
       } else {
         null
       }
 
-      allItemKeys.add(vendorItemIndex)
+      allItemKeys.add(hash.toString())
       pendingItems[hash] = VendorItem.Builder()
         .statHashes(itemStats)
         .perkHashes(finalPerkHashes)
@@ -640,8 +606,11 @@ class ManifestManager @Inject constructor(
     ).use {
       while (it.moveToNext()) {
         val (hash, obj) = it.manifestColumns()
-        val item = makeCoreProperties(hash, obj, null) ?: continue
+        val item = makeCoreProperties(hash, obj) ?: continue
         corePropertiesMap[hash] = item
+        val defaultDamageTypeHash = obj["defaultDamageTypeHash"]?.jsonPrimitive ?: continue
+        val damageTypeInfo = damageTypes[defaultDamageTypeHash.long.toUInt()] ?: continue
+        damageTypeMap[hash] = damageTypeInfo
       }
     }
     getManifestDb().query(
@@ -661,9 +630,15 @@ class ManifestManager @Inject constructor(
     }
 
     for (entry in pendingItems) {
-      results.add(
-        entry.value.coreProperties(corePropertiesMap[entry.key]!!).build(statMap, plugMap)
-      )
+      val builder = entry.value
+      val coreProperties = corePropertiesMap[entry.key] ?: continue
+      builder.coreProperties(coreProperties)
+      val damagePair = damageTypeMap[entry.key]
+      if (damagePair != null) {
+        builder.damageType(damagePair.first)
+        builder.damageIconPath(damagePair.second)
+      }
+      results.add(builder.build(statMap, plugMap))
     }
     return results
   }

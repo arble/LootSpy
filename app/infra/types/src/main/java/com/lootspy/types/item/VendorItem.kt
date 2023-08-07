@@ -21,6 +21,33 @@ class VendorItem(
   val perkArray: List<List<ItemPerk>>?,
 ) {
 
+  // autocomplete "item" ctor
+  constructor(
+    hash: UInt,
+    name: String,
+    tier: String,
+    itemType: String,
+    iconPath: String,
+    watermarkPath: String,
+    isShelved: Boolean,
+    damageType: String?,
+    damageIconPath: String?,
+  ) :
+      this(
+        hash,
+        name,
+        tier,
+        itemType,
+        iconPath,
+        watermarkPath,
+        isShelved,
+        damageType,
+        damageIconPath,
+        null,
+        null
+      )
+
+
   class Builder(
 
   ) {
@@ -55,7 +82,9 @@ class VendorItem(
         coreProperties.isShelved,
         damageType,
         damageIconPath,
-        statHashesMap?.mapValues { Pair(it.value, stats[it.key]!!.second) }
+        statHashesMap?.mapValues {
+          Pair(it.value, stats[it.key]?.second ?: throw IllegalStateException("$it not found"))
+        }
           ?.mapKeys { stats[it.key]?.first ?: INVALID_STAT },
         perkHashes?.map { perkColumn -> perkColumn.map { perks[it] ?: ItemPerk.DUMMY_PERK } },
       )

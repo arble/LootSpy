@@ -177,7 +177,7 @@ fun LootScreen(
 //        }
       } else {
         for (entry in uiState.items) {
-          BasicItemElement(item = entry.item as BasicItem)
+          BasicItemElement(item = entry.item)
         }
       }
       val activeCharacter = uiState.characters.find { it.characterId == uiState.activeCharacter }
@@ -306,7 +306,7 @@ private fun LootItem(
       .clickable { onLootClick(entry) }
   ) {
     Text(
-      text = entry.item.shortName(),
+      text = entry.item.name,
       style = MaterialTheme.typography.headlineSmall,
       modifier = Modifier.padding(
         start = dimensionResource(

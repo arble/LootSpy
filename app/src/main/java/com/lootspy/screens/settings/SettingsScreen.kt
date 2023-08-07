@@ -49,7 +49,7 @@ import com.lootspy.R
 import com.lootspy.api.workers.AddShortcutTablesWorker
 import com.lootspy.data.bungiePath
 import com.lootspy.elements.BasicItemElement
-import com.lootspy.types.item.BasicItem
+import com.lootspy.types.item.VendorItem
 import com.lootspy.util.WorkBuilders
 import com.lootspy.util.popup.LootSpyPopup
 import com.lootspy.util.popup.PopupState
@@ -221,7 +221,7 @@ private fun ItemSuggestion(
   modifier: Modifier = Modifier,
   errorPainter: Painter,
   placeholderPainter: Painter,
-  item: BasicItem,
+  item: VendorItem,
 ) {
   SettingsCard(modifier.height(64.dp)) {
     BasicItemElement(item = item, placeholder = placeholderPainter, error = errorPainter)

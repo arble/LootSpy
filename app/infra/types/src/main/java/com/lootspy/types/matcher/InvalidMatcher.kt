@@ -3,6 +3,7 @@ package com.lootspy.types.matcher
 import kotlinx.serialization.SerialName
 import com.lootspy.types.item.BasicItem
 import com.lootspy.types.item.DestinyItem
+import com.lootspy.types.item.VendorItem
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -12,7 +13,7 @@ data object InvalidMatcher : FilterMatcher {
     TODO("Not yet implemented")
   }
 
-  override fun match(item: DestinyItem): Boolean {
+  override fun match(item: VendorItem): Boolean {
     TODO("Not yet implemented")
   }
 
