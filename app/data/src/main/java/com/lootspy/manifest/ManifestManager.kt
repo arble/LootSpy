@@ -12,6 +12,7 @@ import com.lootspy.client.model.DestinyEntitiesItemsDestinyItemStatsComponent
 import com.lootspy.types.component.ItemPerk
 import com.lootspy.types.item.BasicItem
 import com.lootspy.types.item.VendorItem
+import com.lootspy.types.item.VendorItemCoreProperties
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -162,6 +163,38 @@ class ManifestManager @Inject constructor(
         ?: return null
     val isShelved = powerCaps.getOrDefault(powerCapHash, 999999) < 10000
     return Pair(watermark, isShelved)
+  }
+
+  private fun makeCoreProperties(
+    hash: UInt,
+    obj: JsonObject,
+    successorItems: SuccessorMap?
+  ): VendorItemCoreProperties? {
+    // Check categories first, to bail early on the most possible items
+    val category = findWantedCategory(obj) ?: return null
+    val tierTypeHash =
+      obj["inventory"]?.jsonObject?.get("tierTypeHash")?.jsonPrimitive?.long ?: return null
+    val isCraftable =
+      obj["inventory"]?.jsonObject?.get("recipeItemHash") != null
+    val tier = tierHashes[tierTypeHash.toUInt()] ?: return null
+    val (name, icon) = obj.displayPair("name", "icon") ?: return null
+    val watermarkShelvedPair = getWatermarkAndShelved(obj) ?: return null
+    val (watermark, isShelved) = watermarkShelvedPair
+    val defaultDamageTypeHash = obj["defaultDamageTypeHash"]?.jsonPrimitive
+    if (defaultDamageTypeHash == null) {
+      successorItems?.set(name, Triple(hash, icon, watermark))
+      return null
+    }
+    val damageTypeInfo = damageTypes[defaultDamageTypeHash.long.toUInt()] ?: return null
+    return VendorItemCoreProperties(
+      hash = hash,
+      name = name,
+      tier = tier,
+      itemType = category,
+      iconPath = icon,
+      watermarkPath = watermark,
+      isShelved = isShelved,
+    )
   }
 
   private fun makeBasicItem(
@@ -566,17 +599,17 @@ class ManifestManager @Inject constructor(
     val plugsMap = itemComponents.reusablePlugs!!.data!!
 
     val results = mutableListOf<VendorItem>()
-    val basicItemMap = mutableMapOf<UInt, BasicItem>()
+    val corePropertiesMap = mutableMapOf<UInt, VendorItemCoreProperties>()
     val plugMap = mutableMapOf<UInt, ItemPerk>()
     val allPlugs = mutableSetOf<UInt>()
     val pendingItems = mutableMapOf<UInt, VendorItem.Builder>()
     for (entry in salesMap) {
       val vendorItemIndex = entry.key
       val hash = entry.value.itemHash!!.toUInt()
-      val itemStats = statsMap[vendorItemIndex]!!.stats!!.mapKeys { it.key.toUInt() }.mapValues {
-        it.value.value!!
+      val itemStats = statsMap[vendorItemIndex]?.stats?.mapKeys { it.key.toUInt() }?.mapValues {
+        it.value.value ?: -1
       }
-      val itemPlugs = plugsMap[vendorItemIndex]!!.plugs!!.map {
+      val itemPlugs = plugsMap[vendorItemIndex]?.plugs?.map {
         it.value.map { plug ->
           val plugHash = plug.plugItemHash!!.toUInt()
           allPlugs.add(plugHash)
@@ -584,12 +617,17 @@ class ManifestManager @Inject constructor(
         }
       }
       val frameTypePlugHash =
-        socketsMap[vendorItemIndex]!!.sockets!!.getOrNull(0)!!.plugHash!!.toUInt()
+        socketsMap[vendorItemIndex]?.sockets?.getOrNull(0)?.plugHash?.toUInt()
+      val finalPerkHashes = if (itemPlugs != null && frameTypePlugHash != null) {
+        listOf(listOf(frameTypePlugHash)) + itemPlugs
+      } else {
+        null
+      }
 
       allItemKeys.add(vendorItemIndex)
       pendingItems[hash] = VendorItem.Builder()
         .statHashes(itemStats)
-        .perkHashes(listOf(listOf(frameTypePlugHash)) + itemPlugs)
+        .perkHashes(finalPerkHashes)
     }
     getManifestDb().query(
       "DestinyInventoryItemDefinition",
@@ -602,8 +640,8 @@ class ManifestManager @Inject constructor(
     ).use {
       while (it.moveToNext()) {
         val (hash, obj) = it.manifestColumns()
-        val item = makeBasicItem(hash, obj, null)?.first ?: continue
-        basicItemMap[hash] = item
+        val item = makeCoreProperties(hash, obj, null) ?: continue
+        corePropertiesMap[hash] = item
       }
     }
     getManifestDb().query(
@@ -623,7 +661,9 @@ class ManifestManager @Inject constructor(
     }
 
     for (entry in pendingItems) {
-      results.add(entry.value.build(basicItemMap[entry.key]!!, statMap, plugMap))
+      results.add(
+        entry.value.coreProperties(corePropertiesMap[entry.key]!!).build(statMap, plugMap)
+      )
     }
     return results
   }

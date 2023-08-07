@@ -7,6 +7,4 @@ sealed interface DestinyItem {
   val hash: UInt
 
   fun shortName(): String
-
-  fun basicItem(): BasicItem
 }

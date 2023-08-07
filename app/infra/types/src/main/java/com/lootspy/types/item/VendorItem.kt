@@ -5,42 +5,64 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 class VendorItem(
-  override val hash: UInt,
-  val basicItem: BasicItem,
-  val statsMap: Map<String, Pair<Int, String>>,
-  val perkArray: List<List<ItemPerk>>,
-) : DestinyItem {
+  // === essential properties ===
+  val hash: UInt,
+  val name: String,
+  val tier: String,
+  val itemType: String,
+  val iconPath: String,
+  val watermarkPath: String,
+  val isShelved: Boolean,
 
-  override fun basicItem() = basicItem
+  // === weapon properties ===
+  val damageType: String?,
+  val damageIconPath: String?,
+  val statsMap: Map<String, Pair<Int, String>>?,
+  val perkArray: List<List<ItemPerk>>?,
+) {
 
-  class Builder {
-    private lateinit var statHashesMap: Map<UInt, Int>
-    private lateinit var perkHashes: List<List<UInt>>
+  class Builder(
 
-    fun statHashes(statHashesMap: Map<UInt, Int>) = apply { this.statHashesMap = statHashesMap }
+  ) {
+    private var damageType: String? = null
+    private var damageIconPath: String? = null
+    private var statHashesMap: Map<UInt, Int>? = null
+    private var perkHashes: List<List<UInt>>? = null
+    private lateinit var coreProperties: VendorItemCoreProperties
 
-    fun perkHashes(perkHashes: List<List<UInt>>) = apply { this.perkHashes = perkHashes }
+    fun coreProperties(coreProperties: VendorItemCoreProperties) =
+      apply { this.coreProperties = coreProperties }
+
+    fun damageType(damageType: String?) = apply { this.damageType = damageType }
+
+    fun damageIconPath(damageIconPath: String?) = apply { this.damageIconPath = damageIconPath }
+
+    fun statHashes(statHashesMap: Map<UInt, Int>?) = apply { this.statHashesMap = statHashesMap }
+
+    fun perkHashes(perkHashes: List<List<UInt>>?) = apply { this.perkHashes = perkHashes }
 
     fun build(
-      item: BasicItem,
       stats: Map<UInt, Pair<String, String>>,
       perks: Map<UInt, ItemPerk>
     ): VendorItem {
       return VendorItem(
-        item.hash,
-        item,
-        statHashesMap.mapValues { Pair(it.value, stats[it.key]!!.second) }
-          .mapKeys { stats[it.key]?.first ?: INVALID_STAT },
-        perkHashes.map { perkColumn -> perkColumn.map { perks[it] ?: ItemPerk.DUMMY_PERK } },
+        coreProperties.hash,
+        coreProperties.name,
+        coreProperties.tier,
+        coreProperties.itemType,
+        coreProperties.iconPath,
+        coreProperties.watermarkPath,
+        coreProperties.isShelved,
+        damageType,
+        damageIconPath,
+        statHashesMap?.mapValues { Pair(it.value, stats[it.key]!!.second) }
+          ?.mapKeys { stats[it.key]?.first ?: INVALID_STAT },
+        perkHashes?.map { perkColumn -> perkColumn.map { perks[it] ?: ItemPerk.DUMMY_PERK } },
       )
     }
   }
 
   companion object {
     const val INVALID_STAT = "INVALID_STAT"
-  }
-
-  override fun shortName(): String {
-    TODO("Not yet implemented")
   }
 }
