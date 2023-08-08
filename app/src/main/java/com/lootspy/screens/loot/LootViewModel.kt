@@ -11,6 +11,7 @@ import com.lootspy.data.UserStore
 import com.lootspy.data.source.DestinyCharacter
 import com.lootspy.types.item.DestinyItem
 import com.lootspy.types.item.LootEntry
+import com.lootspy.types.item.VendorItem
 import com.lootspy.util.Async
 import com.lootspy.util.combine
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,11 +23,13 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class LootUiState(
   val items: List<LootEntry> = emptyList(),
+  val selectedItem: VendorItem? = null,
   val characters: List<DestinyCharacter> = emptyList(),
   val activeCharacter: Long = 0,
   val isLoading: Boolean = false,
@@ -58,6 +61,7 @@ class LootViewModel @Inject constructor(
   private val _filterUiInfo = savedFilterType.map { getFilterUiInfo(it) }.distinctUntilChanged()
   private val _userMessage: MutableStateFlow<Int?> = MutableStateFlow(null)
   private val _isLoading = MutableStateFlow(false)
+  private val _selectedItem: MutableStateFlow<VendorItem?> = MutableStateFlow(null)
   private val _filteredLootEntriesAsync =
 //    combine(lootRepository.getLootStream(), savedFilterType) { loot, type ->
 //      filterLoot(loot, type)
@@ -75,7 +79,8 @@ class LootViewModel @Inject constructor(
     _filteredLootEntriesAsync,
     characterRepository.getCharactersStream(),
     userStore.activeCharacter,
-  ) { filterUiInfo, isLoading, userMessage, lootEntriesAsync, characters, activeCharacter ->
+    _selectedItem,
+  ) { filterUiInfo, isLoading, userMessage, lootEntriesAsync, characters, activeCharacter, selectedItem ->
     when (lootEntriesAsync) {
       is Async.Loading -> {
         LootUiState(isLoading = true, characters = characters, activeCharacter = activeCharacter)
@@ -92,6 +97,7 @@ class LootViewModel @Inject constructor(
       is Async.Success -> {
         LootUiState(
           items = lootEntriesAsync.data,
+          selectedItem = selectedItem,
           isLoading = isLoading,
           filteringUiInfo = filterUiInfo,
           userMessage = userMessage,
@@ -131,4 +137,10 @@ class LootViewModel @Inject constructor(
   fun saveActiveCharacter(characterId: Long) {
     viewModelScope.launch { userStore.saveActiveCharacter(characterId) }
   }
+
+  fun selectItem(item: VendorItem?) {
+    viewModelScope.launch { _selectedItem.update { item } }
+  }
+
+  fun clearLoot() = viewModelScope.launch { lootRepository.clearLoot() }
 }

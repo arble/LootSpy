@@ -48,7 +48,7 @@ import coil.compose.AsyncImage
 import com.lootspy.R
 import com.lootspy.api.workers.AddShortcutTablesWorker
 import com.lootspy.data.bungiePath
-import com.lootspy.elements.BasicItemElement
+import com.lootspy.elements.VendorItemElement
 import com.lootspy.types.item.VendorItem
 import com.lootspy.util.WorkBuilders
 import com.lootspy.util.popup.LootSpyPopup
@@ -224,7 +224,7 @@ private fun ItemSuggestion(
   item: VendorItem,
 ) {
   SettingsCard(modifier.height(64.dp)) {
-    BasicItemElement(item = item, placeholder = placeholderPainter, error = errorPainter)
+    VendorItemElement(item = item, placeholder = placeholderPainter, error = errorPainter)
   }
 }
 

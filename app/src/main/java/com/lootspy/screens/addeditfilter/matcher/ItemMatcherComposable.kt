@@ -22,7 +22,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lootspy.R
-import com.lootspy.elements.BasicItemElement
+import com.lootspy.elements.VendorItemElement
 import com.lootspy.types.matcher.FilterMatcher
 import com.lootspy.types.matcher.ItemMatcher
 import com.lootspy.screens.addeditfilter.AddEditFilterViewModel
@@ -150,7 +150,7 @@ fun ItemMatcherDetails(
       }
     }
     suggestions.value.forEach { item ->
-      BasicItemElement(item = item,
+      VendorItemElement(item = item,
         onClick = {
           if (viewModel.saveItemMatcher(index, it)) {
             onFinish()

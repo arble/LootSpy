@@ -17,7 +17,7 @@ class VendorItem(
   // === weapon properties ===
   val damageType: String?,
   val damageIconPath: String?,
-  val statsMap: Map<String, Pair<Int, String>>?,
+  val statsMap: Map<String, Int>?,
   val perkArray: List<List<ItemPerk>>?,
 ) {
 
@@ -47,6 +47,37 @@ class VendorItem(
         null
       )
 
+  private fun statNames() = when (itemType) {
+    "Fusion Rifle" -> listOf(
+      "Charge Time",
+      "Impact",
+      "Range",
+      "Stability",
+      "Handling",
+      "Reload Speed"
+    )
+    "Bow" -> listOf("Draw Time", "Impact", "Accuracy", "Stability", "Handling", "Reload Speed")
+    "Glaive" -> listOf(
+      "Rounds Per Minute",
+      "Impact",
+      "Range",
+      "Shield Duration",
+      "Handling",
+      "Reload Speed"
+    )
+    else -> listOf("Rounds Per Minute", "Impact", "Range", "Stability", "Handling", "Reload Speed")
+  }
+
+  fun itemStatMap(): Map<String, Int>? {
+    if (statsMap == null) {
+      return null
+    }
+    val result = mutableMapOf<String, Int>()
+    for (stat in statNames()) {
+      result[stat] = statsMap[stat]!!
+    }
+    return result
+  }
 
   class Builder(
 
@@ -82,10 +113,7 @@ class VendorItem(
         coreProperties.isShelved,
         damageType,
         damageIconPath,
-        statHashesMap?.mapValues {
-          Pair(it.value, stats[it.key]?.second ?: throw IllegalStateException("$it not found"))
-        }
-          ?.mapKeys { stats[it.key]?.first ?: INVALID_STAT },
+        statHashesMap?.mapKeys { stats[it.key]?.first ?: INVALID_STAT },
         perkHashes?.map { perkColumn -> perkColumn.map { perks[it] ?: ItemPerk.DUMMY_PERK } },
       )
     }

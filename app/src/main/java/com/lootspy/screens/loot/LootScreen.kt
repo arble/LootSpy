@@ -1,7 +1,5 @@
 package com.lootspy.screens.loot
 
-import android.widget.Toast
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,7 +47,6 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.ExperimentalTextApi
@@ -66,11 +63,10 @@ import com.lootspy.R
 import com.lootspy.api.workers.GetCharactersWorker
 import com.lootspy.api.workers.GetMembershipsWorker
 import com.lootspy.api.workers.GetVendorsWorker
-import com.lootspy.types.item.LootEntry
-import com.lootspy.data.source.DestinyCharacter
 import com.lootspy.data.bungiePath
-import com.lootspy.elements.BasicItemElement
-import com.lootspy.types.item.BasicItem
+import com.lootspy.data.source.DestinyCharacter
+import com.lootspy.elements.VendorItemDetails
+import com.lootspy.elements.VendorItemElement
 import com.lootspy.util.WorkBuilders
 import kotlinx.coroutines.launch
 
@@ -104,13 +100,14 @@ fun LootScreen(
             Icon(Icons.Default.Check, null)
           }
           IconButton(onClick = {
-            WorkBuilders.dispatchUniqueWorkWithTokens(
-              context,
-              "sync_characters",
-              mapOf("notify_channel" to "lootspyApi"),
-              listOf(GetCharactersWorker::class.java),
-            )
+//            WorkBuilders.dispatchUniqueWorkWithTokens(
+//              context,
+//              "sync_characters",
+//              mapOf("notify_channel" to "lootspyApi"),
+//              listOf(GetCharactersWorker::class.java),
+//            )
 //          viewModel.deleteAuthInfo()
+            viewModel.clearLoot()
           }) {
             Icon(Icons.Default.List, null)
           }
@@ -135,22 +132,11 @@ fun LootScreen(
   ) { paddingValues ->
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
-    val onLootClick: (LootEntry) -> Unit = {
-      Toast.makeText(context, "Loot item is: $it", Toast.LENGTH_SHORT).show()
-    }
     var showCharacterSheet by remember { mutableStateOf(false) }
-    val sheetState =
+    val characterSheetState =
       remember { SheetState(skipPartiallyExpanded = true, initialValue = SheetValue.Hidden) }
-
-//    ScreenContentWithEmptyText(
-//      loading = uiState.isLoading,
-//      items = uiState.items,
-//      itemContent = { _, entry ->
-//        LootItem(entry = entry, onLootClick = onLootClick)
-//      },
-//      emptyText = stringResource(id = R.string.loot_screen_empty),
-//      modifier = Modifier.padding(paddingValues)
-//    )
+    val itemDetailSheetState =
+      remember { SheetState(skipPartiallyExpanded = true, initialValue = SheetValue.Hidden) }
     Column(
       modifier = Modifier
         .padding(paddingValues)
@@ -177,7 +163,9 @@ fun LootScreen(
 //        }
       } else {
         for (entry in uiState.items) {
-          BasicItemElement(item = entry.item)
+          VendorItemElement(item = entry.item) {
+            viewModel.selectItem(it)
+          }
         }
       }
       val activeCharacter = uiState.characters.find { it.characterId == uiState.activeCharacter }
@@ -202,10 +190,11 @@ fun LootScreen(
         }
       }
 
+      val selectedItem = uiState.selectedItem
       if (showCharacterSheet) {
         ModalBottomSheet(
           onDismissRequest = { showCharacterSheet = false },
-          sheetState = sheetState,
+          sheetState = characterSheetState,
           windowInsets = WindowInsets.safeDrawing,
         ) {
           Column(
@@ -217,13 +206,29 @@ fun LootScreen(
             uiState.characters.forEach { character ->
               CharacterSelectorItem(character = character) { clickedCharacter ->
                 viewModel.saveActiveCharacter(clickedCharacter.characterId)
-                scope.launch { sheetState.hide() }.invokeOnCompletion {
-                  if (!sheetState.isVisible) {
+                scope.launch { characterSheetState.hide() }.invokeOnCompletion {
+                  if (!characterSheetState.isVisible) {
                     showCharacterSheet = false
                   }
                 }
               }
             }
+            Row(modifier = Modifier.height(48.dp)) {}
+          }
+        }
+      } else if (selectedItem != null) {
+        ModalBottomSheet(
+          onDismissRequest = { viewModel.selectItem(null) },
+          sheetState = itemDetailSheetState,
+          windowInsets = WindowInsets.safeDrawing,
+        ) {
+          Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+              .fillMaxWidth()
+              .systemBarsPadding()
+          ) {
+            VendorItemDetails(item = selectedItem)
             Row(modifier = Modifier.height(48.dp)) {}
           }
         }
@@ -287,32 +292,5 @@ private fun CharacterSelectorItem(
       )
       Spacer(modifier = Modifier.width(16.dp))
     }
-  }
-}
-
-@Composable
-private fun LootItem(
-  entry: LootEntry,
-  onLootClick: (LootEntry) -> Unit,
-) {
-  Row(
-    verticalAlignment = Alignment.CenterVertically,
-    modifier = Modifier
-      .fillMaxWidth()
-      .padding(
-        horizontal = dimensionResource(id = R.dimen.horizontal_margin),
-        vertical = dimensionResource(id = R.dimen.loot_item_padding),
-      )
-      .clickable { onLootClick(entry) }
-  ) {
-    Text(
-      text = entry.item.name,
-      style = MaterialTheme.typography.headlineSmall,
-      modifier = Modifier.padding(
-        start = dimensionResource(
-          id = R.dimen.horizontal_margin
-        )
-      ),
-    )
   }
 }
