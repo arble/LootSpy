@@ -60,7 +60,6 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import coil.compose.AsyncImage
 import com.lootspy.R
-import com.lootspy.api.workers.GetCharactersWorker
 import com.lootspy.api.workers.GetMembershipsWorker
 import com.lootspy.api.workers.GetVendorsWorker
 import com.lootspy.data.bungiePath

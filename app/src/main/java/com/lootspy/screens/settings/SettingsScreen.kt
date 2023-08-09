@@ -170,13 +170,7 @@ fun SettingsScreen(
         viewModel.getSuggestions(value, 5)
       })
       if (suggestionItems.value.isNotEmpty()) {
-        suggestionItems.value.forEach { item ->
-          ItemSuggestion(
-            errorPainter = errorPainter,
-            placeholderPainter = placeholderPainter,
-            item = item
-          )
-        }
+        suggestionItems.value.forEach { item -> ItemSuggestion(item = item) }
       }
     }
   }
@@ -219,12 +213,10 @@ private fun ProfileSelectorEntry(
 @Composable
 private fun ItemSuggestion(
   modifier: Modifier = Modifier,
-  errorPainter: Painter,
-  placeholderPainter: Painter,
   item: VendorItem,
 ) {
   SettingsCard(modifier.height(64.dp)) {
-    VendorItemElement(item = item, placeholder = placeholderPainter, error = errorPainter)
+    VendorItemElement(item = item)
   }
 }
 
